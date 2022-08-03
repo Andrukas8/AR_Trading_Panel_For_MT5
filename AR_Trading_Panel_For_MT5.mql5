@@ -1,0 +1,268 @@
+//+------------------------------------------------------------------+
+//|                                               ControlsButton.mq5 |
+//|                        Copyright 2022, MetaQuotes Software Corp. |
+//|                                             https://www.mql5.com |
+//+------------------------------------------------------------------+
+#property copyright "Copyright 2022, MetaQuotes Software Corp."
+#property link      "https://www.mql5.com"
+#property version   "1.00"
+#property description "Control Panels and Dialogs. Demonstration class CButton"
+
+#include <Trade/Trade.mqh>
+#include <Controls\Dialog.mqh>
+#include <Controls\Button.mqh>
+
+double ask;
+double bid;
+
+double ask_tp;
+double bid_tp;
+
+double slSell;
+double slBuy;
+
+input double slPips = 10; // Stoploss in pips
+input double RiskToReward = 2; // Risk to Reward Ratio
+input double posLots = 0.1; // Lot size
+
+//+------------------------------------------------------------------+
+//| defines                                                          |
+//+------------------------------------------------------------------+
+//--- indents and gaps
+#define INDENT_LEFT                         (11)      // indent from left (with allowance for border width)
+#define INDENT_TOP                          (11)      // indent from top (with allowance for border width)
+#define INDENT_RIGHT                        (11)      // indent from right (with allowance for border width)
+#define INDENT_BOTTOM                       (11)      // indent from bottom (with allowance for border width)
+#define CONTROLS_GAP_X                      (5)       // gap by X coordinate
+#define CONTROLS_GAP_Y                      (5)       // gap by Y coordinate
+//--- for buttons
+#define BUTTON_WIDTH                        (100)     // size by X coordinate
+#define BUTTON_HEIGHT                       (20)      // size by Y coordinate
+//--- for the indication area
+#define EDIT_HEIGHT                         (20)      // size by Y coordinate
+//--- for group controls
+#define GROUP_WIDTH                         (150)     // size by X coordinate
+#define LIST_HEIGHT                         (179)     // size by Y coordinate
+#define RADIO_HEIGHT                        (56)      // size by Y coordinate
+#define CHECK_HEIGHT                        (93)      // size by Y coordinate
+//+------------------------------------------------------------------+
+//| Class CControlsDialog                                            |
+//| Usage: main dialog of the Controls application                   |
+//+------------------------------------------------------------------+
+class CControlsDialog : public CAppDialog
+  {
+private:
+   CButton           m_SellBtn;                       // the button object
+   CButton           m_BuyBtn;                       // the button object
+   CButton           m_CloseAllBtn;                       // the fixed button object
+ 
+public:
+                     CControlsDialog(void);
+                    ~CControlsDialog(void);
+   //--- create
+   virtual bool      Create(const long chart,const string name,const int subwin,const int x1,const int y1,const int x2,const int y2);
+   //--- chart event handler
+   virtual bool      OnEvent(const int id,const long &lparam,const double &dparam,const string &sparam);
+ 
+protected:
+   //--- create dependent controls
+   bool              CreateSellBtn(void);
+   bool              CreateBuyBtn(void);
+   bool              CreateCloseAllBtn(void);
+   //--- handlers of the dependent controls events
+   void              OnClickSellBtn(void);
+   void              OnClickBuyBtn(void);
+   void              OnClickCloseAllBtn(void);
+  };
+//+------------------------------------------------------------------+
+//| Event Handling                                                   |
+//+------------------------------------------------------------------+
+EVENT_MAP_BEGIN(CControlsDialog)
+ON_EVENT(ON_CLICK,m_SellBtn,OnClickSellBtn)
+ON_EVENT(ON_CLICK,m_BuyBtn,OnClickBuyBtn)
+ON_EVENT(ON_CLICK,m_CloseAllBtn,OnClickCloseAllBtn)
+EVENT_MAP_END(CAppDialog)
+//+------------------------------------------------------------------+
+//| Constructor                                                      |
+//+------------------------------------------------------------------+
+CControlsDialog::CControlsDialog(void)
+  {
+  }
+//+------------------------------------------------------------------+
+//| Destructor                                                       |
+//+------------------------------------------------------------------+
+CControlsDialog::~CControlsDialog(void)
+  {
+  }
+//+------------------------------------------------------------------+
+//| Create                                                           |
+//+------------------------------------------------------------------+
+bool CControlsDialog::Create(const long chart,const string name,const int subwin,const int x1,const int y1,const int x2,const int y2)
+  {
+   if(!CAppDialog::Create(chart,name,subwin,x1,y1,x2,y2))
+      return(false);
+//--- create dependent controls
+   if(!CreateSellBtn())
+      return(false);
+   if(!CreateBuyBtn())
+      return(false);
+   if(!CreateCloseAllBtn())
+      return(false);
+//--- succeed
+   return(true);
+  }
+//+------------------------------------------------------------------+
+//| Create the "SellBtn" button                                      |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateSellBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT;
+   int y1=INDENT_TOP+(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_SellBtn.Create(m_chart_id,m_name+"SellBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_SellBtn.Text("SELL"))
+      return(false);
+   if(!Add(m_SellBtn))
+      return(false);
+//--- succeed
+   return(true);
+  }
+//+------------------------------------------------------------------+
+//| Create the "BuyBtn" button                                      |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateBuyBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_BuyBtn.Create(m_chart_id,m_name+"BuyBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_BuyBtn.Text("BUY"))
+      return(false);
+   if(!Add(m_BuyBtn))
+      return(false);
+//--- succeed
+   return(true);
+  }
+//+------------------------------------------------------------------+
+//| Create the "CloseAllBtn" fixed button                                |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateCloseAllBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_CloseAllBtn.Create(m_chart_id,m_name+"CloseAllBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_CloseAllBtn.Text("Close All"))
+      return(false);
+   if(!Add(m_CloseAllBtn))
+      return(false);
+   //m_CloseAllBtn.Locking(true);
+//--- succeed
+   return(true);
+  }
+//+------------------------------------------------------------------+
+//| Event handler                                                    |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickSellBtn(void)
+  {   
+    CTrade trade;          
+    if(trade.Sell(posLots,_Symbol,bid,slSell,bid_tp,"This is a SELL trade"))
+      {
+       Print("Sold ",posLots," Lots of ",_Symbol," @ ",bid," SL = ",slSell, " TP = ",bid_tp);
+      }       
+   Comment(__FUNCTION__);
+  }
+//+------------------------------------------------------------------+
+//| Event handler                                                    |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickBuyBtn(void)
+  {  
+    CTrade trade;          
+    if(trade.Buy(posLots,_Symbol,ask,slBuy,ask_tp,"This is a SELL trade"))
+      {
+       Print("Bought ",posLots," Lots of ",_Symbol," @ ",ask," SL = ",slBuy, " TP = ",ask_tp);
+      } 
+   Comment(__FUNCTION__);            
+  }
+//+------------------------------------------------------------------+
+//| Event handler                                                    |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickCloseAllBtn(void)
+  {
+  CTrade trade;
+   for(int i = PositionsTotal() - 1; i>=0;i--)
+      {         
+         ulong posTicket = PositionGetTicket(i);
+         if(trade.PositionClose(posTicket))
+           {
+            Print(i," Position #",posTicket," Was closed...");
+           }                                      
+       } // end of for loop      
+   Comment(__FUNCTION__);
+  }
+//+------------------------------------------------------------------+
+//| Global Variables                                                 |
+//+------------------------------------------------------------------+
+CControlsDialog ExtDialog;
+//+------------------------------------------------------------------+
+//| Expert initialization function                                   |
+//+------------------------------------------------------------------+
+int OnInit()
+  {
+//--- create application dialog
+   if(!ExtDialog.Create(0,"Controls",0,40,40,380,344))
+      return(INIT_FAILED);
+//--- run application
+   ExtDialog.Run();
+//--- succeed
+   return(INIT_SUCCEEDED);
+  }
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                                 |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+  {
+//--- clear comments
+   Comment("");
+//--- destroy dialog
+   ExtDialog.Destroy(reason);
+  }
+//+------------------------------------------------------------------+
+//| Expert chart event function                                      |
+//+------------------------------------------------------------------+
+void OnChartEvent(const int id,         // event ID  
+                  const long& lparam,   // event parameter of the long type
+                  const double& dparam, // event parameter of the double type
+                  const string& sparam) // event parameter of the string type
+  {
+   ExtDialog.ChartEvent(id,lparam,dparam,sparam);
+  }
+    
+void OnTick()
+  { 
+// Saving edit values into variables     
+  // posLots = NormalizeDouble(StringToDouble(ObjectGetString(0,EdiLots,OBJPROP_TEXT)),2);        
+  // slPips = NormalizeDouble(StringToDouble(ObjectGetString(0,EdiSlPips,OBJPROP_TEXT)),2);
+  // RiskToReward = NormalizeDouble(StringToDouble(ObjectGetString(0,EdiRiskToReward,OBJPROP_TEXT)),2); 
+      
+   ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
+   bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);   
+   
+   slSell = NormalizeDouble(ask + slPips*_Point*10,4);
+   slBuy = NormalizeDouble(bid - slPips*_Point*10,4);
+      
+   ask_tp = NormalizeDouble(ask + RiskToReward * (ask - slBuy),4);
+   bid_tp = NormalizeDouble(bid - RiskToReward * (slSell - bid),4);
+  }
