@@ -12,6 +12,7 @@
 #include <Controls\Dialog.mqh>
 #include <Controls\Button.mqh>
 #include <Controls\Edit.mqh>
+#include <Controls\Label.mqh>
 
 double ask;
 double bid;
@@ -41,6 +42,7 @@ double posLots; // Lot size
 #define BUTTON_HEIGHT                       (20)      // size by Y coordinate
 //--- for the indication area
 #define EDIT_HEIGHT                         (20)      // size by Y coordinate
+#define EDIT_WIDTH                          (70)      // size by Y coordinate
 //--- for group controls
 #define GROUP_WIDTH                         (150)     // size by X coordinate
 #define LIST_HEIGHT                         (179)     // size by Y coordinate
@@ -53,19 +55,25 @@ double posLots; // Lot size
 class CControlsDialog : public CAppDialog
   {
 private:
+    // Labels
+   CLabel            m_LotsLbl;                       // Label for Lots
+   CLabel            m_SlPipsLbl;                     // Label for Lots
+   CLabel            m_RiskToRewardRatioLbl;          // Label for Risk to Reward Ratio
+   CLabel            m_RiskLbl;                       // Label for Risk percentage      
+     // Edits
+   CEdit             m_LotsEdit;                      // Edit field for the lots  
+   CEdit             m_SlPipsEdit;                    // Edit field for the sl pips  
+   CEdit             m_RiskToRewardRatioEdit;         // Edit field for Risk to Reward Ratio
+   CEdit             m_RiskEdit;                      // Edit field for Risk percentage
+   
+   // Buttons
    CButton           m_SellBtn;                       // button to sell
    CButton           m_BuyBtn;                        // button to buy
    CButton           m_CloseAllBtn;                   // button to close all positions
-   CButton           m_CalculateRisk;                 // button to calculate lot size based on % of deposit to risk   
-   CButton           m_ClearInputs;                   // button to clear the input fields
+   CButton           m_CalculateRiskBtn;              // button to calculate lot size based on % of deposit to risk   
+   CButton           m_ClearInputsBtn;                // button to clear the input fields
+   CButton           m_BreakEvenBtn;
 
-   CEdit             m_Lots;                          // Edit field for the lots       <<<================
-   CEdit             m_SlPips;                        // Edit field for the sl pips  
-   CEdit             m_RRR;                           // Edit field for Risk to Reward Ratio
-   CEdit             m_Risk;                          // Edit field for Risk percentage
-   
-   
- 
 public:
                      CControlsDialog(void);
                     ~CControlsDialog(void);
@@ -81,11 +89,17 @@ protected:
    bool              CreateCloseAllBtn(void);
    bool              CreateCalculateRiskBtn(void);
    bool              CreateClearInputsBtn(void);
+   bool              CreateBreakEvenBtn(void);
    
-   bool              CreateLotsEdit(void); //  <<===============
+   bool              CreateLotsEdit(void);
    bool              CreateSlPipsEdit(void);
-   bool              CreateRRREdit(void);
+   bool              CreateRiskToRewardRatioEdit(void);
    bool              CreateRiskEdit(void);
+   
+   bool              CreateLotsLbl(void);
+   bool              CreateSlPipsLbl(void);
+   bool              CreateRiskToRewardRatioLbl(void);
+   bool              CreateRiskLbl(void);
    
    //--- handlers of the dependent controls events
    void              OnClickSellBtn(void);
@@ -93,6 +107,7 @@ protected:
    void              OnClickCloseAllBtn(void);
    void              OnClickCalculateRiskBtn(void);
    void              OnClickClearInputsBtn(void);
+   void              OnClickBreakEvenBtn(void);
   };
 //+------------------------------------------------------------------+
 //| Event Handling                                                   |
@@ -101,8 +116,9 @@ EVENT_MAP_BEGIN(CControlsDialog)
 ON_EVENT(ON_CLICK,m_SellBtn,OnClickSellBtn)
 ON_EVENT(ON_CLICK,m_BuyBtn,OnClickBuyBtn)
 ON_EVENT(ON_CLICK,m_CloseAllBtn,OnClickCloseAllBtn)
-ON_EVENT(ON_CLICK,m_CalculateRisk,OnClickCalculateRiskBtn)
-ON_EVENT(ON_CLICK,m_ClearInputs,OnClickClearInputsBtn)
+ON_EVENT(ON_CLICK,m_CalculateRiskBtn,OnClickCalculateRiskBtn)
+ON_EVENT(ON_CLICK,m_ClearInputsBtn,OnClickClearInputsBtn)
+ON_EVENT(ON_CLICK,m_BreakEvenBtn,OnClickBreakEvenBtn)
 EVENT_MAP_END(CAppDialog)
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
@@ -124,6 +140,22 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
    if(!CAppDialog::Create(chart,name,subwin,x1,y1,x2,y2))
       return(false);
 //--- create dependent controls
+   if(!CreateLotsLbl())
+      return(false);
+   if(!CreateSlPipsLbl())
+      return(false);
+   if(!CreateRiskToRewardRatioLbl())
+      return(false);
+   if(!CreateRiskLbl())
+      return(false);     
+   if(!CreateLotsEdit())   
+      return(false);      
+   if(!CreateSlPipsEdit())   
+      return(false);      
+   if(!CreateRiskToRewardRatioEdit())   
+      return(false);      
+   if(!CreateRiskEdit())   
+      return(false);   
    if(!CreateSellBtn())
       return(false);
    if(!CreateBuyBtn())
@@ -131,23 +163,211 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
    if(!CreateCloseAllBtn())
       return(false);      
    if(!CreateCalculateRiskBtn())
-      return(false);
-      
+      return(false);      
    if(!CreateClearInputsBtn())
       return(false);
-   
-   if(!CreateLotsEdit())   
-      return(false);      
-   if(!CreateSlPipsEdit())   
-      return(false);      
-   if(!CreateRRREdit())   
-      return(false);      
-   if(!CreateRiskEdit())   // <<<==============
-      return(false);
-      
+   if(!CreateBreakEvenBtn())
+      return(false);          
 //--- succeed
    return(true);
   }
+  
+
+
+
+
+
+// Creating Labels =====================================================================================================
+
+
+//+------------------------------------------------------------------+
+//| Create the Lots Label                  #1                        |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateLotsLbl(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT;
+   int y1=INDENT_TOP+CONTROLS_GAP_Y;
+   int x2=x1+EDIT_WIDTH;
+   int y2=y1+EDIT_HEIGHT;   
+//--- create
+   if(!m_LotsLbl.Create(m_chart_id,m_name+"LotsLbl",m_subwin,x1,y1,x2,y2))      
+      return(false);
+   if(!m_LotsLbl.Text("Lots"))
+      return(false);
+   if(!Add(m_LotsLbl))
+      return(false);
+//--- succeed
+   return(true);
+  }
+ 
+ 
+//+------------------------------------------------------------------+
+//| Create the SlPips label             #2                           |  
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateSlPipsLbl(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+EDIT_WIDTH+CONTROLS_GAP_X;
+   int y1=INDENT_TOP+CONTROLS_GAP_Y;
+   int x2=x1+EDIT_WIDTH;
+   int y2=y1+EDIT_HEIGHT;
+      
+//--- create
+   if(!m_SlPipsLbl.Create(m_chart_id,m_name+"SlPipsLbl",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_SlPipsLbl.Text("SL"))
+      return(false);
+   if(!Add(m_SlPipsLbl))
+      return(false);    
+//--- succeed
+   return(true);
+  }
+
+
+//+------------------------------------------------------------------+
+//| Create the risk to reward ratio Label              #3            |  
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateRiskToRewardRatioLbl(void)
+  {
+//--- coordinates
+
+   int x1=INDENT_LEFT+2*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+CONTROLS_GAP_Y;
+   int x2=x1+EDIT_WIDTH;
+   int y2=y1+EDIT_HEIGHT;
+  
+//--- create
+   if(!m_RiskToRewardRatioLbl.Create(m_chart_id,m_name+"RRRLbl",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_RiskToRewardRatioLbl.Text("RRR"))
+      return(false);
+   if(!Add(m_RiskToRewardRatioLbl))
+      return(false);    
+//--- succeed
+   return(true);
+  }
+
+
+
+//+------------------------------------------------------------------+
+//| Create the Risk label                   #4                       |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateRiskLbl(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+3*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+CONTROLS_GAP_Y;
+   int x2=x1+EDIT_WIDTH;
+   int y2=y1+EDIT_HEIGHT;
+//--- create
+   if(!m_RiskLbl.Create(m_chart_id,m_name+"RiskLbl",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_RiskLbl.Text("Risk %"))
+      return(false);
+   if(!Add(m_RiskLbl))
+      return(false);    
+//--- succeed
+   return(true);
+  }
+
+
+// Creating Edit Fields =====================================================================================================
+
+//+------------------------------------------------------------------+
+//| Create the Lots field                  #1                        |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateLotsEdit(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT;
+   int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int x2=x1+EDIT_WIDTH;
+   int y2=y1+EDIT_HEIGHT;   
+//--- create
+   if(!m_LotsEdit.Create(m_chart_id,m_name+"Lots",m_subwin,x1,y1,x2,y2))      
+      return(false);
+//--- allow editing the content
+   if(!m_LotsEdit.ReadOnly(false))
+      return(false);
+   if(!Add(m_LotsEdit))
+      return(false);
+//--- succeed
+   return(true);
+  }
+ 
+//+------------------------------------------------------------------+
+//| Create the SlPips field             #2                           |  
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateSlPipsEdit(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+EDIT_WIDTH+CONTROLS_GAP_X;
+   int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int x2=x1+EDIT_WIDTH;
+   int y2=y1+EDIT_HEIGHT;
+      
+//--- create
+   if(!m_SlPipsEdit.Create(m_chart_id,m_name+"SlPips",m_subwin,x1,y1,x2,y2))
+      return(false);
+//--- allow editing the content
+   if(!m_SlPipsEdit.ReadOnly(false))
+      return(false);
+   if(!Add(m_SlPipsEdit))
+      return(false);    
+//--- succeed
+   return(true);
+  }
+
+//+------------------------------------------------------------------+
+//| Create the Risk to reward ratio edit field          #3           |  
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateRiskToRewardRatioEdit(void)
+  {
+//--- coordinates
+
+   int x1=INDENT_LEFT+2*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int x2=x1+EDIT_WIDTH;
+   int y2=y1+EDIT_HEIGHT;
+  
+//--- create
+   if(!m_RiskToRewardRatioEdit.Create(m_chart_id,m_name+"RRR",m_subwin,x1,y1,x2,y2))
+      return(false);
+//--- allow editing the content
+   if(!m_RiskToRewardRatioEdit.ReadOnly(false))
+      return(false);
+   if(!Add(m_RiskToRewardRatioEdit))
+      return(false);    
+//--- succeed
+   return(true);
+  }
+
+
+//+------------------------------------------------------------------+
+//| Create the Risk Edit field              #4                       |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateRiskEdit(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+3*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int x2=x1+EDIT_WIDTH;
+   int y2=y1+EDIT_HEIGHT;
+//--- create
+   if(!m_RiskEdit.Create(m_chart_id,m_name+"Risk",m_subwin,x1,y1,x2,y2))
+      return(false);
+//--- allow editing the content
+   if(!m_RiskEdit.ReadOnly(false))
+      return(false);
+   if(!Add(m_RiskEdit))
+      return(false);    
+//--- succeed
+   return(true);
+  }
+
+// Creating Buttons =====================================================================================================
+
 //+------------------------------------------------------------------+
 //| Create the "SellBtn" button                                      |
 //+------------------------------------------------------------------+
@@ -155,7 +375,7 @@ bool CControlsDialog::CreateSellBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT;
-   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -175,7 +395,7 @@ bool CControlsDialog::CreateBuyBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -195,7 +415,7 @@ bool CControlsDialog::CreateCloseAllBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -211,141 +431,66 @@ bool CControlsDialog::CreateCloseAllBtn(void)
   
 //+------------------------------------------------------------------+
 //| Create the "CalculateRisk" button                                |
-//+------------------------------------------------------------------+<<<<<=-=======================
+//+------------------------------------------------------------------+
 bool CControlsDialog::CreateCalculateRiskBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+6*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
-   if(!m_CalculateRisk.Create(m_chart_id,m_name+"CalculateRiskBtn",m_subwin,x1,y1,x2,y2))
+   if(!m_CalculateRiskBtn.Create(m_chart_id,m_name+"CalculateRiskBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_CalculateRisk.Text("Calc Risk"))
+   if(!m_CalculateRiskBtn.Text("Calc Risk"))
       return(false);
-   if(!Add(m_CalculateRisk))
+   if(!Add(m_CalculateRiskBtn))
       return(false);  
 //--- succeed
    return(true);
   }
-
 
 //+------------------------------------------------------------------+
 //| Create the "ClearInputs" button                                  |
-//+------------------------------------------------------------------+<<<<<=-=======================
+//+------------------------------------------------------------------+
 bool CControlsDialog::CreateClearInputsBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+7*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
-   if(!m_ClearInputs.Create(m_chart_id,m_name+"ClearInputsBtn",m_subwin,x1,y1,x2,y2))
+   if(!m_ClearInputsBtn.Create(m_chart_id,m_name+"ClearInputsBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_ClearInputs.Text("Clear"))
+   if(!m_ClearInputsBtn.Text("Clear Inputs"))
       return(false);
-   if(!Add(m_ClearInputs))
+   if(!Add(m_ClearInputsBtn))
       return(false);  
 //--- succeed
    return(true);
   }
 
-
 //+------------------------------------------------------------------+
-//| Create the Lots field                                            |
+//| Create the "Break Even"  button                                  |
 //+------------------------------------------------------------------+
-bool CControlsDialog::CreateLotsEdit(void)
+bool CControlsDialog::CreateBreakEvenBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT;
-   int y1=INDENT_TOP+CONTROLS_GAP_Y;
-   int x2=(ClientAreaWidth()-INDENT_RIGHT)/4;
-   int y2=y1+EDIT_HEIGHT;
+   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
 //--- create
-   if(!m_Lots.Create(m_chart_id,m_name+"Lots",m_subwin,x1,y1,x2,y2))      
+   if(!m_BreakEvenBtn.Create(m_chart_id,m_name+"BreakEvenBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-//--- allow editing the content
-   if(!m_Lots.ReadOnly(false))
+   if(!m_BreakEvenBtn.Text("Break Even All"))
       return(false);
-   if(!Add(m_Lots))
-      return(false);
+   if(!Add(m_BreakEvenBtn))
+      return(false);  
 //--- succeed
    return(true);
   }
- 
- 
-//+------------------------------------------------------------------+
-//| Create the SlPips field                                          |  
-//+------------------------------------------------------------------+
-bool CControlsDialog::CreateSlPipsEdit(void)
-  {
-//--- coordinates
-   int x1=INDENT_LEFT;
-   int y1=2*EDIT_HEIGHT+CONTROLS_GAP_Y;
-   int x2=(ClientAreaWidth()-INDENT_RIGHT)/4;
-   int y2=(y1+EDIT_HEIGHT);
-//--- create
-   if(!m_SlPips.Create(m_chart_id,m_name+"SlPips",m_subwin,x1,y1,x2,y2))
-      return(false);
-//--- allow editing the content
-   if(!m_SlPips.ReadOnly(false))
-      return(false);
-   if(!Add(m_SlPips))
-      return(false);    
-//--- succeed
-   return(true);
-  }
-
-
-//+------------------------------------------------------------------+
-//| Create the RRR Edit field                                        |  
-//+------------------------------------------------------------------+
-bool CControlsDialog::CreateRRREdit(void)
-  {
-//--- coordinates
-   int x1=INDENT_LEFT;
-   int y1=3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=(ClientAreaWidth()-INDENT_RIGHT)/4;
-   int y2=y1+EDIT_HEIGHT;
-//--- create
-   if(!m_RRR.Create(m_chart_id,m_name+"RRR",m_subwin,x1,y1,x2,y2))
-      return(false);
-//--- allow editing the content
-   if(!m_RRR.ReadOnly(false))
-      return(false);
-   if(!Add(m_RRR))
-      return(false);    
-//--- succeed
-   return(true);
-  }
-
-
-
-//+------------------------------------------------------------------+
-//| Create the Risk Edit field                                       |
-//+------------------------------------------------------------------+
-bool CControlsDialog::CreateRiskEdit(void)
-  {
-//--- coordinates
-   int x1=INDENT_LEFT;
-   int y1=4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=(ClientAreaWidth()-INDENT_RIGHT)/4;
-   int y2=y1+EDIT_HEIGHT;
-//--- create
-   if(!m_Risk.Create(m_chart_id,m_name+"Risk",m_subwin,x1,y1,x2,y2))
-      return(false);
-//--- allow editing the content
-   if(!m_Risk.ReadOnly(false))
-      return(false);
-   if(!Add(m_Risk))
-      return(false);    
-//--- succeed
-   return(true);
-  }
-
-
 
 //+------------------------------------------------------------------+
 //| Event handler for Sell Button                                    |
@@ -354,11 +499,11 @@ void CControlsDialog::OnClickSellBtn(void)
   {   
     CTrade trade;
     
-    if(m_Lots.Text() != "" && m_SlPips.Text() != "" && m_RRR.Text() != "")
+    if(m_LotsEdit.Text() != "" && m_SlPipsEdit.Text() != "" && m_RiskToRewardRatioEdit.Text() != "")
         {         
-          posLots = NormalizeDouble(StringToDouble(m_Lots.Text()),2);        
-          slPips = NormalizeDouble(StringToDouble(m_SlPips.Text()),2);
-          RiskToReward = NormalizeDouble(StringToDouble(m_RRR.Text()),2);         
+          posLots = NormalizeDouble(StringToDouble(m_LotsEdit.Text()),2);        
+          slPips = NormalizeDouble(StringToDouble(m_SlPipsEdit.Text()),2);
+          RiskToReward = NormalizeDouble(StringToDouble(m_RiskToRewardRatioEdit.Text()),2);         
           
           ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
           bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);   
@@ -388,8 +533,7 @@ void CControlsDialog::OnClickSellBtn(void)
             {
               Print("Not enough input");             
             }
-    
- 
+
    Comment(__FUNCTION__);
   }
 //+------------------------------------------------------------------+
@@ -399,11 +543,11 @@ void CControlsDialog::OnClickBuyBtn(void)
   {  
     CTrade trade;
     
-    if(m_Lots.Text() != "" && m_SlPips.Text() != "" && m_RRR.Text() != "")
+    if(m_LotsEdit.Text() != "" && m_SlPipsEdit.Text() != "" && m_RiskToRewardRatioEdit.Text() != "")
         {         
-          posLots = NormalizeDouble(StringToDouble(m_Lots.Text()),2);        
-          slPips = NormalizeDouble(StringToDouble(m_SlPips.Text()),2);
-          RiskToReward = NormalizeDouble(StringToDouble(m_RRR.Text()),2);         
+          posLots = NormalizeDouble(StringToDouble(m_LotsEdit.Text()),2);        
+          slPips = NormalizeDouble(StringToDouble(m_SlPipsEdit.Text()),2);
+          RiskToReward = NormalizeDouble(StringToDouble(m_RiskToRewardRatioEdit.Text()),2);         
           
           ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
           bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);   
@@ -433,12 +577,11 @@ void CControlsDialog::OnClickBuyBtn(void)
             {
               Print("Not enough input");             
             }
-        
+            
    Comment(__FUNCTION__);            
   }
   
-  
-  
+
 //+------------------------------------------------------------------+
 //| Event handler for Close All Positions Button                     |
 //+------------------------------------------------------------------+
@@ -457,16 +600,16 @@ void CControlsDialog::OnClickCloseAllBtn(void)
   }
   
 //+------------------------------------------------------------------+
-//| Event handler for Calculate Risk Button                          |     <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+//| Event handler for Calculate Risk Button                          |     
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickCalculateRiskBtn(void)
-  {   if(m_Risk.Text() !="" && m_SlPips.Text() != "")
+  {   if(m_RiskEdit.Text() !="" && m_SlPipsEdit.Text() != "")
         {
-          double percentRisk = NormalizeDouble(StringToDouble(m_Risk.Text()),2);             
+          double percentRisk = NormalizeDouble(StringToDouble(m_RiskEdit.Text()),2);             
           double AccountBalance = NormalizeDouble(AccountInfoDouble(ACCOUNT_BALANCE),2);          
           double AmountToRisk = NormalizeDouble(AccountBalance*percentRisk/100,2);          
           double ValuePp = SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_VALUE);
-          double LotsCalculated = NormalizeDouble(AmountToRisk/(StringToDouble(m_SlPips.Text())*10)/ValuePp,2);      
+          double LotsCalculated = NormalizeDouble(AmountToRisk/(StringToDouble(m_SlPipsEdit.Text())*10)/ValuePp,2);      
           string LotsCalculatedStr = DoubleToString(LotsCalculated,2);
       
             if(
@@ -477,7 +620,7 @@ void CControlsDialog::OnClickCalculateRiskBtn(void)
                LotsCalculated > 0
                )
               {
-               m_Lots.Text(DoubleToString(LotsCalculated,2));   
+               m_LotsEdit.Text(DoubleToString(LotsCalculated,2));   
               } else
                   {
                    Print("Incorrect input");
@@ -488,30 +631,31 @@ void CControlsDialog::OnClickCalculateRiskBtn(void)
              Print("Not enough input");
              //Alert("Not enough Input");
             }      
-                                                            
-      
-        
+    
    Comment(__FUNCTION__);
   }
   
 
 //+------------------------------------------------------------------+
-//| Event handler for Clear Inputs Button                     |
+//| Event handler for Clear Inputs Button                            |
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickClearInputsBtn(void)
   {                                    
-   m_Lots.Text(NULL);
-   m_SlPips.Text(NULL);
-   m_RRR.Text(NULL);
-   m_Risk.Text(NULL);
+   m_LotsEdit.Text(NULL);
+   m_SlPipsEdit.Text(NULL);
+   m_RiskToRewardRatioEdit.Text(NULL);
+   m_RiskEdit.Text(NULL);
    Comment(__FUNCTION__);
   }
-  
 
-
-
-
-
+//+------------------------------------------------------------------+
+//| Event handler for Break Even Button                              |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickBreakEvenBtn(void)
+  {                           
+   Print("Break Even Button clicked");       
+   Comment(__FUNCTION__);
+  }
 
 //+------------------------------------------------------------------+
 //| Global Variables                                                 |
