@@ -16,8 +16,8 @@
 double ask;
 double bid;
 
-double ask_tp;
-double bid_tp;
+double tpBuy;
+double tpSell;
 
 double slSell;
 double slBuy;
@@ -57,6 +57,8 @@ private:
    CButton           m_BuyBtn;                        // button to buy
    CButton           m_CloseAllBtn;                   // button to close all positions
    CButton           m_CalculateRisk;                 // button to calculate lot size based on % of deposit to risk   
+   CButton           m_ClearInputs;                   // button to clear the input fields
+
    CEdit             m_Lots;                          // Edit field for the lots       <<<================
    CEdit             m_SlPips;                        // Edit field for the sl pips  
    CEdit             m_RRR;                           // Edit field for Risk to Reward Ratio
@@ -78,6 +80,7 @@ protected:
    bool              CreateBuyBtn(void);
    bool              CreateCloseAllBtn(void);
    bool              CreateCalculateRiskBtn(void);
+   bool              CreateClearInputsBtn(void);
    
    bool              CreateLotsEdit(void); //  <<===============
    bool              CreateSlPipsEdit(void);
@@ -89,6 +92,7 @@ protected:
    void              OnClickBuyBtn(void);
    void              OnClickCloseAllBtn(void);
    void              OnClickCalculateRiskBtn(void);
+   void              OnClickClearInputsBtn(void);
   };
 //+------------------------------------------------------------------+
 //| Event Handling                                                   |
@@ -98,6 +102,7 @@ ON_EVENT(ON_CLICK,m_SellBtn,OnClickSellBtn)
 ON_EVENT(ON_CLICK,m_BuyBtn,OnClickBuyBtn)
 ON_EVENT(ON_CLICK,m_CloseAllBtn,OnClickCloseAllBtn)
 ON_EVENT(ON_CLICK,m_CalculateRisk,OnClickCalculateRiskBtn)
+ON_EVENT(ON_CLICK,m_ClearInputs,OnClickClearInputsBtn)
 EVENT_MAP_END(CAppDialog)
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
@@ -127,6 +132,10 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
       return(false);      
    if(!CreateCalculateRiskBtn())
       return(false);
+      
+   if(!CreateClearInputsBtn())
+      return(false);
+   
    if(!CreateLotsEdit())   
       return(false);      
    if(!CreateSlPipsEdit())   
@@ -220,7 +229,30 @@ bool CControlsDialog::CreateCalculateRiskBtn(void)
 //--- succeed
    return(true);
   }
-  
+
+
+//+------------------------------------------------------------------+
+//| Create the "ClearInputs" button                                  |
+//+------------------------------------------------------------------+<<<<<=-=======================
+bool CControlsDialog::CreateClearInputsBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+7*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_ClearInputs.Create(m_chart_id,m_name+"ClearInputsBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_ClearInputs.Text("Clear"))
+      return(false);
+   if(!Add(m_ClearInputs))
+      return(false);  
+//--- succeed
+   return(true);
+  }
+
+
 //+------------------------------------------------------------------+
 //| Create the Lots field                                            |
 //+------------------------------------------------------------------+
@@ -229,7 +261,7 @@ bool CControlsDialog::CreateLotsEdit(void)
 //--- coordinates
    int x1=INDENT_LEFT;
    int y1=INDENT_TOP+CONTROLS_GAP_Y;
-   int x2=ClientAreaWidth()-INDENT_RIGHT;
+   int x2=(ClientAreaWidth()-INDENT_RIGHT)/4;
    int y2=y1+EDIT_HEIGHT;
 //--- create
    if(!m_Lots.Create(m_chart_id,m_name+"Lots",m_subwin,x1,y1,x2,y2))      
@@ -252,7 +284,7 @@ bool CControlsDialog::CreateSlPipsEdit(void)
 //--- coordinates
    int x1=INDENT_LEFT;
    int y1=2*EDIT_HEIGHT+CONTROLS_GAP_Y;
-   int x2=ClientAreaWidth()-INDENT_RIGHT;
+   int x2=(ClientAreaWidth()-INDENT_RIGHT)/4;
    int y2=(y1+EDIT_HEIGHT);
 //--- create
    if(!m_SlPips.Create(m_chart_id,m_name+"SlPips",m_subwin,x1,y1,x2,y2))
@@ -275,7 +307,7 @@ bool CControlsDialog::CreateRRREdit(void)
 //--- coordinates
    int x1=INDENT_LEFT;
    int y1=3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=ClientAreaWidth()-INDENT_RIGHT;
+   int x2=(ClientAreaWidth()-INDENT_RIGHT)/4;
    int y2=y1+EDIT_HEIGHT;
 //--- create
    if(!m_RRR.Create(m_chart_id,m_name+"RRR",m_subwin,x1,y1,x2,y2))
@@ -299,7 +331,7 @@ bool CControlsDialog::CreateRiskEdit(void)
 //--- coordinates
    int x1=INDENT_LEFT;
    int y1=4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=ClientAreaWidth()-INDENT_RIGHT;
+   int x2=(ClientAreaWidth()-INDENT_RIGHT)/4;
    int y2=y1+EDIT_HEIGHT;
 //--- create
    if(!m_Risk.Create(m_chart_id,m_name+"Risk",m_subwin,x1,y1,x2,y2))
@@ -322,14 +354,42 @@ void CControlsDialog::OnClickSellBtn(void)
   {   
     CTrade trade;
     
-     posLots = NormalizeDouble(StringToDouble(m_Lots.Text()),2);        
-     slPips = NormalizeDouble(StringToDouble(m_SlPips.Text()),2);
-     RiskToReward = NormalizeDouble(StringToDouble(m_RRR.Text()),2);
-           
-    if(trade.Sell(posLots,_Symbol,bid,slSell,bid_tp,"This is a SELL trade"))
-      {
-       Print("Sold ",posLots," Lots of ",_Symbol," @ ",bid," SL = ",slSell, " TP = ",bid_tp);
-      }       
+    if(m_Lots.Text() != "" && m_SlPips.Text() != "" && m_RRR.Text() != "")
+        {         
+          posLots = NormalizeDouble(StringToDouble(m_Lots.Text()),2);        
+          slPips = NormalizeDouble(StringToDouble(m_SlPips.Text()),2);
+          RiskToReward = NormalizeDouble(StringToDouble(m_RRR.Text()),2);         
+          
+          ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
+          bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);   
+   
+          slSell = NormalizeDouble(bid + slPips*_Point*10,4);
+          slBuy = NormalizeDouble(ask - slPips*_Point*10,4);
+      
+          tpSell = NormalizeDouble(bid - RiskToReward * (slSell - bid),4);
+          tpBuy = NormalizeDouble(ask + RiskToReward * (ask - slBuy),4);
+                                
+          Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,4),
+          " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,4));
+          
+             if(posLots > 0 && slPips > 0 && RiskToReward > 0)
+               {
+                  if(trade.Sell(posLots,_Symbol,bid,slSell,tpSell,"This is a SELL trade"))
+                     {
+                      Print("Sold ",posLots," Lots of ",_Symbol," @ ",bid," SL = ",slSell, " TP = ",tpSell);
+                     }    
+                } else
+                   
+                {
+                   Print("Incorrect input");                   
+                }
+        
+        } else
+            {
+              Print("Not enough input");             
+            }
+    
+ 
    Comment(__FUNCTION__);
   }
 //+------------------------------------------------------------------+
@@ -339,16 +399,46 @@ void CControlsDialog::OnClickBuyBtn(void)
   {  
     CTrade trade;
     
-    posLots = NormalizeDouble(StringToDouble(m_Lots.Text()),2);        
-    slPips = NormalizeDouble(StringToDouble(m_SlPips.Text()),2);
-    RiskToReward = NormalizeDouble(StringToDouble(m_RRR.Text()),2);
-           
-    if(trade.Buy(posLots,_Symbol,ask,slBuy,ask_tp,"This is a SELL trade"))
-      {
-       Print("Bought ",posLots," Lots of ",_Symbol," @ ",ask," SL = ",slBuy, " TP = ",ask_tp);
-      } 
+    if(m_Lots.Text() != "" && m_SlPips.Text() != "" && m_RRR.Text() != "")
+        {         
+          posLots = NormalizeDouble(StringToDouble(m_Lots.Text()),2);        
+          slPips = NormalizeDouble(StringToDouble(m_SlPips.Text()),2);
+          RiskToReward = NormalizeDouble(StringToDouble(m_RRR.Text()),2);         
+          
+          ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
+          bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);   
+   
+          slSell = NormalizeDouble(bid + slPips*_Point*10,4);
+          slBuy = NormalizeDouble(ask - slPips*_Point*10,4);
+      
+          tpSell = NormalizeDouble(bid - RiskToReward * (slSell - bid),4);
+          tpBuy = NormalizeDouble(ask + RiskToReward * (ask - slBuy),4);
+                                
+          Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,4),
+          " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,4));
+          
+             if(posLots > 0 && slPips > 0 && RiskToReward > 0)
+               {
+                 if(trade.Buy(posLots,_Symbol,ask,slBuy,tpBuy,"This is a BUY trade"))
+                   {
+                     Print("Bought ",posLots," Lots of ",_Symbol," @ ",ask," SL = ",slBuy, " TP = ",tpBuy);
+                   } 
+               } else
+                   
+                {
+                   Print("Incorrect input");                   
+                }
+        
+        } else
+            {
+              Print("Not enough input");             
+            }
+        
    Comment(__FUNCTION__);            
   }
+  
+  
+  
 //+------------------------------------------------------------------+
 //| Event handler for Close All Positions Button                     |
 //+------------------------------------------------------------------+
@@ -370,32 +460,58 @@ void CControlsDialog::OnClickCloseAllBtn(void)
 //| Event handler for Calculate Risk Button                          |     <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickCalculateRiskBtn(void)
-  {         
-      double percentRisk = NormalizeDouble(StringToDouble(m_Risk.Text()),2);             
-      double AccountBalance = NormalizeDouble(AccountInfoDouble(ACCOUNT_BALANCE),2);          
-      double AmountToRisk = NormalizeDouble(AccountBalance*percentRisk/100,2);          
-      double ValuePp = SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_VALUE);
-      double LotsCalculated = NormalizeDouble(AmountToRisk/(StringToDouble(m_SlPips.Text())*10)/ValuePp,2);      
-      string LotsCalculatedStr = DoubleToString(LotsCalculated,2);
-      
-      if(
-         percentRisk > 0 &&
-         AccountBalance > 0 &&
-         AmountToRisk  > 0 &
-         ValuePp > 0 &&
-         LotsCalculated > 0
-         )
+  {   if(m_Risk.Text() !="" && m_SlPips.Text() != "")
         {
-         m_Lots.Text(DoubleToString(LotsCalculated,2));   
+          double percentRisk = NormalizeDouble(StringToDouble(m_Risk.Text()),2);             
+          double AccountBalance = NormalizeDouble(AccountInfoDouble(ACCOUNT_BALANCE),2);          
+          double AmountToRisk = NormalizeDouble(AccountBalance*percentRisk/100,2);          
+          double ValuePp = SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_VALUE);
+          double LotsCalculated = NormalizeDouble(AmountToRisk/(StringToDouble(m_SlPips.Text())*10)/ValuePp,2);      
+          string LotsCalculatedStr = DoubleToString(LotsCalculated,2);
+      
+            if(
+               percentRisk > 0 &&
+               AccountBalance > 0 &&
+               AmountToRisk  > 0 &
+               ValuePp > 0 &&
+               LotsCalculated > 0
+               )
+              {
+               m_Lots.Text(DoubleToString(LotsCalculated,2));   
+              } else
+                  {
+                   Print("Incorrect input");
+                   //Alert("Incorrect Input");
+                  }    
         } else
             {
-             Print("Incorrect input");
-            }                                                           
+             Print("Not enough input");
+             //Alert("Not enough Input");
+            }      
+                                                            
       
         
    Comment(__FUNCTION__);
   }
   
+
+//+------------------------------------------------------------------+
+//| Event handler for Clear Inputs Button                     |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickClearInputsBtn(void)
+  {                                    
+   m_Lots.Text(NULL);
+   m_SlPips.Text(NULL);
+   m_RRR.Text(NULL);
+   m_Risk.Text(NULL);
+   Comment(__FUNCTION__);
+  }
+  
+
+
+
+
+
 
 //+------------------------------------------------------------------+
 //| Global Variables                                                 |
@@ -436,23 +552,6 @@ void OnChartEvent(const int id,         // event ID
   }
     
 void OnTick()
-  { 
-// Saving edit values into variables     
-  // posLots = NormalizeDouble(StringToDouble(ObjectGetString(0,EdiLots,OBJPROP_TEXT)),2);        
-  // slPips = NormalizeDouble(StringToDouble(ObjectGetString(0,EdiSlPips,OBJPROP_TEXT)),2);
-  // RiskToReward = NormalizeDouble(StringToDouble(ObjectGetString(0,EdiRiskToReward,OBJPROP_TEXT)),2); 
-      
-   ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
-   bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);   
+  {   
    
-   slSell = NormalizeDouble(ask + slPips*_Point*10,4);
-   slBuy = NormalizeDouble(bid - slPips*_Point*10,4);
-      
-   ask_tp = NormalizeDouble(ask + RiskToReward * (ask - slBuy),4);
-   bid_tp = NormalizeDouble(bid - RiskToReward * (slSell - bid),4);
-  }
-  
-
-//+------------------------------------------------------------------+
-//| Function to make sure all input values are of correct format     |
-//+------------------------------------------------------------------+
+  }  
