@@ -23,9 +23,14 @@ double tpSell;
 double slSell;
 double slBuy;
 
+input string posLotsDef = 0.1; // Lot size
+input string slPipsDef = 100; // Stoploss in pips
+input string RiskToRewardDef = 2; // Risk to Reward Ratio
+
+double posLots; // Lot size
 double slPips; // Stoploss in pips
 double RiskToReward; // Risk to Reward Ratio
-double posLots; // Lot size
+
 
 //+------------------------------------------------------------------+
 //| defines                                                          |
@@ -173,10 +178,6 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
   }
   
 
-
-
-
-
 // Creating Labels =====================================================================================================
 
 
@@ -292,6 +293,9 @@ bool CControlsDialog::CreateLotsEdit(void)
       return(false);
    if(!Add(m_LotsEdit))
       return(false);
+//--- Assign default value from the inputs
+   if(!m_LotsEdit.Text(posLotsDef))
+      return(false);
 //--- succeed
    return(true);
   }
@@ -314,7 +318,10 @@ bool CControlsDialog::CreateSlPipsEdit(void)
    if(!m_SlPipsEdit.ReadOnly(false))
       return(false);
    if(!Add(m_SlPipsEdit))
-      return(false);    
+      return(false);
+//--- Assign default value from the inputs
+   if(!m_SlPipsEdit.Text(slPipsDef))
+      return(false);  
 //--- succeed
    return(true);
   }
@@ -338,7 +345,10 @@ bool CControlsDialog::CreateRiskToRewardRatioEdit(void)
    if(!m_RiskToRewardRatioEdit.ReadOnly(false))
       return(false);
    if(!Add(m_RiskToRewardRatioEdit))
-      return(false);    
+      return(false);
+//--- Assign default value from the inputs
+   if(!m_RiskToRewardRatioEdit.Text(RiskToRewardDef))
+      return(false);         
 //--- succeed
    return(true);
   }
@@ -466,7 +476,7 @@ bool CControlsDialog::CreateClearInputsBtn(void)
    if(!m_ClearInputsBtn.Text("Clear Inputs"))
       return(false);
    if(!Add(m_ClearInputsBtn))
-      return(false);  
+      return(false);
 //--- succeed
    return(true);
   }
@@ -589,9 +599,9 @@ void CControlsDialog::OnClickCloseAllBtn(void)
   {
   CTrade trade;
    for(int i = PositionsTotal() - 1; i>=0;i--)
-      {         
-         ulong posTicket = PositionGetTicket(i);
-         if(trade.PositionClose(posTicket))
+      {                      
+         ulong posTicket = PositionGetTicket(i); 
+         if(trade.PositionClose(_Symbol))
            {
             Print(i," Position #",posTicket," Was closed...");
            }                                      
@@ -648,11 +658,34 @@ void CControlsDialog::OnClickClearInputsBtn(void)
    Comment(__FUNCTION__);
   }
 
-//+------------------------------------------------------------------+
+//+------------------------------------------------------------------+   <<<<<<<<<<<<<<<<<<<<<<<<<<<\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 //| Event handler for Break Even Button                              |
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickBreakEvenBtn(void)
-  {                           
+  {
+   CTrade trade;
+   for(int i = PositionsTotal() - 1; i>=0;i--)
+      {                      
+         ulong posTicket = PositionGetTicket(i);
+         string posSymbol = PositionGetSymbol(i);
+         double posOpen = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),4);
+         double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),4);
+         double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),4);
+         double posCurrent = NormalizeDouble(PositionGetDouble(POSITION_PRICE_CURRENT),4);
+                 
+      
+         if(posSymbol == _Symbol)
+           {
+            if((posCurrent > posOpen && posOpen > posSl) || (posCurrent < posOpen && posOpen < posSl))
+              {
+               trade.PositionModify(posTicket,posOpen,posTp);                             
+               Print(i," Position #",posTicket," Break Even...");               
+              }
+           
+           }                              
+         
+       } // end of for loop                               
+   
    Print("Break Even Button clicked");       
    Comment(__FUNCTION__);
   }
@@ -670,7 +703,7 @@ int OnInit()
    if(!ExtDialog.Create(0,"Controls",0,40,40,380,344))
       return(INIT_FAILED);
 //--- run application
-   ExtDialog.Run();
+   ExtDialog.Run();   
 //--- succeed
    return(INIT_SUCCEEDED);
   }
