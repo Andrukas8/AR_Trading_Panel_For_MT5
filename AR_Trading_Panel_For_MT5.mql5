@@ -77,7 +77,9 @@ private:
    CButton           m_CloseAllBtn;                   // button to close all positions
    CButton           m_CalculateRiskBtn;              // button to calculate lot size based on % of deposit to risk   
    CButton           m_ClearInputsBtn;                // button to clear the input fields
-   CButton           m_BreakEvenBtn;
+   CButton           m_BreakEvenBtn;                  // button to break even all traded on the current chart
+   CButton           m_MarketPendingBtn;              // Button to toggle between market and pending orders
+   
 
 public:
                      CControlsDialog(void);
@@ -95,6 +97,7 @@ protected:
    bool              CreateCalculateRiskBtn(void);
    bool              CreateClearInputsBtn(void);
    bool              CreateBreakEvenBtn(void);
+   bool              CreateMarketPendingBtn(void);
    
    bool              CreateLotsEdit(void);
    bool              CreateSlPipsEdit(void);
@@ -113,6 +116,7 @@ protected:
    void              OnClickCalculateRiskBtn(void);
    void              OnClickClearInputsBtn(void);
    void              OnClickBreakEvenBtn(void);
+   void              OnClickMarketPendingBtn(void);
   };
 //+------------------------------------------------------------------+
 //| Event Handling                                                   |
@@ -124,6 +128,7 @@ ON_EVENT(ON_CLICK,m_CloseAllBtn,OnClickCloseAllBtn)
 ON_EVENT(ON_CLICK,m_CalculateRiskBtn,OnClickCalculateRiskBtn)
 ON_EVENT(ON_CLICK,m_ClearInputsBtn,OnClickClearInputsBtn)
 ON_EVENT(ON_CLICK,m_BreakEvenBtn,OnClickBreakEvenBtn)
+ON_EVENT(ON_CLICK,m_MarketPendingBtn,OnClickMarketPendingBtn)
 EVENT_MAP_END(CAppDialog)
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
@@ -172,7 +177,9 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
    if(!CreateClearInputsBtn())
       return(false);
    if(!CreateBreakEvenBtn())
-      return(false);          
+      return(false);      
+   if(!CreateMarketPendingBtn())
+      return(false);        
 //--- succeed
    return(true);
   }
@@ -501,6 +508,29 @@ bool CControlsDialog::CreateBreakEvenBtn(void)
 //--- succeed
    return(true);
   }
+  
+  
+//+------------------------------------------------------------------+
+//| Create the "Market Pending"  button                              |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateMarketPendingBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT;
+   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_MarketPendingBtn.Create(m_chart_id,m_name+"MarketPending",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_MarketPendingBtn.Text("Market"))
+      return(false);
+   if(!Add(m_MarketPendingBtn))
+      return(false);  
+//--- succeed
+   return(true);
+  }
+
 
 //+------------------------------------------------------------------+
 //| Event handler for Sell Button                                    |
@@ -658,7 +688,7 @@ void CControlsDialog::OnClickClearInputsBtn(void)
    Comment(__FUNCTION__);
   }
 
-//+------------------------------------------------------------------+   <<<<<<<<<<<<<<<<<<<<<<<<<<<\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+//+------------------------------------------------------------------+
 //| Event handler for Break Even Button                              |
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickBreakEvenBtn(void)
@@ -689,6 +719,25 @@ void CControlsDialog::OnClickBreakEvenBtn(void)
    Print("Break Even Button clicked");       
    Comment(__FUNCTION__);
   }
+
+
+
+
+//+------------------------------------------------------------------+   <<<<<<<<<<<<<<<<<<<<<<<<<<<\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+//| Event handler for Market Pending Button                          |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickMarketPendingBtn(void)
+  {
+   if(m_MarketPendingBtn.Text() == "Market")
+     {
+      m_MarketPendingBtn.Text("Pending");
+     } else if(m_MarketPendingBtn.Text() == "Pending")
+              {
+               m_MarketPendingBtn.Text("Market");
+              }   
+   Comment(__FUNCTION__);
+  }
+
 
 //+------------------------------------------------------------------+
 //| Global Variables                                                 |
