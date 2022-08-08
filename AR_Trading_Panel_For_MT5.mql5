@@ -65,11 +65,15 @@ private:
    CLabel            m_SlPipsLbl;                     // Label for Lots
    CLabel            m_RiskToRewardRatioLbl;          // Label for Risk to Reward Ratio
    CLabel            m_RiskLbl;                       // Label for Risk percentage      
+   CLabel            m_TpPipsLbl;                     // Label for Take Profit price level
+   CLabel            m_PriceLbl;                      // Label for Price for pending orders 
      // Edits
    CEdit             m_LotsEdit;                      // Edit field for the lots  
    CEdit             m_SlPipsEdit;                    // Edit field for the sl pips  
    CEdit             m_RiskToRewardRatioEdit;         // Edit field for Risk to Reward Ratio
    CEdit             m_RiskEdit;                      // Edit field for Risk percentage
+   CEdit             m_TpPipsEdit;                    // Edit field for Risk percentage\
+   CEdit             m_PriceEdit;                     // Edit field for Risk percentage
    
    // Buttons
    CButton           m_SellBtn;                       // button to sell
@@ -79,13 +83,14 @@ private:
    CButton           m_ClearInputsBtn;                // button to clear the input fields
    CButton           m_BreakEvenBtn;                  // button to break even all traded on the current chart
    CButton           m_MarketPendingBtn;              // Button to toggle between market and pending orders
+   CButton           m_ShowLinesBtn;                  // Button to show price sl and tp prices for order placing
    
 
 public:
                      CControlsDialog(void);
                     ~CControlsDialog(void);
    //--- create
-   virtual bool      Create(const long chart,const string name,const int subwin,const int x1,const int y1,const int x2,const int y2);
+   virtual bool      Create(const long chart,const string name,const int subwin,const int x1,const int y1,const int x2,const int y2);   
    //--- chart event handler
    virtual bool      OnEvent(const int id,const long &lparam,const double &dparam,const string &sparam);
  
@@ -98,16 +103,21 @@ protected:
    bool              CreateClearInputsBtn(void);
    bool              CreateBreakEvenBtn(void);
    bool              CreateMarketPendingBtn(void);
+   bool              CreateShowLinesBtn(void);
    
    bool              CreateLotsEdit(void);
    bool              CreateSlPipsEdit(void);
    bool              CreateRiskToRewardRatioEdit(void);
    bool              CreateRiskEdit(void);
+   bool              CreateTpPipsEdit(void);
+   bool              CreatePriceEdit(void);
    
    bool              CreateLotsLbl(void);
    bool              CreateSlPipsLbl(void);
    bool              CreateRiskToRewardRatioLbl(void);
    bool              CreateRiskLbl(void);
+   bool              CreateTpPipsLbl(void);
+   bool              CreatePriceLbl(void);
    
    //--- handlers of the dependent controls events
    void              OnClickSellBtn(void);
@@ -116,7 +126,8 @@ protected:
    void              OnClickCalculateRiskBtn(void);
    void              OnClickClearInputsBtn(void);
    void              OnClickBreakEvenBtn(void);
-   void              OnClickMarketPendingBtn(void);
+   void              OnClickMarketPendingBtn(void);   
+   void              OnClickShowLinesBtn(void);  
   };
 //+------------------------------------------------------------------+
 //| Event Handling                                                   |
@@ -129,6 +140,7 @@ ON_EVENT(ON_CLICK,m_CalculateRiskBtn,OnClickCalculateRiskBtn)
 ON_EVENT(ON_CLICK,m_ClearInputsBtn,OnClickClearInputsBtn)
 ON_EVENT(ON_CLICK,m_BreakEvenBtn,OnClickBreakEvenBtn)
 ON_EVENT(ON_CLICK,m_MarketPendingBtn,OnClickMarketPendingBtn)
+ON_EVENT(ON_CLICK,m_ShowLinesBtn,OnClickShowLinesBtn)
 EVENT_MAP_END(CAppDialog)
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
@@ -147,9 +159,11 @@ CControlsDialog::~CControlsDialog(void)
 //+------------------------------------------------------------------+
 bool CControlsDialog::Create(const long chart,const string name,const int subwin,const int x1,const int y1,const int x2,const int y2)
   {
-   if(!CAppDialog::Create(chart,name,subwin,x1,y1,x2,y2))
+   if(!CAppDialog::Create(chart,name,subwin,x1,y1,x2,y2))              
       return(false);
 //--- create dependent controls
+
+// --- Create Labels
    if(!CreateLotsLbl())
       return(false);
    if(!CreateSlPipsLbl())
@@ -157,7 +171,13 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
    if(!CreateRiskToRewardRatioLbl())
       return(false);
    if(!CreateRiskLbl())
-      return(false);     
+      return(false);
+   if(!CreateTpPipsLbl())   
+      return(false);
+   if(!CreatePriceLbl())   
+      return(false);
+
+// --- Create Edit fields                
    if(!CreateLotsEdit())   
       return(false);      
    if(!CreateSlPipsEdit())   
@@ -165,7 +185,13 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
    if(!CreateRiskToRewardRatioEdit())   
       return(false);      
    if(!CreateRiskEdit())   
+      return(false);
+   if(!CreateTpPipsEdit())   
+      return(false);         
+   if(!CreatePriceEdit())   
       return(false);   
+      
+// --- Create Buttons
    if(!CreateSellBtn())
       return(false);
    if(!CreateBuyBtn())
@@ -179,7 +205,9 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
    if(!CreateBreakEvenBtn())
       return(false);      
    if(!CreateMarketPendingBtn())
-      return(false);        
+      return(false);
+   if(!CreateShowLinesBtn())
+      return(false);
 //--- succeed
    return(true);
   }
@@ -234,13 +262,34 @@ bool CControlsDialog::CreateSlPipsLbl(void)
 
 
 //+------------------------------------------------------------------+
+//| Create the Tp pips label                   #3                    |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateTpPipsLbl(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+2*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+CONTROLS_GAP_Y;
+   int x2=x1+EDIT_WIDTH;
+   int y2=y1+EDIT_HEIGHT;
+//--- create
+   if(!m_TpPipsLbl.Create(m_chart_id,m_name+"TpPipsLbl",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_TpPipsLbl.Text("TP"))
+      return(false);
+   if(!Add(m_TpPipsLbl))
+      return(false);    
+//--- succeed
+   return(true);
+  }
+
+//+------------------------------------------------------------------+
 //| Create the risk to reward ratio Label              #3            |  
 //+------------------------------------------------------------------+
 bool CControlsDialog::CreateRiskToRewardRatioLbl(void)
   {
 //--- coordinates
 
-   int x1=INDENT_LEFT+2*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+3*(EDIT_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
@@ -256,15 +305,13 @@ bool CControlsDialog::CreateRiskToRewardRatioLbl(void)
    return(true);
   }
 
-
-
 //+------------------------------------------------------------------+
 //| Create the Risk label                   #4                       |
 //+------------------------------------------------------------------+
 bool CControlsDialog::CreateRiskLbl(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+3*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+4*(EDIT_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
@@ -278,6 +325,29 @@ bool CControlsDialog::CreateRiskLbl(void)
 //--- succeed
    return(true);
   }
+
+
+//+------------------------------------------------------------------+
+//| Create the Price  label                   #6                     |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreatePriceLbl(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+5*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+CONTROLS_GAP_Y;
+   int x2=x1+EDIT_WIDTH;
+   int y2=y1+EDIT_HEIGHT;
+//--- create
+   if(!m_PriceLbl.Create(m_chart_id,m_name+"PriceLbl",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_PriceLbl.Text("Price"))
+      return(false);
+   if(!Add(m_PriceLbl))
+      return(false);    
+//--- succeed
+   return(true);
+  }
+
 
 
 // Creating Edit Fields =====================================================================================================
@@ -333,14 +403,37 @@ bool CControlsDialog::CreateSlPipsEdit(void)
    return(true);
   }
 
+
 //+------------------------------------------------------------------+
-//| Create the Risk to reward ratio edit field          #3           |  
+//| Create the TP Pips Edit field              #3                    |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateTpPipsEdit(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+2*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int x2=x1+EDIT_WIDTH;
+   int y2=y1+EDIT_HEIGHT;
+//--- create
+   if(!m_TpPipsEdit.Create(m_chart_id,m_name+"TpRiskEdit",m_subwin,x1,y1,x2,y2))
+      return(false);
+//--- allow editing the content
+   if(!m_TpPipsEdit.ReadOnly(false))
+      return(false);
+   if(!Add(m_TpPipsEdit))
+      return(false);    
+//--- succeed
+   return(true);
+  }
+
+//+------------------------------------------------------------------+
+//| Create the Risk to reward ratio edit field          #4           |  
 //+------------------------------------------------------------------+
 bool CControlsDialog::CreateRiskToRewardRatioEdit(void)
   {
 //--- coordinates
 
-   int x1=INDENT_LEFT+2*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+3*(EDIT_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
@@ -362,12 +455,12 @@ bool CControlsDialog::CreateRiskToRewardRatioEdit(void)
 
 
 //+------------------------------------------------------------------+
-//| Create the Risk Edit field              #4                       |
+//| Create the Risk Edit field              #5                       |
 //+------------------------------------------------------------------+
 bool CControlsDialog::CreateRiskEdit(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+3*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+4*(EDIT_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
@@ -382,6 +475,30 @@ bool CControlsDialog::CreateRiskEdit(void)
 //--- succeed
    return(true);
   }
+
+
+//+------------------------------------------------------------------+
+//| Create the Price Edit field              #6                      |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreatePriceEdit(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+5*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int x2=x1+EDIT_WIDTH;
+   int y2=y1+EDIT_HEIGHT;
+//--- create
+   if(!m_PriceEdit.Create(m_chart_id,m_name+"PriceEdit",m_subwin,x1,y1,x2,y2))
+      return(false);
+//--- allow editing the content
+   if(!m_PriceEdit.ReadOnly(false))
+      return(false);
+   if(!Add(m_PriceEdit))
+      return(false);    
+//--- succeed
+   return(true);
+  }
+
 
 // Creating Buttons =====================================================================================================
 
@@ -526,6 +643,27 @@ bool CControlsDialog::CreateMarketPendingBtn(void)
    if(!m_MarketPendingBtn.Text("Market"))
       return(false);
    if(!Add(m_MarketPendingBtn))
+      return(false);  
+//--- succeed
+   return(true);
+  }
+  
+//+------------------------------------------------------------------+
+//| Create the "Show Lines"  button                              |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateShowLinesBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_ShowLinesBtn.Create(m_chart_id,m_name+"ShowLinesBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_ShowLinesBtn.Text("Show Lines"))
+      return(false);
+   if(!Add(m_ShowLinesBtn))
       return(false);  
 //--- succeed
    return(true);
@@ -721,9 +859,7 @@ void CControlsDialog::OnClickBreakEvenBtn(void)
   }
 
 
-
-
-//+------------------------------------------------------------------+   <<<<<<<<<<<<<<<<<<<<<<<<<<<\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+//+------------------------------------------------------------------+
 //| Event handler for Market Pending Button                          |
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickMarketPendingBtn(void)
@@ -738,6 +874,20 @@ void CControlsDialog::OnClickMarketPendingBtn(void)
    Comment(__FUNCTION__);
   }
 
+//+------------------------------------------------------------------+
+//| Event handler for Show Lines Button                              |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickShowLinesBtn(void)
+  {
+   if(m_ShowLinesBtn.Text() == "Show Lines")
+     {
+      m_ShowLinesBtn.Text("Hide Lines");
+     } else if(m_ShowLinesBtn.Text() == "Hide Lines")
+              {
+               m_ShowLinesBtn.Text("Show Lines");
+              }   
+   Comment(__FUNCTION__);
+  }
 
 //+------------------------------------------------------------------+
 //| Global Variables                                                 |
@@ -749,7 +899,7 @@ CControlsDialog ExtDialog;
 int OnInit()
   {
 //--- create application dialog
-   if(!ExtDialog.Create(0,"Controls",0,40,40,380,344))
+   if(!ExtDialog.Create(0,"Controls",0,40,40,550,250))
       return(INIT_FAILED);
 //--- run application
    ExtDialog.Run();   
