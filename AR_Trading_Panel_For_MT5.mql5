@@ -23,14 +23,18 @@ double tpSell;
 double slSell;
 double slBuy;
 
-input string posLotsDef = 0.1; // Lot size
-input string slPipsDef = 100; // Stoploss in pips
-input string RiskToRewardDef = 2; // Risk to Reward Ratio
+input string posLotsDef = "0.01"; // Lot size
+input string slPipsDef = "10"; // Stoploss in pips
+input string RiskToRewardDef = "2"; // Risk to Reward Ratio
 
 double posLots; // Lot size
 double slPips; // Stoploss in pips
 double RiskToReward; // Risk to Reward Ratio
+bool lineInput = false; // show lines for graphical input
+bool pendingToggle = false; // toggle between market and pending order types
 
+bool sellToggle = false;
+bool buyToggle = false;
 
 //+------------------------------------------------------------------+
 //| defines                                                          |
@@ -60,40 +64,47 @@ double RiskToReward; // Risk to Reward Ratio
 class CControlsDialog : public CAppDialog
   {
 private:
-    // Labels
+   // Labels
    CLabel            m_LotsLbl;                       // Label for Lots
    CLabel            m_SlPipsLbl;                     // Label for Lots
    CLabel            m_RiskToRewardRatioLbl;          // Label for Risk to Reward Ratio
-   CLabel            m_RiskLbl;                       // Label for Risk percentage      
+   CLabel            m_RiskLbl;                       // Label for Risk percentage
    CLabel            m_TpPipsLbl;                     // Label for Take Profit price level
-   CLabel            m_PriceLbl;                      // Label for Price for pending orders 
-     // Edits
-   CEdit             m_LotsEdit;                      // Edit field for the lots  
-   CEdit             m_SlPipsEdit;                    // Edit field for the sl pips  
+   CLabel            m_PriceLbl;                      // Label for Price for pending orders
+   CLabel            m_SlLbl;
+   CLabel            m_TpLbl;
+   // Edits
+   CEdit             m_LotsEdit;                      // Edit field for the lots
+   CEdit             m_SlPipsEdit;                    // Edit field for the sl pips
    CEdit             m_RiskToRewardRatioEdit;         // Edit field for Risk to Reward Ratio
    CEdit             m_RiskEdit;                      // Edit field for Risk percentage
    CEdit             m_TpPipsEdit;                    // Edit field for Risk percentage\
    CEdit             m_PriceEdit;                     // Edit field for Risk percentage
-   
+   CEdit             m_SlEdit;                        // Edit field for Risk percentage
+   CEdit             m_TpEdit;                        // Edit field for Risk percentage
+
    // Buttons
    CButton           m_SellBtn;                       // button to sell
    CButton           m_BuyBtn;                        // button to buy
    CButton           m_CloseAllBtn;                   // button to close all positions
-   CButton           m_CalculateRiskBtn;              // button to calculate lot size based on % of deposit to risk   
+   CButton           m_CalculateRiskBtn;              // button to calculate lot size based on % of deposit to risk
    CButton           m_ClearInputsBtn;                // button to clear the input fields
    CButton           m_BreakEvenBtn;                  // button to break even all traded on the current chart
    CButton           m_MarketPendingBtn;              // Button to toggle between market and pending orders
    CButton           m_ShowLinesBtn;                  // Button to show price sl and tp prices for order placing
-   
+
+   CButton           m_SellToggleBtn;
+   CButton           m_BuyToggleBtn;
+   CButton           m_SendOrderBtn;
 
 public:
                      CControlsDialog(void);
                     ~CControlsDialog(void);
    //--- create
-   virtual bool      Create(const long chart,const string name,const int subwin,const int x1,const int y1,const int x2,const int y2);   
+   virtual bool      Create(const long chart,const string name,const int subwin,const int x1,const int y1,const int x2,const int y2);
    //--- chart event handler
    virtual bool      OnEvent(const int id,const long &lparam,const double &dparam,const string &sparam);
- 
+
 protected:
    //--- create dependent controls
    bool              CreateSellBtn(void);
@@ -104,21 +115,29 @@ protected:
    bool              CreateBreakEvenBtn(void);
    bool              CreateMarketPendingBtn(void);
    bool              CreateShowLinesBtn(void);
-   
+   bool              CreateSellToggleBtn(void);
+   bool              CreateBuyToggleBtn(void);
+   bool              CreateSendOrderBtn(void);
+
    bool              CreateLotsEdit(void);
    bool              CreateSlPipsEdit(void);
    bool              CreateRiskToRewardRatioEdit(void);
    bool              CreateRiskEdit(void);
    bool              CreateTpPipsEdit(void);
    bool              CreatePriceEdit(void);
-   
+   bool              CreateSlEdit(void);
+   bool              CreateTpEdit(void);
+
    bool              CreateLotsLbl(void);
    bool              CreateSlPipsLbl(void);
    bool              CreateRiskToRewardRatioLbl(void);
    bool              CreateRiskLbl(void);
    bool              CreateTpPipsLbl(void);
    bool              CreatePriceLbl(void);
-   
+   bool              CreateSlLbl(void);
+   bool              CreateTpLbl(void);
+
+
    //--- handlers of the dependent controls events
    void              OnClickSellBtn(void);
    void              OnClickBuyBtn(void);
@@ -126,8 +145,12 @@ protected:
    void              OnClickCalculateRiskBtn(void);
    void              OnClickClearInputsBtn(void);
    void              OnClickBreakEvenBtn(void);
-   void              OnClickMarketPendingBtn(void);   
-   void              OnClickShowLinesBtn(void);  
+   void              OnClickMarketPendingBtn(void);
+   void              OnClickShowLinesBtn(void);
+   void              OnClickSellToggleBtn(void);
+   void              OnClickBuyToggleBtn(void);
+   void              OnClickSendOrderBtn(void);
+
   };
 //+------------------------------------------------------------------+
 //| Event Handling                                                   |
@@ -141,6 +164,9 @@ ON_EVENT(ON_CLICK,m_ClearInputsBtn,OnClickClearInputsBtn)
 ON_EVENT(ON_CLICK,m_BreakEvenBtn,OnClickBreakEvenBtn)
 ON_EVENT(ON_CLICK,m_MarketPendingBtn,OnClickMarketPendingBtn)
 ON_EVENT(ON_CLICK,m_ShowLinesBtn,OnClickShowLinesBtn)
+ON_EVENT(ON_CLICK,m_SellToggleBtn,OnClickSellToggleBtn)
+ON_EVENT(ON_CLICK,m_BuyToggleBtn,OnClickBuyToggleBtn)
+ON_EVENT(ON_CLICK,m_SendOrderBtn,OnClickSendOrderBtn)
 EVENT_MAP_END(CAppDialog)
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
@@ -159,7 +185,7 @@ CControlsDialog::~CControlsDialog(void)
 //+------------------------------------------------------------------+
 bool CControlsDialog::Create(const long chart,const string name,const int subwin,const int x1,const int y1,const int x2,const int y2)
   {
-   if(!CAppDialog::Create(chart,name,subwin,x1,y1,x2,y2))              
+   if(!CAppDialog::Create(chart,name,subwin,x1,y1,x2,y2))
       return(false);
 //--- create dependent controls
 
@@ -172,46 +198,64 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
       return(false);
    if(!CreateRiskLbl())
       return(false);
-   if(!CreateTpPipsLbl())   
+   if(!CreateTpPipsLbl())
       return(false);
-   if(!CreatePriceLbl())   
+   if(!CreatePriceLbl())
+      return(false);
+   if(!CreateSlLbl())
+      return(false);
+   if(!CreateTpLbl())
       return(false);
 
-// --- Create Edit fields                
-   if(!CreateLotsEdit())   
-      return(false);      
-   if(!CreateSlPipsEdit())   
-      return(false);      
-   if(!CreateRiskToRewardRatioEdit())   
-      return(false);      
-   if(!CreateRiskEdit())   
+// --- Create Edit fields
+   if(!CreateLotsEdit())
       return(false);
-   if(!CreateTpPipsEdit())   
-      return(false);         
-   if(!CreatePriceEdit())   
-      return(false);   
-      
+   if(!CreateSlPipsEdit())
+      return(false);
+   if(!CreateRiskToRewardRatioEdit())
+      return(false);
+   if(!CreateRiskEdit())
+      return(false);
+   if(!CreateTpPipsEdit())
+      return(false);
+   if(!CreatePriceEdit())
+      return(false);
+   if(!CreateSlEdit())
+      return(false);
+   if(!CreateTpEdit())
+      return(false);
+
+
+
 // --- Create Buttons
    if(!CreateSellBtn())
       return(false);
    if(!CreateBuyBtn())
       return(false);
    if(!CreateCloseAllBtn())
-      return(false);      
+      return(false);
    if(!CreateCalculateRiskBtn())
-      return(false);      
+      return(false);
    if(!CreateClearInputsBtn())
       return(false);
    if(!CreateBreakEvenBtn())
-      return(false);      
+      return(false);
    if(!CreateMarketPendingBtn())
       return(false);
    if(!CreateShowLinesBtn())
       return(false);
+   if(!CreateSellToggleBtn())
+      return(false);
+   if(!CreateBuyToggleBtn())
+      return(false);
+   if(!CreateSendOrderBtn())
+      return(false);
+
+
 //--- succeed
    return(true);
   }
-  
+
 
 // Creating Labels =====================================================================================================
 
@@ -225,9 +269,9 @@ bool CControlsDialog::CreateLotsLbl(void)
    int x1=INDENT_LEFT;
    int y1=INDENT_TOP+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH;
-   int y2=y1+EDIT_HEIGHT;   
+   int y2=y1+EDIT_HEIGHT;
 //--- create
-   if(!m_LotsLbl.Create(m_chart_id,m_name+"LotsLbl",m_subwin,x1,y1,x2,y2))      
+   if(!m_LotsLbl.Create(m_chart_id,m_name+"LotsLbl",m_subwin,x1,y1,x2,y2))
       return(false);
    if(!m_LotsLbl.Text("Lots"))
       return(false);
@@ -236,10 +280,10 @@ bool CControlsDialog::CreateLotsLbl(void)
 //--- succeed
    return(true);
   }
- 
- 
+
+
 //+------------------------------------------------------------------+
-//| Create the SlPips label             #2                           |  
+//| Create the SlPips label             #2                           |
 //+------------------------------------------------------------------+
 bool CControlsDialog::CreateSlPipsLbl(void)
   {
@@ -248,14 +292,14 @@ bool CControlsDialog::CreateSlPipsLbl(void)
    int y1=INDENT_TOP+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
-      
+
 //--- create
    if(!m_SlPipsLbl.Create(m_chart_id,m_name+"SlPipsLbl",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_SlPipsLbl.Text("SL"))
+   if(!m_SlPipsLbl.Text("SL Pips"))
       return(false);
    if(!Add(m_SlPipsLbl))
-      return(false);    
+      return(false);
 //--- succeed
    return(true);
   }
@@ -274,16 +318,16 @@ bool CControlsDialog::CreateTpPipsLbl(void)
 //--- create
    if(!m_TpPipsLbl.Create(m_chart_id,m_name+"TpPipsLbl",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_TpPipsLbl.Text("TP"))
+   if(!m_TpPipsLbl.Text("TP Pips"))
       return(false);
    if(!Add(m_TpPipsLbl))
-      return(false);    
+      return(false);
 //--- succeed
    return(true);
   }
 
 //+------------------------------------------------------------------+
-//| Create the risk to reward ratio Label              #3            |  
+//| Create the risk to reward ratio Label              #3            |
 //+------------------------------------------------------------------+
 bool CControlsDialog::CreateRiskToRewardRatioLbl(void)
   {
@@ -293,14 +337,14 @@ bool CControlsDialog::CreateRiskToRewardRatioLbl(void)
    int y1=INDENT_TOP+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
-  
+
 //--- create
    if(!m_RiskToRewardRatioLbl.Create(m_chart_id,m_name+"RRRLbl",m_subwin,x1,y1,x2,y2))
       return(false);
    if(!m_RiskToRewardRatioLbl.Text("RRR"))
       return(false);
    if(!Add(m_RiskToRewardRatioLbl))
-      return(false);    
+      return(false);
 //--- succeed
    return(true);
   }
@@ -321,7 +365,7 @@ bool CControlsDialog::CreateRiskLbl(void)
    if(!m_RiskLbl.Text("Risk %"))
       return(false);
    if(!Add(m_RiskLbl))
-      return(false);    
+      return(false);
 //--- succeed
    return(true);
   }
@@ -343,12 +387,53 @@ bool CControlsDialog::CreatePriceLbl(void)
    if(!m_PriceLbl.Text("Price"))
       return(false);
    if(!Add(m_PriceLbl))
-      return(false);    
+      return(false);
 //--- succeed
    return(true);
   }
 
 
+//+------------------------------------------------------------------+
+//| Create the Sl  label                   #7                        |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateSlLbl(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+6*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+CONTROLS_GAP_Y;
+   int x2=x1+EDIT_WIDTH;
+   int y2=y1+EDIT_HEIGHT;
+//--- create
+   if(!m_SlLbl.Create(m_chart_id,m_name+"SlLbl",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_SlLbl.Text("SL"))
+      return(false);
+   if(!Add(m_SlLbl))
+      return(false);
+//--- succeed
+   return(true);
+  }
+
+//+------------------------------------------------------------------+
+//| Create the Tp  label                   #8                        |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateTpLbl(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+7*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+CONTROLS_GAP_Y;
+   int x2=x1+EDIT_WIDTH;
+   int y2=y1+EDIT_HEIGHT;
+//--- create
+   if(!m_TpLbl.Create(m_chart_id,m_name+"TpLbl",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_TpLbl.Text("TP"))
+      return(false);
+   if(!Add(m_TpLbl))
+      return(false);
+//--- succeed
+   return(true);
+  }
 
 // Creating Edit Fields =====================================================================================================
 
@@ -361,9 +446,9 @@ bool CControlsDialog::CreateLotsEdit(void)
    int x1=INDENT_LEFT;
    int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH;
-   int y2=y1+EDIT_HEIGHT;   
+   int y2=y1+EDIT_HEIGHT;
 //--- create
-   if(!m_LotsEdit.Create(m_chart_id,m_name+"Lots",m_subwin,x1,y1,x2,y2))      
+   if(!m_LotsEdit.Create(m_chart_id,m_name+"Lots",m_subwin,x1,y1,x2,y2))
       return(false);
 //--- allow editing the content
    if(!m_LotsEdit.ReadOnly(false))
@@ -376,9 +461,9 @@ bool CControlsDialog::CreateLotsEdit(void)
 //--- succeed
    return(true);
   }
- 
+
 //+------------------------------------------------------------------+
-//| Create the SlPips field             #2                           |  
+//| Create the SlPips field             #2                           |
 //+------------------------------------------------------------------+
 bool CControlsDialog::CreateSlPipsEdit(void)
   {
@@ -387,7 +472,7 @@ bool CControlsDialog::CreateSlPipsEdit(void)
    int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
-      
+
 //--- create
    if(!m_SlPipsEdit.Create(m_chart_id,m_name+"SlPips",m_subwin,x1,y1,x2,y2))
       return(false);
@@ -398,7 +483,7 @@ bool CControlsDialog::CreateSlPipsEdit(void)
       return(false);
 //--- Assign default value from the inputs
    if(!m_SlPipsEdit.Text(slPipsDef))
-      return(false);  
+      return(false);
 //--- succeed
    return(true);
   }
@@ -421,13 +506,13 @@ bool CControlsDialog::CreateTpPipsEdit(void)
    if(!m_TpPipsEdit.ReadOnly(false))
       return(false);
    if(!Add(m_TpPipsEdit))
-      return(false);    
+      return(false);
 //--- succeed
    return(true);
   }
 
 //+------------------------------------------------------------------+
-//| Create the Risk to reward ratio edit field          #4           |  
+//| Create the Risk to reward ratio edit field          #4           |
 //+------------------------------------------------------------------+
 bool CControlsDialog::CreateRiskToRewardRatioEdit(void)
   {
@@ -437,7 +522,7 @@ bool CControlsDialog::CreateRiskToRewardRatioEdit(void)
    int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
-  
+
 //--- create
    if(!m_RiskToRewardRatioEdit.Create(m_chart_id,m_name+"RRR",m_subwin,x1,y1,x2,y2))
       return(false);
@@ -448,7 +533,7 @@ bool CControlsDialog::CreateRiskToRewardRatioEdit(void)
       return(false);
 //--- Assign default value from the inputs
    if(!m_RiskToRewardRatioEdit.Text(RiskToRewardDef))
-      return(false);         
+      return(false);
 //--- succeed
    return(true);
   }
@@ -471,7 +556,7 @@ bool CControlsDialog::CreateRiskEdit(void)
    if(!m_RiskEdit.ReadOnly(false))
       return(false);
    if(!Add(m_RiskEdit))
-      return(false);    
+      return(false);
 //--- succeed
    return(true);
   }
@@ -494,11 +579,56 @@ bool CControlsDialog::CreatePriceEdit(void)
    if(!m_PriceEdit.ReadOnly(false))
       return(false);
    if(!Add(m_PriceEdit))
-      return(false);    
+      return(false);
 //--- succeed
    return(true);
   }
 
+
+
+//+------------------------------------------------------------------+
+//| Create the Sl Edit field              #7                         |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateSlEdit(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+6*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int x2=x1+EDIT_WIDTH;
+   int y2=y1+EDIT_HEIGHT;
+//--- create
+   if(!m_SlEdit.Create(m_chart_id,m_name+"SlEdit",m_subwin,x1,y1,x2,y2))
+      return(false);
+//--- allow editing the content
+   if(!m_SlEdit.ReadOnly(false))
+      return(false);
+   if(!Add(m_SlEdit))
+      return(false);
+//--- succeed
+   return(true);
+  }
+
+//+------------------------------------------------------------------+
+//| Create the Sl Edit field              #8                         |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateTpEdit(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+7*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int x2=x1+EDIT_WIDTH;
+   int y2=y1+EDIT_HEIGHT;
+//--- create
+   if(!m_TpEdit.Create(m_chart_id,m_name+"TpEdit",m_subwin,x1,y1,x2,y2))
+      return(false);
+//--- allow editing the content
+   if(!m_TpEdit.ReadOnly(false))
+      return(false);
+   if(!Add(m_TpEdit))
+      return(false);
+//--- succeed
+   return(true);
+  }
 
 // Creating Buttons =====================================================================================================
 
@@ -562,7 +692,7 @@ bool CControlsDialog::CreateCloseAllBtn(void)
 //--- succeed
    return(true);
   }
-  
+
 //+------------------------------------------------------------------+
 //| Create the "CalculateRisk" button                                |
 //+------------------------------------------------------------------+
@@ -579,7 +709,7 @@ bool CControlsDialog::CreateCalculateRiskBtn(void)
    if(!m_CalculateRiskBtn.Text("Calc Risk"))
       return(false);
    if(!Add(m_CalculateRiskBtn))
-      return(false);  
+      return(false);
 //--- succeed
    return(true);
   }
@@ -621,12 +751,12 @@ bool CControlsDialog::CreateBreakEvenBtn(void)
    if(!m_BreakEvenBtn.Text("Break Even All"))
       return(false);
    if(!Add(m_BreakEvenBtn))
-      return(false);  
+      return(false);
 //--- succeed
    return(true);
   }
-  
-  
+
+
 //+------------------------------------------------------------------+
 //| Create the "Market Pending"  button                              |
 //+------------------------------------------------------------------+
@@ -643,11 +773,11 @@ bool CControlsDialog::CreateMarketPendingBtn(void)
    if(!m_MarketPendingBtn.Text("Market"))
       return(false);
    if(!Add(m_MarketPendingBtn))
-      return(false);  
+      return(false);
 //--- succeed
    return(true);
   }
-  
+
 //+------------------------------------------------------------------+
 //| Create the "Show Lines"  button                              |
 //+------------------------------------------------------------------+
@@ -664,53 +794,120 @@ bool CControlsDialog::CreateShowLinesBtn(void)
    if(!m_ShowLinesBtn.Text("Show Lines"))
       return(false);
    if(!Add(m_ShowLinesBtn))
-      return(false);  
+      return(false);
 //--- succeed
    return(true);
   }
 
 
 //+------------------------------------------------------------------+
+//| Create the "Sell Toggle"  button                                 |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateSellToggleBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_SellToggleBtn.Create(m_chart_id,m_name+"SellToggleBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_SellToggleBtn.Text("S"))
+      return(false);
+   if(!Add(m_SellToggleBtn))
+      return(false);
+//--- succeed
+   return(true);
+  }
+
+
+//+------------------------------------------------------------------+
+//| Create the "Buy Toggle"  button                                 |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateBuyToggleBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_BuyToggleBtn.Create(m_chart_id,m_name+"BuyToggleBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_BuyToggleBtn.Text("B"))
+      return(false);
+   if(!Add(m_BuyToggleBtn))
+      return(false);
+//--- succeed
+   return(true);
+  }
+
+
+//+------------------------------------------------------------------+
+//| Create the "Send Order"  button                                 |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateSendOrderBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_SendOrderBtn.Create(m_chart_id,m_name+"SendOrderBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_SendOrderBtn.Text("Send Order"))
+      return(false);
+   if(!Add(m_SendOrderBtn))
+      return(false);
+//--- succeed
+   return(true);
+  }
+
+//+------------------------------------------------------------------+
 //| Event handler for Sell Button                                    |
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickSellBtn(void)
-  {   
-    CTrade trade;
-    
-    if(m_LotsEdit.Text() != "" && m_SlPipsEdit.Text() != "" && m_RiskToRewardRatioEdit.Text() != "")
-        {         
-          posLots = NormalizeDouble(StringToDouble(m_LotsEdit.Text()),2);        
-          slPips = NormalizeDouble(StringToDouble(m_SlPipsEdit.Text()),2);
-          RiskToReward = NormalizeDouble(StringToDouble(m_RiskToRewardRatioEdit.Text()),2);         
-          
-          ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
-          bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);   
-   
-          slSell = NormalizeDouble(bid + slPips*_Point*10,4);
-          slBuy = NormalizeDouble(ask - slPips*_Point*10,4);
-      
-          tpSell = NormalizeDouble(bid - RiskToReward * (slSell - bid),4);
-          tpBuy = NormalizeDouble(ask + RiskToReward * (ask - slBuy),4);
-                                
-          Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,4),
-          " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,4));
-          
-             if(posLots > 0 && slPips > 0 && RiskToReward > 0)
-               {
-                  if(trade.Sell(posLots,_Symbol,bid,slSell,tpSell,"This is a SELL trade"))
-                     {
-                      Print("Sold ",posLots," Lots of ",_Symbol," @ ",bid," SL = ",slSell, " TP = ",tpSell);
-                     }    
-                } else
-                   
-                {
-                   Print("Incorrect input");                   
-                }
-        
-        } else
-            {
-              Print("Not enough input");             
-            }
+  {
+   CTrade trade;
+
+   if(m_LotsEdit.Text() != "" && m_SlPipsEdit.Text() != "" && m_RiskToRewardRatioEdit.Text() != "")
+     {
+      posLots = NormalizeDouble(StringToDouble(m_LotsEdit.Text()),2);
+      slPips = NormalizeDouble(StringToDouble(m_SlPipsEdit.Text()),2);
+      RiskToReward = NormalizeDouble(StringToDouble(m_RiskToRewardRatioEdit.Text()),2);
+
+      ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
+      bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);
+
+      slSell = NormalizeDouble(bid + slPips*_Point*10,4);
+      slBuy = NormalizeDouble(ask - slPips*_Point*10,4);
+
+      tpSell = NormalizeDouble(bid - RiskToReward * (slSell - bid),4);
+      tpBuy = NormalizeDouble(ask + RiskToReward * (ask - slBuy),4);
+
+      Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,4),
+            " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,4));
+
+      if(posLots > 0 && slPips > 0 && RiskToReward > 0)
+        {
+         if(trade.Sell(posLots,_Symbol,bid,slSell,tpSell,"This is a SELL trade"))
+           {
+            Print("Sold ",posLots," Lots of ",_Symbol," @ ",bid," SL = ",slSell, " TP = ",tpSell);
+           }
+        }
+      else
+
+        {
+         Print("Incorrect input");
+        }
+
+     }
+   else
+     {
+      Print("Not enough input");
+     }
 
    Comment(__FUNCTION__);
   }
@@ -718,107 +915,112 @@ void CControlsDialog::OnClickSellBtn(void)
 //| Event handler for Buy Button                                     |
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickBuyBtn(void)
-  {  
-    CTrade trade;
-    
-    if(m_LotsEdit.Text() != "" && m_SlPipsEdit.Text() != "" && m_RiskToRewardRatioEdit.Text() != "")
-        {         
-          posLots = NormalizeDouble(StringToDouble(m_LotsEdit.Text()),2);        
-          slPips = NormalizeDouble(StringToDouble(m_SlPipsEdit.Text()),2);
-          RiskToReward = NormalizeDouble(StringToDouble(m_RiskToRewardRatioEdit.Text()),2);         
-          
-          ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
-          bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);   
-   
-          slSell = NormalizeDouble(bid + slPips*_Point*10,4);
-          slBuy = NormalizeDouble(ask - slPips*_Point*10,4);
-      
-          tpSell = NormalizeDouble(bid - RiskToReward * (slSell - bid),4);
-          tpBuy = NormalizeDouble(ask + RiskToReward * (ask - slBuy),4);
-                                
-          Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,4),
-          " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,4));
-          
-             if(posLots > 0 && slPips > 0 && RiskToReward > 0)
-               {
-                 if(trade.Buy(posLots,_Symbol,ask,slBuy,tpBuy,"This is a BUY trade"))
-                   {
-                     Print("Bought ",posLots," Lots of ",_Symbol," @ ",ask," SL = ",slBuy, " TP = ",tpBuy);
-                   } 
-               } else
-                   
-                {
-                   Print("Incorrect input");                   
-                }
-        
-        } else
-            {
-              Print("Not enough input");             
-            }
-            
-   Comment(__FUNCTION__);            
+  {
+   CTrade trade;
+
+   if(m_LotsEdit.Text() != "" && m_SlPipsEdit.Text() != "" && m_RiskToRewardRatioEdit.Text() != "")
+     {
+      posLots = NormalizeDouble(StringToDouble(m_LotsEdit.Text()),2);
+      slPips = NormalizeDouble(StringToDouble(m_SlPipsEdit.Text()),2);
+      RiskToReward = NormalizeDouble(StringToDouble(m_RiskToRewardRatioEdit.Text()),2);
+
+      ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
+      bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);
+
+      slSell = NormalizeDouble(bid + slPips*_Point*10,4);
+      slBuy = NormalizeDouble(ask - slPips*_Point*10,4);
+
+      tpSell = NormalizeDouble(bid - RiskToReward * (slSell - bid),4);
+      tpBuy = NormalizeDouble(ask + RiskToReward * (ask - slBuy),4);
+
+      Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,4),
+            " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,4));
+
+      if(posLots > 0 && slPips > 0 && RiskToReward > 0)
+        {
+         if(trade.Buy(posLots,_Symbol,ask,slBuy,tpBuy,"This is a BUY trade"))
+           {
+            Print("Bought ",posLots," Lots of ",_Symbol," @ ",ask," SL = ",slBuy, " TP = ",tpBuy);
+           }
+        }
+      else
+
+        {
+         Print("Incorrect input");
+        }
+
+     }
+   else
+     {
+      Print("Not enough input");
+     }
+
+   Comment(__FUNCTION__);
   }
-  
+
 
 //+------------------------------------------------------------------+
 //| Event handler for Close All Positions Button                     |
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickCloseAllBtn(void)
   {
-  CTrade trade;
-   for(int i = PositionsTotal() - 1; i>=0;i--)
-      {                      
-         ulong posTicket = PositionGetTicket(i); 
-         if(trade.PositionClose(_Symbol))
-           {
-            Print(i," Position #",posTicket," Was closed...");
-           }                                      
-       } // end of for loop      
+   CTrade trade;
+   for(int i = PositionsTotal() - 1; i>=0; i--)
+     {
+      ulong posTicket = PositionGetTicket(i);
+      if(trade.PositionClose(_Symbol))
+        {
+         Print(i," Position #",posTicket," Was closed...");
+        }
+     } // end of for loop
    Comment(__FUNCTION__);
   }
-  
+
 //+------------------------------------------------------------------+
-//| Event handler for Calculate Risk Button                          |     
+//| Event handler for Calculate Risk Button                          |
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickCalculateRiskBtn(void)
-  {   if(m_RiskEdit.Text() !="" && m_SlPipsEdit.Text() != "")
+  {
+   if(m_RiskEdit.Text() !="" && m_SlPipsEdit.Text() != "")
+     {
+      double percentRisk = NormalizeDouble(StringToDouble(m_RiskEdit.Text()),2);
+      double AccountBalance = NormalizeDouble(AccountInfoDouble(ACCOUNT_BALANCE),2);
+      double AmountToRisk = NormalizeDouble(AccountBalance*percentRisk/100,2);
+      double ValuePp = SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_VALUE);
+      double LotsCalculated = NormalizeDouble(AmountToRisk/(StringToDouble(m_SlPipsEdit.Text())*10)/ValuePp,2);
+      string LotsCalculatedStr = DoubleToString(LotsCalculated,2);
+
+      if(
+         percentRisk > 0 &&
+         AccountBalance > 0 &&
+         AmountToRisk  > 0 &
+         ValuePp > 0 &&
+         LotsCalculated > 0
+      )
         {
-          double percentRisk = NormalizeDouble(StringToDouble(m_RiskEdit.Text()),2);             
-          double AccountBalance = NormalizeDouble(AccountInfoDouble(ACCOUNT_BALANCE),2);          
-          double AmountToRisk = NormalizeDouble(AccountBalance*percentRisk/100,2);          
-          double ValuePp = SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_VALUE);
-          double LotsCalculated = NormalizeDouble(AmountToRisk/(StringToDouble(m_SlPipsEdit.Text())*10)/ValuePp,2);      
-          string LotsCalculatedStr = DoubleToString(LotsCalculated,2);
-      
-            if(
-               percentRisk > 0 &&
-               AccountBalance > 0 &&
-               AmountToRisk  > 0 &
-               ValuePp > 0 &&
-               LotsCalculated > 0
-               )
-              {
-               m_LotsEdit.Text(DoubleToString(LotsCalculated,2));   
-              } else
-                  {
-                   Print("Incorrect input");
-                   //Alert("Incorrect Input");
-                  }    
-        } else
-            {
-             Print("Not enough input");
-             //Alert("Not enough Input");
-            }      
-    
+         m_LotsEdit.Text(DoubleToString(LotsCalculated,2));
+        }
+      else
+        {
+         Print("Incorrect input");
+         //Alert("Incorrect Input");
+        }
+     }
+   else
+     {
+      Print("Not enough input");
+      //Alert("Not enough Input");
+     }
+
    Comment(__FUNCTION__);
   }
-  
+
 
 //+------------------------------------------------------------------+
 //| Event handler for Clear Inputs Button                            |
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickClearInputsBtn(void)
-  {                                    
+  {
    m_LotsEdit.Text(NULL);
    m_SlPipsEdit.Text(NULL);
    m_RiskToRewardRatioEdit.Text(NULL);
@@ -832,32 +1034,33 @@ void CControlsDialog::OnClickClearInputsBtn(void)
 void CControlsDialog::OnClickBreakEvenBtn(void)
   {
    CTrade trade;
-   for(int i = PositionsTotal() - 1; i>=0;i--)
-      {                      
-         ulong posTicket = PositionGetTicket(i);
-         string posSymbol = PositionGetSymbol(i);
-         double posOpen = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),4);
-         double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),4);
-         double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),4);
-         double posCurrent = NormalizeDouble(PositionGetDouble(POSITION_PRICE_CURRENT),4);
-                 
-      
-         if(posSymbol == _Symbol)
+   for(int i = PositionsTotal() - 1; i>=0; i--)
+     {
+      ulong posTicket = PositionGetTicket(i);
+      string posSymbol = PositionGetSymbol(i);
+      double posOpen = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),4);
+      double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),4);
+      double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),4);
+      double posCurrent = NormalizeDouble(PositionGetDouble(POSITION_PRICE_CURRENT),4);
+
+
+      if(posSymbol == _Symbol)
+        {
+         if((posCurrent > posOpen && posOpen > posSl) || (posCurrent < posOpen && posOpen < posSl))
            {
-            if((posCurrent > posOpen && posOpen > posSl) || (posCurrent < posOpen && posOpen < posSl))
-              {
-               trade.PositionModify(posTicket,posOpen,posTp);                             
-               Print(i," Position #",posTicket," Break Even...");               
-              }
-           
-           }                              
-         
-       } // end of for loop                               
-   
-   Print("Break Even Button clicked");       
+            trade.PositionModify(posTicket,posOpen,posTp);
+            Print(i," Position #",posTicket," Break Even...");
+           }
+         else
+           {
+            Print("Break Even not possible");
+           }
+
+        }
+
+     } // end of for loop
    Comment(__FUNCTION__);
   }
-
 
 //+------------------------------------------------------------------+
 //| Event handler for Market Pending Button                          |
@@ -867,10 +1070,14 @@ void CControlsDialog::OnClickMarketPendingBtn(void)
    if(m_MarketPendingBtn.Text() == "Market")
      {
       m_MarketPendingBtn.Text("Pending");
-     } else if(m_MarketPendingBtn.Text() == "Pending")
-              {
-               m_MarketPendingBtn.Text("Market");
-              }   
+      pendingToggle = false;
+     }
+   else
+      if(m_MarketPendingBtn.Text() == "Pending")
+        {
+         m_MarketPendingBtn.Text("Market");
+         pendingToggle = true;
+        }
    Comment(__FUNCTION__);
   }
 
@@ -882,12 +1089,138 @@ void CControlsDialog::OnClickShowLinesBtn(void)
    if(m_ShowLinesBtn.Text() == "Show Lines")
      {
       m_ShowLinesBtn.Text("Hide Lines");
-     } else if(m_ShowLinesBtn.Text() == "Hide Lines")
-              {
-               m_ShowLinesBtn.Text("Show Lines");
-              }   
+      lineInput = true;
+      // Line Price
+      ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
+      bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);
+
+      double linePrice;
+      double lineSl;
+      double lineTp;
+
+      if(sellToggle && !buyToggle)
+        {
+         // SELL
+         linePrice = NormalizeDouble(ask,4);
+         lineSl = NormalizeDouble(ask + 100*_Point,4);
+         lineTp = NormalizeDouble(ask - 200*_Point,4);
+        }
+      else
+         if(!sellToggle && buyToggle)
+           {
+            // BUY
+            linePrice = NormalizeDouble(bid,4);
+            lineSl = NormalizeDouble(bid - 100*_Point,4);
+            lineTp = NormalizeDouble(bid + 200*_Point,4);
+           }
+
+      if(sellToggle || buyToggle)
+        {
+
+         // Create Price Line
+         ObjectCreate(0,"priceLine",OBJ_HLINE,0,0,linePrice);
+         ObjectSetInteger(0, "priceLine", OBJPROP_COLOR, clrGoldenrod);
+         ObjectSetInteger(0, "priceLine", OBJPROP_STYLE, STYLE_SOLID);
+         ObjectSetInteger(0, "priceLine", OBJPROP_WIDTH, 3);
+         ObjectSetInteger(0, "priceLine", OBJPROP_BACK, false);
+         ObjectSetInteger(0, "priceLine", OBJPROP_SELECTABLE, true);
+         ObjectSetInteger(0, "priceLine", OBJPROP_SELECTED, true);
+         ObjectSetInteger(0, "priceLine", OBJPROP_HIDDEN, false);
+         ObjectSetInteger(0, "priceLine", OBJPROP_ZORDER, 0);
+
+         // Create Stoploss Line
+         ObjectCreate(0,"stopLossLine",OBJ_HLINE,0,0,lineSl);
+         ObjectSetInteger(0, "stopLossLine", OBJPROP_COLOR, clrTomato);
+         ObjectSetInteger(0, "stopLossLine", OBJPROP_STYLE, STYLE_SOLID);
+         ObjectSetInteger(0, "stopLossLine", OBJPROP_WIDTH, 3);
+         ObjectSetInteger(0, "stopLossLine", OBJPROP_BACK, false);
+         ObjectSetInteger(0, "stopLossLine", OBJPROP_SELECTABLE, true);
+         ObjectSetInteger(0, "stopLossLine", OBJPROP_SELECTED, true);
+         ObjectSetInteger(0, "stopLossLine", OBJPROP_HIDDEN, false);
+         ObjectSetInteger(0, "stopLossLine", OBJPROP_ZORDER, 0);
+
+         // Create Take Profit Line
+         ObjectCreate(0,"takeProfitLine",OBJ_HLINE,0,0,lineTp);
+         ObjectSetInteger(0, "takeProfitLine", OBJPROP_COLOR, clrDodgerBlue);
+         ObjectSetInteger(0, "takeProfitLine", OBJPROP_STYLE, STYLE_SOLID);
+         ObjectSetInteger(0, "takeProfitLine", OBJPROP_WIDTH, 3);
+         ObjectSetInteger(0, "takeProfitLine", OBJPROP_BACK, false);
+         ObjectSetInteger(0, "takeProfitLine", OBJPROP_SELECTABLE, true);
+         ObjectSetInteger(0, "takeProfitLine", OBJPROP_SELECTED, true);
+         ObjectSetInteger(0, "takeProfitLine", OBJPROP_HIDDEN, false);
+         ObjectSetInteger(0, "takeProfitLine", OBJPROP_ZORDER, 0);
+
+         double linePriceNew = NormalizeDouble(ObjectGetDouble(0,"priceLine",OBJPROP_PRICE),4);
+         double lineSlNew =  NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),4);
+         double lineTpNew =  NormalizeDouble(ObjectGetDouble(0,"takeProfitLine",OBJPROP_PRICE),4);
+
+         m_PriceEdit.Text(DoubleToString(linePriceNew,4));
+         m_SlEdit.Text(DoubleToString(lineSlNew,4));
+         m_TpEdit.Text(DoubleToString(lineTpNew,4));
+         // CONTINUE HERE
+
+         Print(linePriceNew);
+
+        }
+
+      // Line Sl
+     }
+   else
+      if(m_ShowLinesBtn.Text() == "Hide Lines")
+        {
+         lineInput = false;
+         m_ShowLinesBtn.Text("Show Lines");
+
+         ObjectDelete(0,"priceLine");
+         ObjectDelete(0,"stopLossLine");
+         ObjectDelete(0,"takeProfitLine");
+
+         sellToggle = false;
+         buyToggle = false;
+         m_SellToggleBtn.Text("S");
+         m_BuyToggleBtn.Text("B");
+         Print("SellToggle");
+
+        }
    Comment(__FUNCTION__);
   }
+
+
+//+------------------------------------------------------------------+
+//| Event handler for Sell Toggle Button                             |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickSellToggleBtn(void)
+  {
+   sellToggle = true;
+   buyToggle = false;
+   m_SellToggleBtn.Text("[S]");
+   m_BuyToggleBtn.Text("B");
+   Print("SellToggle");
+   Comment(__FUNCTION__);
+  }
+
+//+------------------------------------------------------------------+
+//| Event handler for Buy Toggle Button                              |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickBuyToggleBtn(void)
+  {
+   sellToggle = false;
+   buyToggle = true;
+   m_SellToggleBtn.Text("S");
+   m_BuyToggleBtn.Text("[B]");
+   Print("BuyToggle");
+   Comment(__FUNCTION__);
+  }
+
+//+------------------------------------------------------------------+
+//| Event handler for Send Order Button                              |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickSendOrderBtn(void)
+  {
+   Print("SendOrder");
+   Comment(__FUNCTION__);
+  }
+
 
 //+------------------------------------------------------------------+
 //| Global Variables                                                 |
@@ -898,11 +1231,14 @@ CControlsDialog ExtDialog;
 //+------------------------------------------------------------------+
 int OnInit()
   {
+   ObjectDelete(0,"priceLine");
+   ObjectDelete(0,"stopLossLine");
+   ObjectDelete(0,"takeProfitLine");
 //--- create application dialog
-   if(!ExtDialog.Create(0,"Controls",0,40,40,550,250))
+   if(!ExtDialog.Create(0,"Controls",0,40,40,800,250))
       return(INIT_FAILED);
 //--- run application
-   ExtDialog.Run();   
+   ExtDialog.Run();
 //--- succeed
    return(INIT_SUCCEEDED);
   }
@@ -913,21 +1249,28 @@ void OnDeinit(const int reason)
   {
 //--- clear comments
    Comment("");
+   ObjectDelete(0,"priceLine");
+   ObjectDelete(0,"stopLossLine");
+   ObjectDelete(0,"takeProfitLine");
 //--- destroy dialog
    ExtDialog.Destroy(reason);
   }
 //+------------------------------------------------------------------+
 //| Expert chart event function                                      |
 //+------------------------------------------------------------------+
-void OnChartEvent(const int id,         // event ID  
+void OnChartEvent(const int id,         // event ID
                   const long& lparam,   // event parameter of the long type
                   const double& dparam, // event parameter of the double type
                   const string& sparam) // event parameter of the string type
   {
    ExtDialog.ChartEvent(id,lparam,dparam,sparam);
   }
-    
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
 void OnTick()
-  {   
-   
-  }  
+  {
+
+  }
+//+------------------------------------------------------------------+
