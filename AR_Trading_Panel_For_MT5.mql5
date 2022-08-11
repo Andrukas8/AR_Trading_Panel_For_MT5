@@ -777,7 +777,7 @@ bool CControlsDialog::CreateMarketPendingBtn(void)
 //--- create
    if(!m_MarketPendingBtn.Create(m_chart_id,m_name+"MarketPending",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_MarketPendingBtn.Text("Market"))
+   if(!m_MarketPendingBtn.Text("[=Market=]"))
       return(false);
    if(!Add(m_MarketPendingBtn))
       return(false);
@@ -1081,7 +1081,7 @@ void CControlsDialog::OnClickClearInputsBtn(void)
    m_PriceEdit.Text(NULL);
    m_SlEdit.Text(NULL);
    m_TpEdit.Text(NULL);
-   m_TpEdit.Text(NULL);
+   m_TpPipsEdit.Text(NULL);
    Comment(__FUNCTION__);
   }
 
@@ -1124,15 +1124,15 @@ void CControlsDialog::OnClickBreakEvenBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickMarketPendingBtn(void)
   {
-   if(m_MarketPendingBtn.Text() == "Market")
+   if(pendingToggle)
      {
-      m_MarketPendingBtn.Text("Pending");
+      m_MarketPendingBtn.Text("[=Market=]");
       pendingToggle = false;
      }
    else
-      if(m_MarketPendingBtn.Text() == "Pending")
+      if(!pendingToggle)
         {
-         m_MarketPendingBtn.Text("Market");
+         m_MarketPendingBtn.Text("[=Pending=]");
          pendingToggle = true;
         }
    Comment(__FUNCTION__);
@@ -1215,9 +1215,11 @@ void CControlsDialog::OnClickShowLinesBtn(void)
          m_PriceEdit.Text(DoubleToString(linePriceNew,4));
          m_SlEdit.Text(DoubleToString(lineSlNew,4));
          m_TpEdit.Text(DoubleToString(lineTpNew,4));
-         // CONTINUE HERE
 
-         Print(linePriceNew);
+         if(!pendingToggle)
+           {
+            m_PriceEdit.Text("Market");
+           }
 
         }
 
@@ -1243,8 +1245,9 @@ void CControlsDialog::OnClickShowLinesBtn(void)
         }
 
 
-
-
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
    Comment(__FUNCTION__);
   }
 
@@ -1280,7 +1283,129 @@ void CControlsDialog::OnClickBuyToggleBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickSendOrderBtn(void)
   {
-   Print("SendOrder");
+
+   Print("Market/Pending = " + pendingToggle + " Sell = " + sellToggle + " Buy = " + buyToggle);
+
+   CTrade trade;
+
+   if(!pendingToggle && sellToggle && !buyToggle) // if market order
+     {
+
+      //+------------------------------------------------------------------+
+      //|                          Market Order SELL                       |
+      //+------------------------------------------------------------------+
+
+      if(m_LotsEdit.Text() != "" && m_SlPipsEdit.Text() != "" && m_RiskToRewardRatioEdit.Text() != "")
+        {
+         posLots = NormalizeDouble(StringToDouble(m_LotsEdit.Text()),2);
+         slPips = NormalizeDouble(StringToDouble(m_SlPipsEdit.Text()),2);
+         RiskToReward = NormalizeDouble(StringToDouble(m_RiskToRewardRatioEdit.Text()),2);
+
+         ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
+         bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);
+
+         slSell = NormalizeDouble(bid + slPips*_Point*10,4);
+         slBuy = NormalizeDouble(ask - slPips*_Point*10,4);
+
+         tpSell = NormalizeDouble(bid - RiskToReward * (slSell - bid),4);
+         tpBuy = NormalizeDouble(ask + RiskToReward * (ask - slBuy),4);
+
+         Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,4),
+               " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,4));
+
+         if(posLots > 0 && slPips > 0 && RiskToReward > 0)
+           {
+            if(trade.Sell(posLots,_Symbol,bid,slSell,tpSell,"This is a SELL trade"))
+              {
+               Print("Sold ",posLots," Lots of ",_Symbol," @ ",bid," SL = ",slSell, " TP = ",tpSell);
+              }
+           }
+         else
+
+           {
+            Print("Incorrect input");
+           }
+        }
+      else
+        {
+         Print("Not enough input");
+        }
+     } // end of if market order
+   else
+      if(!pendingToggle && !sellToggle && buyToggle)
+        {
+
+         //+------------------------------------------------------------------+
+         //|                          Market Order BUY                        |
+         //+------------------------------------------------------------------+
+
+
+         if(m_LotsEdit.Text() != "" && m_SlPipsEdit.Text() != "" && m_RiskToRewardRatioEdit.Text() != "")
+           {
+            posLots = NormalizeDouble(StringToDouble(m_LotsEdit.Text()),2);
+            slPips = NormalizeDouble(StringToDouble(m_SlPipsEdit.Text()),2);
+            RiskToReward = NormalizeDouble(StringToDouble(m_RiskToRewardRatioEdit.Text()),2);
+
+            ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
+            bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);
+
+            slSell = NormalizeDouble(bid + slPips*_Point*10,4);
+            slBuy = NormalizeDouble(ask - slPips*_Point*10,4);
+
+            tpSell = NormalizeDouble(bid - RiskToReward * (slSell - bid),4);
+            tpBuy = NormalizeDouble(ask + RiskToReward * (ask - slBuy),4);
+
+            Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,4),
+                  " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,4));
+
+            if(posLots > 0 && slPips > 0 && RiskToReward > 0)
+              {
+               if(trade.Buy(posLots,_Symbol,ask,slBuy,tpBuy,"This is a BUY trade"))
+                 {
+                  Print("Bought ",posLots," Lots of ",_Symbol," @ ",ask," SL = ",slBuy, " TP = ",tpBuy);
+                 }
+              }
+            else
+
+              {
+               Print("Incorrect input");
+              }
+           }
+         else
+           {
+            Print("Not enough input");
+           }
+        }
+      else
+         if(pendingToggle && sellToggle && !buyToggle)
+           {
+            //+------------------------------------------------------------------+
+            //|                          Pending Order   Sell                    |   [START WORKING HERE!!!]   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            //+------------------------------------------------------------------+
+
+            if(trade.Sell(posLots,_Symbol,bid,slSell,tpSell,"This is a SELL trade"))
+              {
+               Print("Sold ",posLots," Lots of ",_Symbol," @ ",bid," SL = ",slSell, " TP = ",tpSell);
+              }
+
+
+           }
+         else
+            if(pendingToggle && !sellToggle && buyToggle)
+              {
+               //+------------------------------------------------------------------+
+               //|                          Pending Order   Buy                    |
+               //+------------------------------------------------------------------+
+              }
+
+
+
+
+   ObjectDelete(0,"priceLine");
+   ObjectDelete(0,"stopLossLine");
+   ObjectDelete(0,"takeProfitLine");
+
+
    Comment(__FUNCTION__);
   }
 
@@ -1335,4 +1460,9 @@ void OnTick()
   {
 
   }
+//+------------------------------------------------------------------+
+
+
+//+------------------------------------------------------------------+
+
 //+------------------------------------------------------------------+
