@@ -14,6 +14,43 @@
 #include <Controls\Edit.mqh>
 #include <Controls\Label.mqh>
 
+input string posLotsDef = "0.1"; // Lot size
+input string slPipsDef = "10"; // Stoploss in pips
+input string RiskToRewardDef = "2"; // Risk to Reward Ratio
+
+input ENUM_TIMEFRAMES TimeFrame = 5; // Time frame
+input int TslOffsetPoints = 20; // Points above/below the MA
+input double breakevenRatio = 1; // Break Even Ratio
+input int MaPeriod = 8; // MA Period
+input int MaShift = 5; // MA Shift
+input ENUM_MA_METHOD TslMaMethod = MODE_SMMA; // MA Method
+input ENUM_APPLIED_PRICE TslMaAppPrice = PRICE_MEDIAN; // MA Price
+input bool fractalsTSL = false;
+input bool movingAverageTSL = false;
+
+int barsTotal;
+
+double mainUpper = 0;
+double mainLower = 0;
+
+double mainUpperFractal = 0;
+double mainLowerFractal = 0;
+
+int maShift;
+
+int handleFractal;
+int handleMA;
+
+string text;
+
+struct StopLoss
+  {
+   ulong             posTicketArr;
+   double            posSlArr;
+  };
+
+StopLoss originalPosSlArr[];
+
 double ask;
 double bid;
 
@@ -22,10 +59,6 @@ double tpSell;
 
 double slSell;
 double slBuy;
-
-input string posLotsDef = "0.01"; // Lot size
-input string slPipsDef = "10"; // Stoploss in pips
-input string RiskToRewardDef = "2"; // Risk to Reward Ratio
 
 double posLots; // Lot size
 double slPips; // Stoploss in pips
@@ -36,6 +69,7 @@ bool sellToggle = false;
 bool buyToggle = false;
 bool stopToggle = false;
 bool limitToggle = false;
+bool autoPosMgmtToggle = false;
 
 double inputStopLoss;
 double inputTakeProfit;
@@ -56,14 +90,15 @@ double lineTpNew;
 #define INDENT_TOP                          (11)      // indent from top (with allowance for border width)
 #define INDENT_RIGHT                        (11)      // indent from right (with allowance for border width)
 #define INDENT_BOTTOM                       (11)      // indent from bottom (with allowance for border width)
-#define CONTROLS_GAP_X                      (5)       // gap by X coordinate
-#define CONTROLS_GAP_Y                      (5)       // gap by Y coordinate
+#define CONTROLS_GAP_X                      (3)       // gap by X coordinate
+#define CONTROLS_GAP_Y                      (3)       // gap by Y coordinate
 //--- for buttons
 #define BUTTON_WIDTH                        (100)     // size by X coordinate
 #define BUTTON_HEIGHT                       (20)      // size by Y coordinate
 //--- for the indication area
 #define EDIT_HEIGHT                         (20)      // size by Y coordinate
-#define EDIT_WIDTH                          (70)      // size by Y coordinate
+#define EDIT_WIDTH                          (70)      // size by X coordinate
+#define EDIT_WIDTH_SMALL                    (40)      // size by X coordinate
 //--- for group controls
 #define GROUP_WIDTH                         (150)     // size by X coordinate
 #define LIST_HEIGHT                         (179)     // size by Y coordinate
@@ -104,12 +139,12 @@ private:
    CButton           m_BreakEvenBtn;                  // button to break even all traded on the current chart
    CButton           m_MarketPendingBtn;              // Button to toggle between market and pending orders
    CButton           m_ShowLinesBtn;                  // Button to show price sl and tp prices for order placing
-
    CButton           m_SellToggleBtn;
    CButton           m_BuyToggleBtn;
    CButton           m_SendOrderBtn;
    CButton           m_StopToggleBtn;
    CButton           m_LimitToggleBtn;
+   CButton           m_AutoPosMgmtToggleBtn;
 
 
 public:
@@ -135,6 +170,7 @@ protected:
    bool              CreateSendOrderBtn(void);
    bool              CreateStopToggleBtn(void);
    bool              CreateLimitToggleBtn(void);
+   bool              CreateAutoPosMgmtToggleBtn(void);
 
    bool              CreateLotsEdit(void);
    bool              CreateSlPipsEdit(void);
@@ -154,7 +190,6 @@ protected:
    bool              CreateSlLbl(void);
    bool              CreateTpLbl(void);
 
-
    bool              GetOrderData(void);
    bool              GetDataFromLines(void);
    bool              MarketSellOrder(void);
@@ -163,9 +198,6 @@ protected:
    bool              PendingSellLimitOrder(void);
    bool              PendingBuyStopOrder(void);
    bool              PendingBuyLimitOrder(void);
-
-
-
 
    //--- handlers of the dependent controls events
    void              OnClickSellBtn(void);
@@ -181,7 +213,7 @@ protected:
    void              OnClickSendOrderBtn(void);
    void              OnClickStopToggleBtn(void);
    void              OnClickLimitToggleBtn(void);
-
+   void              OnClickAutoPosMgmtToggleBtn(void);
 
 
   };
@@ -202,6 +234,7 @@ ON_EVENT(ON_CLICK,m_BuyToggleBtn,OnClickBuyToggleBtn)
 ON_EVENT(ON_CLICK,m_SendOrderBtn,OnClickSendOrderBtn)
 ON_EVENT(ON_CLICK,m_StopToggleBtn,OnClickStopToggleBtn)
 ON_EVENT(ON_CLICK,m_LimitToggleBtn,OnClickLimitToggleBtn)
+ON_EVENT(ON_CLICK,m_AutoPosMgmtToggleBtn,OnClickAutoPosMgmtToggleBtn)
 EVENT_MAP_END(CAppDialog)
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
@@ -260,8 +293,6 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
    if(!CreateTpEdit())
       return(false);
 
-
-
 // --- Create Buttons
    if(!CreateSellBtn())
       return(false);
@@ -289,7 +320,8 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
       return(false);
    if(!CreateLimitToggleBtn())
       return(false);
-
+   if(!CreateAutoPosMgmtToggleBtn())
+      return(false);
 
 //--- succeed
    return(true);
@@ -306,8 +338,8 @@ bool CControlsDialog::CreateLotsLbl(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT;
-   int y1=INDENT_TOP+CONTROLS_GAP_Y;
-   int x2=x1+EDIT_WIDTH;
+   int y1=INDENT_TOP;
+   int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 //--- create
    if(!m_LotsLbl.Create(m_chart_id,m_name+"LotsLbl",m_subwin,x1,y1,x2,y2))
@@ -327,15 +359,15 @@ bool CControlsDialog::CreateLotsLbl(void)
 bool CControlsDialog::CreateSlPipsLbl(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+EDIT_WIDTH+CONTROLS_GAP_X;
-   int y1=INDENT_TOP+CONTROLS_GAP_Y;
-   int x2=x1+EDIT_WIDTH;
+   int x1=INDENT_LEFT+EDIT_WIDTH_SMALL+CONTROLS_GAP_X;
+   int y1=INDENT_TOP;
+   int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 
 //--- create
    if(!m_SlPipsLbl.Create(m_chart_id,m_name+"SlPipsLbl",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_SlPipsLbl.Text("SL Pips"))
+   if(!m_SlPipsLbl.Text("SLp"))
       return(false);
    if(!Add(m_SlPipsLbl))
       return(false);
@@ -350,14 +382,14 @@ bool CControlsDialog::CreateSlPipsLbl(void)
 bool CControlsDialog::CreateTpPipsLbl(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+2*(EDIT_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+CONTROLS_GAP_Y;
-   int x2=x1+EDIT_WIDTH;
+   int x1=INDENT_LEFT+2*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X);
+   int y1=INDENT_TOP;
+   int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 //--- create
    if(!m_TpPipsLbl.Create(m_chart_id,m_name+"TpPipsLbl",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_TpPipsLbl.Text("TP Pips"))
+   if(!m_TpPipsLbl.Text("TPp"))
       return(false);
    if(!Add(m_TpPipsLbl))
       return(false);
@@ -366,15 +398,15 @@ bool CControlsDialog::CreateTpPipsLbl(void)
   }
 
 //+------------------------------------------------------------------+
-//| Create the risk to reward ratio Label              #3            |
+//| Create the risk to reward ratio Label              #4            |
 //+------------------------------------------------------------------+
 bool CControlsDialog::CreateRiskToRewardRatioLbl(void)
   {
 //--- coordinates
 
-   int x1=INDENT_LEFT+3*(EDIT_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+CONTROLS_GAP_Y;
-   int x2=x1+EDIT_WIDTH;
+   int x1=INDENT_LEFT+3*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X);
+   int y1=INDENT_TOP;
+   int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 
 //--- create
@@ -389,14 +421,14 @@ bool CControlsDialog::CreateRiskToRewardRatioLbl(void)
   }
 
 //+------------------------------------------------------------------+
-//| Create the Risk label                   #4                       |
+//| Create the Risk label                   #5                       |
 //+------------------------------------------------------------------+
 bool CControlsDialog::CreateRiskLbl(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+4*(EDIT_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+CONTROLS_GAP_Y;
-   int x2=x1+EDIT_WIDTH;
+   int x1=INDENT_LEFT+4*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X);
+   int y1=INDENT_TOP;
+   int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 //--- create
    if(!m_RiskLbl.Create(m_chart_id,m_name+"RiskLbl",m_subwin,x1,y1,x2,y2))
@@ -416,8 +448,8 @@ bool CControlsDialog::CreateRiskLbl(void)
 bool CControlsDialog::CreatePriceLbl(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+5*(EDIT_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+CONTROLS_GAP_Y;
+   int x1=INDENT_LEFT+5*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X);
+   int y1=INDENT_TOP;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -438,8 +470,8 @@ bool CControlsDialog::CreatePriceLbl(void)
 bool CControlsDialog::CreateSlLbl(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+6*(EDIT_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+CONTROLS_GAP_Y;
+   int x1=INDENT_LEFT+ 5*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X) + (EDIT_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -459,8 +491,8 @@ bool CControlsDialog::CreateSlLbl(void)
 bool CControlsDialog::CreateTpLbl(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+7*(EDIT_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+CONTROLS_GAP_Y;
+   int x1=INDENT_LEFT+ 5*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X) + 2*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -484,7 +516,7 @@ bool CControlsDialog::CreateLotsEdit(void)
 //--- coordinates
    int x1=INDENT_LEFT;
    int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
-   int x2=x1+EDIT_WIDTH;
+   int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 //--- create
    if(!m_LotsEdit.Create(m_chart_id,m_name+"Lots",m_subwin,x1,y1,x2,y2))
@@ -507,9 +539,9 @@ bool CControlsDialog::CreateLotsEdit(void)
 bool CControlsDialog::CreateSlPipsEdit(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+EDIT_WIDTH+CONTROLS_GAP_X;
+   int x1=INDENT_LEFT+EDIT_WIDTH_SMALL+CONTROLS_GAP_X;
    int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
-   int x2=x1+EDIT_WIDTH;
+   int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 
 //--- create
@@ -534,9 +566,9 @@ bool CControlsDialog::CreateSlPipsEdit(void)
 bool CControlsDialog::CreateTpPipsEdit(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+2*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+2*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X);
    int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
-   int x2=x1+EDIT_WIDTH;
+   int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 //--- create
    if(!m_TpPipsEdit.Create(m_chart_id,m_name+"TpRiskEdit",m_subwin,x1,y1,x2,y2))
@@ -557,9 +589,9 @@ bool CControlsDialog::CreateRiskToRewardRatioEdit(void)
   {
 //--- coordinates
 
-   int x1=INDENT_LEFT+3*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+3*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X);
    int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
-   int x2=x1+EDIT_WIDTH;
+   int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 
 //--- create
@@ -584,9 +616,9 @@ bool CControlsDialog::CreateRiskToRewardRatioEdit(void)
 bool CControlsDialog::CreateRiskEdit(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+4*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+4*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X);
    int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
-   int x2=x1+EDIT_WIDTH;
+   int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 //--- create
    if(!m_RiskEdit.Create(m_chart_id,m_name+"Risk",m_subwin,x1,y1,x2,y2))
@@ -607,7 +639,7 @@ bool CControlsDialog::CreateRiskEdit(void)
 bool CControlsDialog::CreatePriceEdit(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+5*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+5*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X);
    int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
@@ -631,7 +663,7 @@ bool CControlsDialog::CreatePriceEdit(void)
 bool CControlsDialog::CreateSlEdit(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+6*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+ 5*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X) + (EDIT_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
@@ -653,7 +685,7 @@ bool CControlsDialog::CreateSlEdit(void)
 bool CControlsDialog::CreateTpEdit(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+7*(EDIT_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+ 5*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X) + 2*(EDIT_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
@@ -946,6 +978,44 @@ bool CControlsDialog::CreateSendOrderBtn(void)
 //--- succeed
    return(true);
   }
+
+
+
+//+------------------------------------------------------------------+
+//| Create the "Auto Position Management"  button                    |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateAutoPosMgmtToggleBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_AutoPosMgmtToggleBtn.Create(m_chart_id,m_name+"AutoPosMgmtToggleBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+
+   if(autoPosMgmtToggle)
+     {
+      if(!m_AutoPosMgmtToggleBtn.Text("[=APM=]"))
+         return(false);
+     }
+   else
+      if(!autoPosMgmtToggle)
+        {
+         if(!m_AutoPosMgmtToggleBtn.Text("APM"))
+            return(false);
+        }
+
+   if(!Add(m_AutoPosMgmtToggleBtn))
+      return(false);
+//--- succeed
+   return(true);
+  }
+
+//+------------------------------------------------------------------+
+//| +++   Event handlers   +++                                       |
+//+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
 //| Event handler for Sell Button                                    |
@@ -1301,6 +1371,27 @@ void CControlsDialog::OnClickLimitToggleBtn(void)
    Comment(__FUNCTION__);
   }
 
+//+------------------------------------------------------------------+
+//| Event handler for Auto Position Management Button                |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickAutoPosMgmtToggleBtn(void)
+  {
+
+   if(autoPosMgmtToggle)
+     {
+      autoPosMgmtToggle = false;
+      m_AutoPosMgmtToggleBtn.Text("APM");
+     }
+   else
+      if(!autoPosMgmtToggle)
+        {
+         autoPosMgmtToggle = true;
+         m_AutoPosMgmtToggleBtn.Text("[=APM=]");
+        }
+
+   Print("APM = ",autoPosMgmtToggle);
+   Comment(__FUNCTION__);
+  }
 
 
 //+------------------------------------------------------------------+
@@ -1331,7 +1422,7 @@ void CControlsDialog::OnClickSendOrderBtn(void)
 
             if(limitToggle && !stopToggle)
               {
-               PendingSellLimitOrder();    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<   work on dunctions to make these functions function
+               PendingSellLimitOrder();
               }
             else
                if(!limitToggle && stopToggle)
@@ -1357,14 +1448,6 @@ void CControlsDialog::OnClickSendOrderBtn(void)
                     }
               }
 
-
-
-
-   ObjectDelete(0,"priceLine");
-   ObjectDelete(0,"stopLossLine");
-   ObjectDelete(0,"takeProfitLine");
-
-
    Comment(__FUNCTION__);
   }
 
@@ -1381,10 +1464,34 @@ int OnInit()
    ObjectDelete(0,"stopLossLine");
    ObjectDelete(0,"takeProfitLine");
 //--- create application dialog
-   if(!ExtDialog.Create(0,"Controls",0,40,40,800,250))
+   if(!ExtDialog.Create(0,"Controls",0,10,20,475,180))
       return(INIT_FAILED);
 //--- run application
    ExtDialog.Run();
+
+// Auto Position Management EA initialization
+   handleFractal = iFractals(_Symbol, TimeFrame);
+   handleMA = iMA(_Symbol, TimeFrame, MaPeriod, MaShift, TslMaMethod, TslMaAppPrice);
+
+   long totalPos = PositionsTotal();
+
+   for(int i = 0; i < totalPos; i++)
+     {
+      ulong originalPosTicket = PositionGetTicket(i);
+      if(PositionSelectByTicket(originalPosTicket))
+
+        {
+         double originalPosSl = NormalizeDouble(PositionGetDouble(POSITION_SL),4);
+         if(PositionGetString(POSITION_SYMBOL) == _Symbol)
+           {
+            ArrayResize(originalPosSlArr,i+1);
+            originalPosSlArr[i].posTicketArr = originalPosTicket;
+            originalPosSlArr[i].posSlArr = originalPosSl;
+
+           }
+        }
+     }
+
 //--- succeed
    return(INIT_SUCCEEDED);
   }
@@ -1418,14 +1525,216 @@ void OnChartEvent(const int id,         // event ID
 void OnTick()
   {
 
-  }
+   if(autoPosMgmtToggle)
+     {
+      int bars = iBars(_Symbol, TimeFrame);
+      int totalPos = PositionsTotal();
+
+      if(barsTotal != bars && totalPos > 0)  // New bar appeared on the chart
+        {
+         barsTotal = bars;
+
+         double fracUpper[];
+         double fracLower[];
+
+         CopyBuffer(handleFractal, UPPER_LINE, 3, 1, fracUpper);
+         CopyBuffer(handleFractal, LOWER_LINE, 3, 1, fracLower);
+
+         if(fracUpper[0] != EMPTY_VALUE)
+           {
+            mainUpper = NormalizeDouble(fracUpper[0] + TslOffsetPoints * _Point, 4);
+           }
+
+         if(fracLower[0] != EMPTY_VALUE)
+           {
+            mainLower = NormalizeDouble(fracLower[0] - TslOffsetPoints * _Point, 4);
+           }
+
+         text = "-----------------------------\nPosition Management EA\n";
+         text += "------------------------------\n";
+         text += "Upper Fractal = " + DoubleToString(mainUpper, 4) + "\n";
+         text += "Lower Fractal = " + DoubleToString(mainLower, 4) + "\n";
+         text += "MA: Period = " + (string)MaPeriod +  " | Shift = " + (string)MaShift + " | TF = "  + (string)TimeFrame + "\n";
+         text += "Fractal TSL = [ " + (string)fractalsTSL + " ]\n"+ "Moving Average TSL = [ " + (string)movingAverageTSL + " ]\n";
+         text += "BE Ratio = " + breakevenRatio;
+
+         for(int i = 0; i < totalPos; i++)
+           {
+            ulong posTicket = PositionGetTicket(i);
+
+            if(PositionSelectByTicket(posTicket))
+              {
+               if(PositionGetString(POSITION_SYMBOL) == _Symbol)
+                 {
+                  CTrade trade;
+                  double posOpenPrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),4);
+                  double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),4);
+                  double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),4);
+
+                  double bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),4);
+                  double ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),4);
+
+                  double ma[];
+                  CopyBuffer(handleMA,MAIN_LINE,1,MaShift,ma);
+
+                  if(fractalsTSL)
+                    {
+                     // --------------------
+                     // --- BUY POSITION ---
+                     // --------------------
+
+                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position if has type BUY
+                       {
+                        // ---
+                        if(posSl < mainLower && bid > mainLower)
+                          {
+                           double sl = mainLower;
+
+                           if(sl > posSl)
+                             {
+                              Print("sl > posSl ",sl," ", posSl);
+                              if(trade.PositionModify(posTicket, sl, posTp))//;
+
+                                {
+                                 Print(__FUNCTION__, " > Position #", posTicket, " was modified by Fractal tsl. BUY");
+                                }
+                             }
+                          }
+                       }
+
+                     // ---------------------
+                     // --- SELL POSITION ---
+                     // ---------------------
+                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
+                       {
+                        //---
+                        if(posSl > mainUpper && ask < mainUpper)
+                          {
+                           double sl = mainUpper;
+
+                           if(sl < posSl || posSl == 0)
+                             {
+                              if(trade.PositionModify(posTicket, sl, posTp))
+
+                                {
+                                 Print(__FUNCTION__, " > Position #", posTicket, " was modified by Fractal tsl. SELL");
+                                }
+                             }
+                          }
+                       }
+                    } // end of if fractals
+
+                  if(movingAverageTSL)
+                    {
+
+                     // --------------------
+                     // --- BUY POSITION ---
+                     // --------------------
+
+                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
+                       {
+                        if(ArraySize(ma) > 0)
+                          {
+                           double sl = NormalizeDouble(ma[MaShift - 1] - TslOffsetPoints * _Point,4);
+
+                           if(sl > posSl && sl < bid)
+                             {
+                              if(trade.PositionModify(posTicket,sl,posTp))
+                                {
+                                 Print(__FUNCTION__," > Position #",posTicket," was modified by ma tsl.");
+                                }
+                             }
+                          }
+                       }
+
+                     // ---------------------
+                     // --- SELL POSITION ---
+                     // ---------------------
+
+                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
+                       {
+                        if(ArraySize(ma) > 0)
+                          {
+                           double sl = NormalizeDouble(ma[MaShift - 1] + TslOffsetPoints * _Point,4);
+                           if(sl < posSl || posSl == 0)
+                             {
+                              if(trade.PositionModify(posTicket,sl,posTp))
+                                {
+                                 Print(__FUNCTION__," > Position #",posTicket," was modified by ma tsl.");
+                                }
+                             }
+
+                          }
+                       }
+
+                    } // end of moving average
+
+                  //+------------------------------------------------------------------+
+                  //|         Break Even                                               |
+                  //+------------------------------------------------------------------+
+
+                  double oldPosSl;
+
+                  for(int j=0; j<originalPosSlArr.Size(); j++)
+                    {
+                     if(originalPosSlArr[j].posTicketArr==posTicket)
+                       {
+                        oldPosSl = NormalizeDouble(originalPosSlArr[j].posSlArr,4);
+                       }
+                    }
+
+                  if(breakevenRatio > 0 && NormalizeDouble(posOpenPrice,4) != oldPosSl && posOpenPrice != posSl)
+                    {
+                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position if has type BUY
+                       {
+                        if(NormalizeDouble(bid - posOpenPrice,4) > NormalizeDouble((posOpenPrice - oldPosSl)*breakevenRatio,4)
+                           && posSl < posOpenPrice)
+                          {
+                           double sl = posOpenPrice;
+                           if(trade.PositionModify(posTicket, sl, posTp))
+
+                             {
+                              Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven BUY");
+                             }
+                          }
+                       }
+
+                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL) // checking if the open position has type SELL
+                       {
+                        if(NormalizeDouble(posOpenPrice - ask,4) > NormalizeDouble((oldPosSl - posOpenPrice)*breakevenRatio,4)
+                           && posSl > posOpenPrice)
+                          {
+                           double sl = posOpenPrice;
+                           if(trade.PositionModify(posTicket, sl, posTp))
+
+                             {
+                              Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven SELL");
+                             }
+                          }
+
+                       }
+                    } // Breakeven ratio > 0
+
+                  // -----------------------
+
+                 } // PositionGetString(POSITION_SYMBOL) == _Symbol
+
+              } // PositionSelectByTicket(posTicket)
+
+           } // for loop
+
+         Comment(text);
+         text="";
+        } // if(barsTotal != bars && totalPos > 0)
+     }
+
+  } // OnTick
 
 //+---------------------------------------------------------------------------------------+
 //+---------------------------------------------------------------------------------------+
 //|                              +++ DEFINED FUNCTIONS +++                                |
 //+---------------------------------------------------------------------------------------+
 //+---------------------------------------------------------------------------------------+
-
 
 //+------------------------------------------------------------------+
 //|                      Get Order Data Function                     |
@@ -1478,7 +1787,6 @@ bool CControlsDialog::MarketSellOrder()
      }
    return(true);
   }
-
 
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -1624,4 +1932,5 @@ bool CControlsDialog::PendingBuyLimitOrder()
   }
 
 
+//+------------------------------------------------------------------+
 //+------------------------------------------------------------------+
