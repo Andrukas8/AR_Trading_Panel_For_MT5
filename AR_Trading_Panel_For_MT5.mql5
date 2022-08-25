@@ -122,6 +122,7 @@ private:
    CLabel            m_PriceLbl;                      // Label for Price for pending orders
    CLabel            m_SlLbl;
    CLabel            m_TpLbl;
+
    // Edits
    CEdit             m_LotsEdit;                      // Edit field for the lots
    CEdit             m_SlPipsEdit;                    // Edit field for the sl pips
@@ -147,7 +148,7 @@ private:
    CButton           m_StopToggleBtn;
    CButton           m_LimitToggleBtn;
    CButton           m_AutoPosMgmtToggleBtn;
-
+   CButton           m_DoubleOrderBtn;
 
 public:
                      CControlsDialog(void);
@@ -173,6 +174,7 @@ protected:
    bool              CreateStopToggleBtn(void);
    bool              CreateLimitToggleBtn(void);
    bool              CreateAutoPosMgmtToggleBtn(void);
+   bool              CreateDoubleOrderBtn(void);
 
    bool              CreateLotsEdit(void);
    bool              CreateSlPipsEdit(void);
@@ -192,6 +194,7 @@ protected:
    bool              CreateSlLbl(void);
    bool              CreateTpLbl(void);
 
+   // -- Auxilary functions
    bool              GetOrderData(void);
    bool              GetDataFromLines(void);
    bool              MarketSellOrder(void);
@@ -200,6 +203,13 @@ protected:
    bool              PendingSellLimitOrder(void);
    bool              PendingBuyStopOrder(void);
    bool              PendingBuyLimitOrder(void);
+   bool              MarketSellDoubleOrder(void);
+   bool              MarketBuyDoubleOrder(void);
+   bool              PendingSellStopDoubleOrder(void);
+   bool              PendingSellLimitDoubleOrder(void);
+   bool              PendingBuyStopDoubleOrder(void);
+   bool              PendingBuyLimitDoubleOrder(void);
+
 
    //--- handlers of the dependent controls events
    void              OnClickSellBtn(void);
@@ -216,6 +226,7 @@ protected:
    void              OnClickStopToggleBtn(void);
    void              OnClickLimitToggleBtn(void);
    void              OnClickAutoPosMgmtToggleBtn(void);
+   void              OnClickDoubleOrderBtn(void);
 
 
   };
@@ -237,6 +248,7 @@ ON_EVENT(ON_CLICK,m_SendOrderBtn,OnClickSendOrderBtn)
 ON_EVENT(ON_CLICK,m_StopToggleBtn,OnClickStopToggleBtn)
 ON_EVENT(ON_CLICK,m_LimitToggleBtn,OnClickLimitToggleBtn)
 ON_EVENT(ON_CLICK,m_AutoPosMgmtToggleBtn,OnClickAutoPosMgmtToggleBtn)
+ON_EVENT(ON_CLICK,m_DoubleOrderBtn,OnClickDoubleOrderBtn)
 EVENT_MAP_END(CAppDialog)
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
@@ -323,6 +335,8 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
    if(!CreateLimitToggleBtn())
       return(false);
    if(!CreateAutoPosMgmtToggleBtn())
+      return(false);
+   if(!CreateDoubleOrderBtn())
       return(false);
 
 //--- succeed
@@ -713,7 +727,7 @@ bool CControlsDialog::CreateSellBtn(void)
 //--- coordinates
    int x1=INDENT_LEFT;
    int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH;
+   int x2=x1+BUTTON_WIDTH/2;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_SellBtn.Create(m_chart_id,m_name+"SellBtn",m_subwin,x1,y1,x2,y2))
@@ -726,14 +740,15 @@ bool CControlsDialog::CreateSellBtn(void)
    return(true);
   }
 //+------------------------------------------------------------------+
-//| Create the "BuyBtn" button                                      |
+//| Create the "BuyBtn" button                                       |
 //+------------------------------------------------------------------+
 bool CControlsDialog::CreateBuyBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
+
+   int x1=INDENT_LEFT+BUTTON_WIDTH/2;
    int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH;
+   int x2=x1+BUTTON_WIDTH/2;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_BuyBtn.Create(m_chart_id,m_name+"BuyBtn",m_subwin,x1,y1,x2,y2))
@@ -751,16 +766,47 @@ bool CControlsDialog::CreateBuyBtn(void)
 bool CControlsDialog::CreateCloseAllBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
+
+
+   int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
+
+// use for double order button
+// int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
+// int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+// int x2=x1+BUTTON_WIDTH;
+// int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_CloseAllBtn.Create(m_chart_id,m_name+"CloseAllBtn",m_subwin,x1,y1,x2,y2))
       return(false);
    if(!m_CloseAllBtn.Text("Close All"))
       return(false);
    if(!Add(m_CloseAllBtn))
+      return(false);
+//--- succeed
+   return(true);
+  }
+
+
+//+------------------------------------------------------------------+
+//| Create the "DoubleOrderBtn"   button                             |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateDoubleOrderBtn(void)
+  {
+//--- coordinates
+
+   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_DoubleOrderBtn.Create(m_chart_id,m_name+"DoubleOrderBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_DoubleOrderBtn.Text("Send D Order"))
+      return(false);
+   if(!Add(m_DoubleOrderBtn))
       return(false);
 //--- succeed
    return(true);
@@ -1053,6 +1099,67 @@ void CControlsDialog::OnClickCloseAllBtn(void)
      } // end of for loop
    Comment(__FUNCTION__);
   }
+
+
+
+//+------------------------------------------------------------------+
+//| Event handler for Send D Order Button                            |   <<<<<<<<<<<<<<<<<=================------------------
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickDoubleOrderBtn(void)
+  {
+   CTrade trade;
+
+   Print("Market/Pending = " + pendingToggle + " Sell = " + sellToggle + " Buy = " + buyToggle);
+
+   if(!pendingToggle && sellToggle && !buyToggle) // if market sell order
+     {
+      MarketSellDoubleOrder();
+     }
+   else
+      if(!pendingToggle && !sellToggle && buyToggle) // if market buy order
+        {
+         MarketBuyDoubleOrder();
+        }
+      else
+         if(pendingToggle && sellToggle && !buyToggle)
+           {
+            //+------------------------------------------------------------------+
+            //|                          Pending Order   Sell                    |
+            //+------------------------------------------------------------------+
+
+            if(limitToggle && !stopToggle)
+              {
+               PendingSellLimitDoubleOrder();
+              }
+            else
+               if(!limitToggle && stopToggle)
+                 {
+                  PendingSellStopDoubleOrder();
+                 }
+
+           }
+         else
+            if(pendingToggle && !sellToggle && buyToggle)
+              {
+               //+------------------------------------------------------------------+
+               //|                          Pending Order   Buy                    |
+               //+------------------------------------------------------------------+
+               if(limitToggle && !stopToggle)
+                 {
+                  PendingBuyLimitDoubleOrder();
+                 }
+               else
+                  if(!limitToggle && stopToggle)
+                    {
+                     PendingBuyStopDoubleOrder();
+                    }
+              }
+
+   Comment(__FUNCTION__);
+  }
+
+
+
 
 //+------------------------------------------------------------------+
 //| Event handler for Calculate Position Button                      |
@@ -1771,6 +1878,24 @@ bool CControlsDialog::GetOrderData()
    return(true);
   }
 
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+bool CControlsDialog::GetDataFromLines()
+  {
+   linePriceNew = NormalizeDouble(ObjectGetDouble(0,"priceLine",OBJPROP_PRICE),4);
+   lineSlNew =  NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),4);
+   lineTpNew =  NormalizeDouble(ObjectGetDouble(0,"takeProfitLine",OBJPROP_PRICE),4);
+
+   m_PriceEdit.Text(DoubleToString(linePriceNew,4));
+   m_SlEdit.Text(DoubleToString(lineSlNew,4));
+   m_TpEdit.Text(DoubleToString(lineTpNew,4));
+   return(true);
+  }
+
+
+
 //+------------------------------------------------------------------+
 //|                          Market Order SELL                       |
 //+------------------------------------------------------------------+
@@ -1803,20 +1928,6 @@ bool CControlsDialog::MarketSellOrder()
    return(true);
   }
 
-//+------------------------------------------------------------------+
-//|                                                                  |
-//+------------------------------------------------------------------+
-bool CControlsDialog::GetDataFromLines()
-  {
-   linePriceNew = NormalizeDouble(ObjectGetDouble(0,"priceLine",OBJPROP_PRICE),4);
-   lineSlNew =  NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),4);
-   lineTpNew =  NormalizeDouble(ObjectGetDouble(0,"takeProfitLine",OBJPROP_PRICE),4);
-
-   m_PriceEdit.Text(DoubleToString(linePriceNew,4));
-   m_SlEdit.Text(DoubleToString(lineSlNew,4));
-   m_TpEdit.Text(DoubleToString(lineTpNew,4));
-   return(true);
-  }
 
 //+------------------------------------------------------------------+
 //|                          Market Order BUY                        |
@@ -1854,7 +1965,7 @@ bool  CControlsDialog::MarketBuyOrder()
   }
 
 //+------------------------------------------------------------------+
-//|                                                                  |
+//|                                PendingSellStopOrder              |
 //+------------------------------------------------------------------+
 bool CControlsDialog::PendingSellStopOrder()
   {
@@ -1948,4 +2059,219 @@ bool CControlsDialog::PendingBuyLimitOrder()
 
 
 //+------------------------------------------------------------------+
+// Auxiliary functions for Double Orders button
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//|                          Market Order SELL Double                |
+//+------------------------------------------------------------------+
+bool CControlsDialog::MarketSellDoubleOrder()
+  {
+   CTrade trade;
+   if(m_LotsEdit.Text() != "" && m_SlPipsEdit.Text() != "" && m_RiskToRewardRatioEdit.Text() != "")
+     {
+      GetOrderData();
+
+      tpSell =  slSell - 2*(slSell - bid);
+      posLots = NormalizeDouble(0.5 * posLots,2);
+
+      Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,4),
+            " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,4));
+
+      if(posLots > 0 && slPips > 0 && RiskToReward > 0)
+        {
+         if(trade.Sell(posLots,_Symbol,bid,slSell,tpSell,"This is a SELL trade"))
+           {
+            Print("Sold ",posLots," Lots of ",_Symbol," @ ",bid," SL = ",slSell, " TP = ",tpSell);
+           }
+         tpSell = 0;
+         if(trade.Sell(posLots,_Symbol,bid,slSell,0,"This is a SELL trade"))
+           {
+            Print("Sold ",posLots," Lots of ",_Symbol," @ ",bid," SL = ",slSell, " TP = ",tpSell);
+           }
+
+
+        }
+      else
+        {
+         Print("Incorrect input");
+        }
+     }
+   else
+     {
+      Print("Not enough input");
+     }
+   return(true);
+  }
+
+//+------------------------------------------------------------------+
+//|                          Market Order BUY Double                 |
+//+------------------------------------------------------------------+
+bool  CControlsDialog::MarketBuyDoubleOrder()
+  {
+   CTrade trade;
+
+   if(m_LotsEdit.Text() != "" && m_SlPipsEdit.Text() != "" && m_RiskToRewardRatioEdit.Text() != "")
+     {
+      GetOrderData();
+
+      tpBuy =  ask + ask - slBuy;
+      posLots = NormalizeDouble(0.5 * posLots,2);
+
+      Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,5),
+            " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,5));
+
+      if(posLots > 0 && slPips > 0 && RiskToReward > 0)
+        {
+         if(trade.Buy(posLots,_Symbol,ask,slBuy,tpBuy,"This is a BUY trade"))
+           {
+            Print("Bought ",posLots," Lots of ",_Symbol," @ ",ask," SL = ",slBuy, " TP = ",tpBuy);
+           }
+
+         tpBuy =  0;
+         if(trade.Buy(posLots,_Symbol,ask,slBuy,tpBuy,"This is a BUY trade"))
+           {
+            Print("Bought ",posLots," Lots of ",_Symbol," @ ",ask," SL = ",slBuy, " TP = ",tpBuy);
+           }
+
+        }
+      else
+
+        {
+         Print("Incorrect input");
+        }
+     }
+   else
+     {
+      Print("Not enough input");
+     }
+   return(true);
+
+  }
+
+//+------------------------------------------------------------------+
+//|                          PendingSellStopDoubleOrder              |
+//+------------------------------------------------------------------+
+bool CControlsDialog::PendingSellStopDoubleOrder()
+  {
+   CTrade trade;
+   GetOrderData();
+   GetDataFromLines();
+
+   lineTpNew = lineSlNew - 2*(lineSlNew - linePriceNew);
+   posLots = NormalizeDouble(0.5 * posLots,2);
+
+   if(lineSlNew > linePriceNew && (linePriceNew >= lineTpNew) && linePriceNew < ask)
+     {
+      if(trade.SellStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+        {
+         Print("SellStop Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
+        }
+      lineTpNew = 0;
+      if(trade.SellStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+        {
+         Print("SellStop Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
+        }
+
+     }
+   else
+     {
+      Print("Incorrect input parameters for SellStop Double Order operation");
+     }
+   return(true);
+  }
+
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+bool CControlsDialog::PendingSellLimitDoubleOrder()
+  {
+   CTrade trade;
+   GetOrderData();
+   GetDataFromLines();
+
+   lineTpNew = lineSlNew - 2*(lineSlNew - linePriceNew);
+   posLots = NormalizeDouble(0.5 * posLots,2);
+
+   if(lineSlNew > linePriceNew && (linePriceNew >= lineTpNew) && linePriceNew > ask)
+     {
+      if(trade.SellLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+        {
+         Print("SellLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
+        }
+      lineTpNew = 0;
+      if(trade.SellLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+        {
+         Print("SellLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
+        }
+
+     }
+   else
+     {
+      Print("Incorrect input parameters for SellLimit Double operation");
+     }
+   return(true);
+  }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+bool CControlsDialog::PendingBuyStopDoubleOrder()
+  {
+   CTrade trade;
+   GetOrderData();
+   GetDataFromLines();
+
+   lineTpNew = linePriceNew + linePriceNew - lineSlNew;
+   posLots = NormalizeDouble(0.5 * posLots,2);
+
+   if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew > bid)
+     {
+      if(trade.BuyStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+        {
+         Print("BuyStop Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
+        }
+      lineTpNew = 0;
+      if(trade.BuyStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+        {
+         Print("BuyStop Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
+        }
+     }
+   else
+     {
+      Print("Incorrect input parameters for BuyStop operation");
+     }
+   return(true);
+  }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+bool CControlsDialog::PendingBuyLimitDoubleOrder()
+  {
+   CTrade trade;
+   GetOrderData();
+   GetDataFromLines();
+
+   lineTpNew = linePriceNew + linePriceNew - lineSlNew;
+   posLots = NormalizeDouble(0.5 * posLots,2);
+
+   if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew < bid)
+     {
+      if(trade.BuyLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+        {
+         Print("BuyLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
+        }
+      lineTpNew = 0;
+      if(trade.BuyLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+        {
+         Print("BuyLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
+        }
+     }
+   else
+     {
+      Print("Incorrect input parameters for BuyLimit Double operation");
+     }
+   return(true);
+  }
+
 //+------------------------------------------------------------------+
