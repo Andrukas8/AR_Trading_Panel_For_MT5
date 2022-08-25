@@ -16,6 +16,7 @@ Description of Buttons:
 - SELL / BUY = used for imidiate market order placements according to Lots, SLp and RRR;
 - Close All = closes all active open positions on current chart;
 - Send Order = sends market or pending stop/limit sell or buy orders;
+- Send D Order = same as Send Order but it places two orders instead of 1, 50% lot size each and 1 to 1 RRR for one order and no TP for the second order;
 - Break Even All = moves the SL of all positions to break even wherever possible;
 - Clear Inputs = delets all inputs in Edit fields;
 - Calc Position = calculates the lot size based on SL and Risk %;
