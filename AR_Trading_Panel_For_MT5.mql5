@@ -149,6 +149,7 @@ private:
    CButton           m_LimitToggleBtn;
    CButton           m_AutoPosMgmtToggleBtn;
    CButton           m_DoubleOrderBtn;
+   CButton           m_DrawPositionsBtn;
 
 public:
                      CControlsDialog(void);
@@ -175,6 +176,7 @@ protected:
    bool              CreateLimitToggleBtn(void);
    bool              CreateAutoPosMgmtToggleBtn(void);
    bool              CreateDoubleOrderBtn(void);
+   bool              CreateDrawPositionsBtn(void);
 
    bool              CreateLotsEdit(void);
    bool              CreateSlPipsEdit(void);
@@ -227,7 +229,7 @@ protected:
    void              OnClickLimitToggleBtn(void);
    void              OnClickAutoPosMgmtToggleBtn(void);
    void              OnClickDoubleOrderBtn(void);
-
+   void              OnClickDrawPositionsBtn(void);
 
   };
 //+------------------------------------------------------------------+
@@ -249,6 +251,7 @@ ON_EVENT(ON_CLICK,m_StopToggleBtn,OnClickStopToggleBtn)
 ON_EVENT(ON_CLICK,m_LimitToggleBtn,OnClickLimitToggleBtn)
 ON_EVENT(ON_CLICK,m_AutoPosMgmtToggleBtn,OnClickAutoPosMgmtToggleBtn)
 ON_EVENT(ON_CLICK,m_DoubleOrderBtn,OnClickDoubleOrderBtn)
+ON_EVENT(ON_CLICK,m_DrawPositionsBtn,OnClickDrawPositionsBtn)
 EVENT_MAP_END(CAppDialog)
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
@@ -337,6 +340,8 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
    if(!CreateAutoPosMgmtToggleBtn())
       return(false);
    if(!CreateDoubleOrderBtn())
+      return(false);
+   if(!CreateDrawPositionsBtn())
       return(false);
 
 //--- succeed
@@ -745,7 +750,6 @@ bool CControlsDialog::CreateSellBtn(void)
 bool CControlsDialog::CreateBuyBtn(void)
   {
 //--- coordinates
-
    int x1=INDENT_LEFT+BUTTON_WIDTH/2;
    int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/2;
@@ -766,18 +770,10 @@ bool CControlsDialog::CreateBuyBtn(void)
 bool CControlsDialog::CreateCloseAllBtn(void)
   {
 //--- coordinates
-
-
    int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
-
-// use for double order button
-// int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
-// int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-// int x2=x1+BUTTON_WIDTH;
-// int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_CloseAllBtn.Create(m_chart_id,m_name+"CloseAllBtn",m_subwin,x1,y1,x2,y2))
       return(false);
@@ -796,7 +792,6 @@ bool CControlsDialog::CreateCloseAllBtn(void)
 bool CControlsDialog::CreateDoubleOrderBtn(void)
   {
 //--- coordinates
-
    int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH;
@@ -1036,7 +1031,7 @@ bool CControlsDialog::CreateAutoPosMgmtToggleBtn(void)
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH;
+   int x2=x1+BUTTON_WIDTH/2;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_AutoPosMgmtToggleBtn.Create(m_chart_id,m_name+"AutoPosMgmtToggleBtn",m_subwin,x1,y1,x2,y2))
@@ -1059,6 +1054,31 @@ bool CControlsDialog::CreateAutoPosMgmtToggleBtn(void)
 //--- succeed
    return(true);
   }
+
+
+//+------------------------------------------------------------------+
+//| Create the "Draw Positions"  button                              |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateDrawPositionsBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/2;
+   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/2;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_DrawPositionsBtn.Create(m_chart_id,m_name+"DrawPositionsBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_DrawPositionsBtn.Text("Draw"))
+      return(false);
+   if(!Add(m_DrawPositionsBtn))
+      return(false);
+
+//--- succeed
+   return(true);
+  }
+
+
 
 //+------------------------------------------------------------------+
 //| +++   Event handlers   +++                                       |
@@ -1102,7 +1122,7 @@ void CControlsDialog::OnClickCloseAllBtn(void)
 
 
 //+------------------------------------------------------------------+
-//| Event handler for Send D Order Button                            |   <<<<<<<<<<<<<<<<<=================------------------
+//| Event handler for Send D Order Button                            |
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickDoubleOrderBtn(void)
   {
@@ -1552,6 +1572,51 @@ void CControlsDialog::OnClickSendOrderBtn(void)
                      PendingBuyStopOrder();
                     }
               }
+
+   Comment(__FUNCTION__);
+  }
+
+
+//+------------------------------------------------------------------+
+//| Event handler for "Draw Positions" Button                        |  <<<<<<<<<<<<===============-------------------
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickDrawPositionsBtn(void)
+  {
+   int totalPos = PositionsTotal();
+
+   for(int i = 0; i < totalPos; i++)
+     {
+      ulong posTicket = PositionGetTicket(i);
+
+      if(PositionSelectByTicket(posTicket))
+        {
+         if(PositionGetString(POSITION_SYMBOL) == _Symbol)
+           {
+            datetime time1 = PositionGetInteger(POSITION_TIME);
+            datetime time2 = time1+(PeriodSeconds(_Period)*15);
+            double price1 = PositionGetDouble(POSITION_PRICE_OPEN);
+            double price2 = PositionGetDouble(POSITION_SL);
+            double price3 = PositionGetDouble(POSITION_TP);
+
+            if(price2 > 0)
+              {
+               ObjectCreate(0, "SL_Rectangle_"+i, OBJ_RECTANGLE, 0, time1, price1, time2, price2);
+               ObjectSetInteger(0,"SL_Rectangle_"+i,OBJPROP_COLOR,clrDarkRed);
+               ObjectSetInteger(0,"SL_Rectangle_"+i,OBJPROP_FILL,true);
+               ObjectSetInteger(0,"SL_Rectangle_"+i,OBJPROP_SELECTABLE,true);
+              }
+
+            if(price3 > 0)
+              {
+               ObjectCreate(0, "TP_Rectangle_"+i, OBJ_RECTANGLE, 0, time1, price1, time2, price3);
+               ObjectSetInteger(0,"TP_Rectangle_"+i,OBJPROP_COLOR,clrDarkGreen);
+               ObjectSetInteger(0,"TP_Rectangle_"+i,OBJPROP_FILL,true);
+               ObjectSetInteger(0,"TP_Rectangle_"+i,OBJPROP_SELECTABLE,true);
+              }
+           }
+        }
+     }
+
 
    Comment(__FUNCTION__);
   }
