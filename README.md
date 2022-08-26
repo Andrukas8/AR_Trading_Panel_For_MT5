@@ -20,5 +20,6 @@ Description of Buttons:
 - Break Even All = moves the SL of all positions to break even wherever possible;
 - Clear Inputs = delets all inputs in Edit fields;
 - Calc Position = calculates the lot size based on SL and Risk %;
-- APM = turns on and off the Automatic Position Management function, parameters of which can be changed in Input window.
+- APM = turns on and off the Automatic Position Management function, parameters of which can be changed in Input window;
+- Draw = button goes through all active positions and draws a red rectangle to show the SL and green rectangle to show the TP.
 
