@@ -903,7 +903,7 @@ bool CControlsDialog::CreateMarketPendingBtn(void)
 bool CControlsDialog::CreateShowLinesBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
@@ -925,7 +925,7 @@ bool CControlsDialog::CreateShowLinesBtn(void)
 bool CControlsDialog::CreateSellToggleBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/2;
    int y2=y1+BUTTON_HEIGHT;
@@ -947,7 +947,7 @@ bool CControlsDialog::CreateSellToggleBtn(void)
 bool CControlsDialog::CreateBuyToggleBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/2;
+   int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/2;
    int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/2;
    int y2=y1+BUTTON_HEIGHT;
@@ -969,7 +969,7 @@ bool CControlsDialog::CreateBuyToggleBtn(void)
 bool CControlsDialog::CreateStopToggleBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/2;
    int y2=y1+BUTTON_HEIGHT;
@@ -984,14 +984,13 @@ bool CControlsDialog::CreateStopToggleBtn(void)
    return(true);
   }
 
-
 //+------------------------------------------------------------------+
 //| Create the "Limit Toggle"  button                                |
 //+------------------------------------------------------------------+
 bool CControlsDialog::CreateLimitToggleBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/2;
+   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/2;
    int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/2;
    int y2=y1+BUTTON_HEIGHT;
