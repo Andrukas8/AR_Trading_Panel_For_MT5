@@ -1193,20 +1193,44 @@ void CControlsDialog::OnClickCalculatePosBtn(void)
       double AmountToRisk = NormalizeDouble(AccountBalance*percentRisk/100,2);
       double ValuePp = SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_VALUE);
 
-      inputPrice = NormalizeDouble(ObjectGetDouble(0,"priceLine",OBJPROP_PRICE),4);
+      if(pendingToggle)
+        {
+         inputPrice = NormalizeDouble(ObjectGetDouble(0,"priceLine",OBJPROP_PRICE),4);
+         string inputPriceStr = DoubleToString(inputPrice,4);
+         m_PriceEdit.Text(inputPriceStr);
+        }
+
       inputStopLoss = NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),4);
       inputTakeProfit = NormalizeDouble(ObjectGetDouble(0,"takeProfitLine",OBJPROP_PRICE),4);
 
-      string inputPriceStr = DoubleToString(inputPrice,4);
       string inputStopLossStr = DoubleToString(inputStopLoss,4);
       string inputTakeProfitStr = DoubleToString(inputTakeProfit,4);
 
-      m_PriceEdit.Text(inputPriceStr);
       m_SlEdit.Text(inputStopLossStr);
       m_TpEdit.Text(inputTakeProfitStr);
 
-      calcTpPips = 0.1*MathAbs(inputTakeProfit - inputPrice)/_Point;
-      calcSlPips = 0.1*MathAbs(inputStopLoss - inputPrice)/_Point;
+      if(pendingToggle)
+        {
+         calcTpPips = 0.1*MathAbs(inputTakeProfit - inputPrice)/_Point;
+         calcSlPips = 0.1*MathAbs(inputStopLoss - inputPrice)/_Point;
+        }
+      else
+         if(!pendingToggle)
+           {
+            if(sellToggle && !buyToggle) // SELL
+              {
+               calcTpPips = 0.1*MathAbs(inputTakeProfit - bid)/_Point;
+               calcSlPips = 0.1*MathAbs(inputStopLoss - bid)/_Point;
+              }
+            else
+               if(!sellToggle && buyToggle) // BUY
+                 {
+                  calcTpPips = 0.1*MathAbs(inputTakeProfit - ask)/_Point;
+                  calcSlPips = 0.1*MathAbs(inputStopLoss - ask)/_Point;
+                 }
+           }
+
+
       calcRRR = NormalizeDouble(calcTpPips/calcSlPips,1);
 
       m_TpPipsEdit.Text(DoubleToString(NormalizeDouble(MathRound(calcTpPips),1),0));
@@ -1370,15 +1394,18 @@ void CControlsDialog::OnClickShowLinesBtn(void)
         {
 
          // Create Price Line
-         ObjectCreate(0,"priceLine",OBJ_HLINE,0,0,linePrice);
-         ObjectSetInteger(0, "priceLine", OBJPROP_COLOR, clrGoldenrod);
-         ObjectSetInteger(0, "priceLine", OBJPROP_STYLE, STYLE_SOLID);
-         ObjectSetInteger(0, "priceLine", OBJPROP_WIDTH, 3);
-         ObjectSetInteger(0, "priceLine", OBJPROP_BACK, true);
-         ObjectSetInteger(0, "priceLine", OBJPROP_SELECTABLE, true);
-         ObjectSetInteger(0, "priceLine", OBJPROP_SELECTED, true);
-         ObjectSetInteger(0, "priceLine", OBJPROP_HIDDEN, false);
-         ObjectSetInteger(0, "priceLine", OBJPROP_ZORDER, 0);
+         if(pendingToggle)
+           {
+            ObjectCreate(0,"priceLine",OBJ_HLINE,0,0,linePrice);
+            ObjectSetInteger(0, "priceLine", OBJPROP_COLOR, clrGoldenrod);
+            ObjectSetInteger(0, "priceLine", OBJPROP_STYLE, STYLE_SOLID);
+            ObjectSetInteger(0, "priceLine", OBJPROP_WIDTH, 3);
+            ObjectSetInteger(0, "priceLine", OBJPROP_BACK, true);
+            ObjectSetInteger(0, "priceLine", OBJPROP_SELECTABLE, true);
+            ObjectSetInteger(0, "priceLine", OBJPROP_SELECTED, true);
+            ObjectSetInteger(0, "priceLine", OBJPROP_HIDDEN, false);
+            ObjectSetInteger(0, "priceLine", OBJPROP_ZORDER, 0);
+           }
 
          // Create Stoploss Line
          ObjectCreate(0,"stopLossLine",OBJ_HLINE,0,0,lineSl);
@@ -1578,7 +1605,7 @@ void CControlsDialog::OnClickSendOrderBtn(void)
 
 
 //+------------------------------------------------------------------+
-//| Event handler for "Draw Positions" Button                        |  <<<<<<<<<<<<===============-------------------
+//| Event handler for "Draw Positions" Button                        |
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickDrawPositionsBtn(void)
   {
