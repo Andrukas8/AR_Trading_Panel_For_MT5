@@ -1178,8 +1178,6 @@ void CControlsDialog::OnClickDoubleOrderBtn(void)
   }
 
 
-
-
 //+------------------------------------------------------------------+
 //| Event handler for Calculate Position Button                      |
 //+------------------------------------------------------------------+
@@ -1229,7 +1227,6 @@ void CControlsDialog::OnClickCalculatePosBtn(void)
                   calcSlPips = 0.1*MathAbs(inputStopLoss - ask)/_Point;
                  }
            }
-
 
       calcRRR = NormalizeDouble(calcTpPips/calcSlPips,1);
 
@@ -1283,8 +1280,6 @@ void CControlsDialog::OnClickCalculatePosBtn(void)
            }
         }
 
-
-
    Comment(__FUNCTION__);
   }
 
@@ -1319,7 +1314,6 @@ void CControlsDialog::OnClickBreakEvenBtn(void)
       double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),4);
       double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),4);
       double posCurrent = NormalizeDouble(PositionGetDouble(POSITION_PRICE_CURRENT),4);
-
 
       if(posSymbol == _Symbol)
         {
@@ -1378,16 +1372,16 @@ void CControlsDialog::OnClickShowLinesBtn(void)
         {
          // SELL
          linePrice = NormalizeDouble(ask,4);
-         lineSl = NormalizeDouble(ask + 100*_Point,5);
-         lineTp = NormalizeDouble(ask - 200*_Point,5);
+         lineSl = NormalizeDouble(ask + StringToDouble(slPipsDef)*_Point,5);
+         lineTp = NormalizeDouble(ask - StringToDouble(slPipsDef)*StringToDouble(RiskToRewardDef)*_Point,5);
         }
       else
          if(!sellToggle && buyToggle)
            {
             // BUY
             linePrice = NormalizeDouble(bid,4);
-            lineSl = NormalizeDouble(bid - 100*_Point,5);
-            lineTp = NormalizeDouble(bid + 200*_Point,5);
+            lineSl = NormalizeDouble(bid - StringToDouble(slPipsDef)*_Point,5);
+            lineTp = NormalizeDouble(bid + StringToDouble(slPipsDef)*StringToDouble(RiskToRewardDef)*_Point,5);
            }
 
       if(sellToggle || buyToggle)
@@ -2364,5 +2358,6 @@ bool CControlsDialog::PendingBuyLimitDoubleOrder()
      }
    return(true);
   }
+
 
 //+------------------------------------------------------------------+
