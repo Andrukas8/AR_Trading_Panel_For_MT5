@@ -211,6 +211,7 @@ protected:
    bool              PendingSellLimitDoubleOrder(void);
    bool              PendingBuyStopDoubleOrder(void);
    bool              PendingBuyLimitDoubleOrder(void);
+   bool              CalculatePosition(void);
 
 
    //--- handlers of the dependent controls events
@@ -647,6 +648,7 @@ bool CControlsDialog::CreateRiskEdit(void)
 //--- allow editing the content
    if(!m_RiskEdit.ReadOnly(false))
       return(false);
+
    if(!Add(m_RiskEdit))
       return(false);
 //--- succeed
@@ -1183,103 +1185,7 @@ void CControlsDialog::OnClickDoubleOrderBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickCalculatePosBtn(void)
   {
-   Print("Line Input = ",lineInput);
-   if(lineInput)
-     {
-      double percentRisk = NormalizeDouble(StringToDouble(m_RiskEdit.Text()),2);
-      double AccountBalance = NormalizeDouble(AccountInfoDouble(ACCOUNT_BALANCE),2);
-      double AmountToRisk = NormalizeDouble(AccountBalance*percentRisk/100,2);
-      double ValuePp = SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_VALUE);
-
-      if(pendingToggle)
-        {
-         inputPrice = NormalizeDouble(ObjectGetDouble(0,"priceLine",OBJPROP_PRICE),4);
-         string inputPriceStr = DoubleToString(inputPrice,4);
-         m_PriceEdit.Text(inputPriceStr);
-        }
-
-      inputStopLoss = NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),4);
-      inputTakeProfit = NormalizeDouble(ObjectGetDouble(0,"takeProfitLine",OBJPROP_PRICE),4);
-
-      string inputStopLossStr = DoubleToString(inputStopLoss,4);
-      string inputTakeProfitStr = DoubleToString(inputTakeProfit,4);
-
-      m_SlEdit.Text(inputStopLossStr);
-      m_TpEdit.Text(inputTakeProfitStr);
-
-      if(pendingToggle)
-        {
-         calcTpPips = 0.1*MathAbs(inputTakeProfit - inputPrice)/_Point;
-         calcSlPips = 0.1*MathAbs(inputStopLoss - inputPrice)/_Point;
-        }
-      else
-         if(!pendingToggle)
-           {
-            if(sellToggle && !buyToggle) // SELL
-              {
-               calcTpPips = 0.1*MathAbs(inputTakeProfit - bid)/_Point;
-               calcSlPips = 0.1*MathAbs(inputStopLoss - bid)/_Point;
-              }
-            else
-               if(!sellToggle && buyToggle) // BUY
-                 {
-                  calcTpPips = 0.1*MathAbs(inputTakeProfit - ask)/_Point;
-                  calcSlPips = 0.1*MathAbs(inputStopLoss - ask)/_Point;
-                 }
-           }
-
-      calcRRR = NormalizeDouble(calcTpPips/calcSlPips,1);
-
-      m_TpPipsEdit.Text(DoubleToString(NormalizeDouble(MathRound(calcTpPips),1),0));
-      m_SlPipsEdit.Text(DoubleToString(NormalizeDouble(MathRound(calcSlPips),1),0));
-      m_RiskToRewardRatioEdit.Text(DoubleToString(MathRound(calcRRR),1));
-
-      double LotsCalculated = 0.01 * NormalizeDouble(AmountToRisk/calcSlPips*10/ValuePp,2);
-
-      string LotsCalculatedStr = DoubleToString(LotsCalculated,2);
-      m_LotsEdit.Text(DoubleToString(LotsCalculated,2));
-      Print(MathAbs(inputStopLoss-inputPrice));
-      Print("SL Pips = ",calcSlPips);
-      Print(calcRRR);
-      Print("Lots = ", LotsCalculated, " ",LotsCalculatedStr);
-     }
-   else
-      if(!lineInput)
-        {
-         if(m_RiskEdit.Text() !="" && m_SlPipsEdit.Text() != "")
-           {
-            double percentRisk = NormalizeDouble(StringToDouble(m_RiskEdit.Text()),2);
-            double AccountBalance = NormalizeDouble(AccountInfoDouble(ACCOUNT_BALANCE),2);
-            double AmountToRisk = NormalizeDouble(AccountBalance*percentRisk/100,2);
-            double ValuePp = SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_VALUE);
-
-            double LotsCalculated = NormalizeDouble(AmountToRisk/(StringToDouble(m_SlPipsEdit.Text())*10)/ValuePp,2);
-
-            string LotsCalculatedStr = DoubleToString(LotsCalculated,2);
-
-            if(
-               percentRisk > 0 &&
-               AccountBalance > 0 &&
-               AmountToRisk  > 0 &
-               ValuePp > 0 &&
-               LotsCalculated > 0
-            )
-              {
-               m_LotsEdit.Text(DoubleToString(LotsCalculated,2));
-              }
-            else
-              {
-               Print("Incorrect input");
-               //Alert("Incorrect Input");
-              }
-           }
-         else
-           {
-            Print("Not enough input");
-            //Alert("Not enough Input");
-           }
-        }
-
+   CalculatePosition();
    Comment(__FUNCTION__);
   }
 
@@ -1355,6 +1261,7 @@ void CControlsDialog::OnClickMarketPendingBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickShowLinesBtn(void)
   {
+   Print("Line input = ", lineInput);
    if(!lineInput)
      {
       lineInput = true;
@@ -1372,21 +1279,20 @@ void CControlsDialog::OnClickShowLinesBtn(void)
         {
          // SELL
          linePrice = NormalizeDouble(ask,4);
-         lineSl = NormalizeDouble(ask + StringToDouble(slPipsDef)*_Point,5);
-         lineTp = NormalizeDouble(ask - StringToDouble(slPipsDef)*StringToDouble(RiskToRewardDef)*_Point,5);
+         lineSl = NormalizeDouble(ask + StringToDouble(slPipsDef)*10*_Point,5);
+         lineTp = NormalizeDouble(ask - StringToDouble(slPipsDef)*StringToDouble(RiskToRewardDef)*10*_Point,5);
         }
       else
          if(!sellToggle && buyToggle)
            {
             // BUY
             linePrice = NormalizeDouble(bid,4);
-            lineSl = NormalizeDouble(bid - StringToDouble(slPipsDef)*_Point,5);
-            lineTp = NormalizeDouble(bid + StringToDouble(slPipsDef)*StringToDouble(RiskToRewardDef)*_Point,5);
+            lineSl = NormalizeDouble(bid - StringToDouble(slPipsDef)*10*_Point,5);
+            lineTp = NormalizeDouble(bid + StringToDouble(slPipsDef)*StringToDouble(RiskToRewardDef)*10*_Point,5);
            }
 
       if(sellToggle || buyToggle)
         {
-
          // Create Price Line
          if(pendingToggle)
            {
@@ -1423,13 +1329,20 @@ void CControlsDialog::OnClickShowLinesBtn(void)
          ObjectSetInteger(0, "takeProfitLine", OBJPROP_HIDDEN, false);
          ObjectSetInteger(0, "takeProfitLine", OBJPROP_ZORDER, 0);
 
-         GetDataFromLines();
+         if(!GetDataFromLines())
+           {
+            Print("Get Data From Lines Failed...");
+           }
 
-         if(!pendingToggle)
+         if(!CalculatePosition())
+           {
+            Print("Position Calculation Failed...");
+           }
+
+         if(pendingToggle)
            {
             m_PriceEdit.Text("Market");
            }
-
         }
 
       // Line Sl
@@ -1438,21 +1351,16 @@ void CControlsDialog::OnClickShowLinesBtn(void)
       if(lineInput)
         {
          lineInput = false;
-
          m_ShowLinesBtn.Text("Show Lines");
-
          ObjectDelete(0,"priceLine");
          ObjectDelete(0,"stopLossLine");
          ObjectDelete(0,"takeProfitLine");
-
          sellToggle = false;
          buyToggle = false;
          m_SellToggleBtn.Text("S");
          m_BuyToggleBtn.Text("B");
          m_StopToggleBtn.Text("STP");
          m_LimitToggleBtn.Text("LMT");
-         Print("SellToggle");
-
         }
 
 
@@ -1700,7 +1608,7 @@ void OnDeinit(const int reason)
    ExtDialog.Destroy(reason);
   }
 
-//---------------------------------------+
+//-------------------------------------------------------------------+
 //| Expert chart event function                                      |
 //+------------------------------------------------------------------+
 void OnChartEvent(const int id,         // event ID
@@ -1786,11 +1694,9 @@ void OnTick()
 
                            if(sl > posSl)
                              {
-                              Print("sl > posSl ",sl," ", posSl);
                               if(trade.PositionModify(posTicket, sl, posTp))
 
                                 {
-                                 Print("Kuku Fractal Buy");
                                  Print(__FUNCTION__, " > Position #", posTicket, " was modified by Fractal tsl. BUY");
                                 }
                              }
@@ -1811,7 +1717,6 @@ void OnTick()
                              {
                               if(trade.PositionModify(posTicket, sl, posTp))
                                 {
-                                 Print("Kuku Fractal Sell");
                                  Print(__FUNCTION__, " > Position #", posTicket, " was modified by Fractal tsl. SELL");
                                 }
                              }
@@ -1837,7 +1742,6 @@ void OnTick()
                              {
                               if(trade.PositionModify(posTicket,sl,posTp))
                                 {
-                                 Print("Kuku MA Buy");
                                  Print(NormalizeDouble(sl - posSl,4), " ", NormalizeDouble(bid - sl,4));
                                  Print("SL = ",sl, " TP = ", posTp);
                                  Print(__FUNCTION__," > Position #",posTicket," was modified by ma tsl.");
@@ -1859,7 +1763,6 @@ void OnTick()
                              {
                               if(trade.PositionModify(posTicket,sl,posTp))
                                 {
-                                 Print("Kuku MA Sell");
                                  Print("SL = ",sl, " TP = ", posTp);
                                  Print(__FUNCTION__," > Position #",posTicket," was modified by ma tsl.");
                                 }
@@ -1897,7 +1800,6 @@ void OnTick()
                               if(trade.PositionModify(posTicket, sl, posTp))
 
                                 {
-                                 Print("Kuku BreakEven Buy");
                                  Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven BUY");
                                 }
                              }
@@ -1912,7 +1814,6 @@ void OnTick()
                               if(trade.PositionModify(posTicket, sl, posTp))
 
                                 {
-                                 Print("Kuku BreakEven Sell");
                                  Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven SELL");
                                 }
                              }
@@ -2174,8 +2075,6 @@ bool CControlsDialog::MarketSellDoubleOrder()
            {
             Print("Sold ",posLots," Lots of ",_Symbol," @ ",bid," SL = ",slSell, " TP = ",tpSell);
            }
-
-
         }
       else
         {
@@ -2359,5 +2258,112 @@ bool CControlsDialog::PendingBuyLimitDoubleOrder()
    return(true);
   }
 
+
+//+------------------------------------------------------------------+
+
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CalculatePosition()
+  {
+   if(lineInput)
+     {
+      double percentRisk = NormalizeDouble(StringToDouble(m_RiskEdit.Text()),2);
+      double AccountBalance = NormalizeDouble(AccountInfoDouble(ACCOUNT_BALANCE),2);
+      double AmountToRisk = NormalizeDouble(AccountBalance*percentRisk/100,2);
+      double ValuePp = SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_VALUE);
+
+      if(pendingToggle)
+        {
+         inputPrice = NormalizeDouble(ObjectGetDouble(0,"priceLine",OBJPROP_PRICE),4);
+         string inputPriceStr = DoubleToString(inputPrice,4);
+         m_PriceEdit.Text(inputPriceStr);
+        }
+
+      inputStopLoss = NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),4);
+      inputTakeProfit = NormalizeDouble(ObjectGetDouble(0,"takeProfitLine",OBJPROP_PRICE),4);
+
+      string inputStopLossStr = DoubleToString(inputStopLoss,4);
+      string inputTakeProfitStr = DoubleToString(inputTakeProfit,4);
+
+      m_SlEdit.Text(inputStopLossStr);
+      m_TpEdit.Text(inputTakeProfitStr);
+
+      if(pendingToggle)
+        {
+         calcTpPips = 0.1*MathAbs(inputTakeProfit - inputPrice)/_Point;
+         calcSlPips = 0.1*MathAbs(inputStopLoss - inputPrice)/_Point;
+        }
+      else
+         if(!pendingToggle)
+           {
+            if(sellToggle && !buyToggle) // SELL
+              {
+               calcTpPips = 0.1*MathAbs(inputTakeProfit - bid)/_Point;
+               calcSlPips = 0.1*MathAbs(inputStopLoss - bid)/_Point;
+              }
+            else
+               if(!sellToggle && buyToggle) // BUY
+                 {
+                  calcTpPips = 0.1*MathAbs(inputTakeProfit - ask)/_Point;
+                  calcSlPips = 0.1*MathAbs(inputStopLoss - ask)/_Point;
+                 }
+           }
+
+      calcRRR = NormalizeDouble(calcTpPips/calcSlPips,1);
+
+      m_TpPipsEdit.Text(DoubleToString(NormalizeDouble(MathRound(calcTpPips),1),0));
+      m_SlPipsEdit.Text(DoubleToString(NormalizeDouble(MathRound(calcSlPips),1),0));
+      m_RiskToRewardRatioEdit.Text(DoubleToString(MathRound(calcRRR),1));
+
+      double LotsCalculated = 0.01 * NormalizeDouble(AmountToRisk/calcSlPips*10/ValuePp,2);
+
+      string LotsCalculatedStr = DoubleToString(LotsCalculated,2);
+      m_LotsEdit.Text(DoubleToString(LotsCalculated,2));
+      Print(MathAbs(inputStopLoss-inputPrice));
+      Print("SL Pips = ",calcSlPips);
+      Print(calcRRR);
+      Print("Lots = ", LotsCalculated, " ",LotsCalculatedStr);
+     }
+   else
+      if(!lineInput)
+        {
+         if(m_RiskEdit.Text() !="" && m_SlPipsEdit.Text() != "")
+           {
+            double percentRisk = NormalizeDouble(StringToDouble(m_RiskEdit.Text()),2);
+            double AccountBalance = NormalizeDouble(AccountInfoDouble(ACCOUNT_BALANCE),2);
+            double AmountToRisk = NormalizeDouble(AccountBalance*percentRisk/100,2);
+            double ValuePp = SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_VALUE);
+
+            double LotsCalculated = NormalizeDouble(AmountToRisk/(StringToDouble(m_SlPipsEdit.Text())*10)/ValuePp,2);
+
+            string LotsCalculatedStr = DoubleToString(LotsCalculated,2);
+
+            if(
+               percentRisk > 0 &&
+               AccountBalance > 0 &&
+               AmountToRisk  > 0 &
+               ValuePp > 0 &&
+               LotsCalculated > 0
+            )
+              {
+               m_LotsEdit.Text(DoubleToString(LotsCalculated,2));
+              }
+            else
+              {
+               Print("Incorrect Input...");
+              }
+           }
+         else
+           {
+            Print("Not enough Input...");
+           }
+        }
+
+   return(true);
+  }
+
+//+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
