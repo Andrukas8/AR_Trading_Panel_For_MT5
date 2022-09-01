@@ -1656,9 +1656,10 @@ void OnTick()
       text += "Lower Fractal = " + DoubleToString(mainLower, 4) + "\n";
       text += "Upper Fractal = " + DoubleToString(mainUpper, 4) + "\n";
       text += "BE Ratio = " + (string)breakevenRatio + "\n";
-      text += "MA: Period = " + (string)MaPeriod +  " | Shift = " + (string)MaShift + " | TF = "  + (string)TimeFrame + "\n";
-      text += "Fractal TSL = [ " + (string)fractalsTSL + " ]\n"+ "Moving Average TSL = [ " + (string)movingAverageTSL + " ]\n";
-      text += "Auto Break Even = [ " + (string)autoBreakEven + " ]";
+      text += "MA Period = " + (string)MaPeriod +  " | Shift = " + (string)MaShift + " | TF = "  + (string)TimeFrame + "\n";
+      text += "TSL Fra   = [ " + (string)fractalsTSL + " ]\n";
+      text += "TSL MA  = [ " + (string)movingAverageTSL + " ]\n";
+      text += "Auto BE  = [ " + (string)autoBreakEven + " ]";
 
       for(int i = 0; i < totalPos; i++)
         {
