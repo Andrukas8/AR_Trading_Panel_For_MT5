@@ -1695,14 +1695,16 @@ void OnTick()
 
                if(autoBreakEven)
                  {
+
+
                   if(breakevenRatio > 0 && NormalizeDouble(posOpenPrice,4) != oldPosSl && posOpenPrice != posSl)
                     {
                      if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position has type BUY
                        {
-
+                        double posTriggerBuy = NormalizeDouble((posOpenPrice - posSl) * breakevenRatio,_Digits);
                         if(posSl < posOpenPrice)
                           {
-                           if(NormalizeDouble(bid - posOpenPrice,5) > NormalizeDouble((posOpenPrice - oldPosSl)*breakevenRatio + spreadPos*_Point,5))
+                           if(bid > posOpenPrice + posTriggerBuy)
 
                              {
                               Print("BUY Break Even Conditions Met...  Position Open Price = ",posOpenPrice);
@@ -1717,28 +1719,22 @@ void OnTick()
                      if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL) // checking if the open position has type SELL
                        {
 
+                        double posTriggerSell = NormalizeDouble((posSl - posOpenPrice) * breakevenRatio,_Digits);
                         if(posSl > posOpenPrice)
                           {
-                           if(NormalizeDouble(posOpenPrice - ask,5) > NormalizeDouble((oldPosSl - posOpenPrice)*breakevenRatio,5))
+                           if(ask < posOpenPrice - posTriggerSell)
 
                              {
-                              Print("SELL Break Even Conditions Met...  Position Open Price = ",posOpenPrice);
+                              Print("BUY Break Even Conditions Met...  Position Open Price = ",posOpenPrice);
                               if(trade.PositionModify(posTicket, posOpenPrice, posTp))
-
                                 {
-                                 Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven SELL");
+                                 Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven BUY");
                                 }
                              }
                           }
-
-
                        }
                     } // Breakeven ratio > 0
                  } // End of Auto Breakeven
-
-
-
-
 
 
 
