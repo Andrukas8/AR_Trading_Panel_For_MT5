@@ -1531,7 +1531,7 @@ void CControlsDialog::OnClickDrawPositionsBtn(void)
               {
                ObjectCreate(0, "SL_Rectangle_"+i, OBJ_RECTANGLE, 0, time1, price1, time2, price2);
                ObjectSetInteger(0,"SL_Rectangle_"+i,OBJPROP_COLOR,clrDarkRed);
-               ObjectSetInteger(0,"SL_Rectangle_"+i,OBJPROP_FILL,true);
+               ObjectSetInteger(0,"SL_Rectangle_"+i,OBJPROP_FILL,false);
                ObjectSetInteger(0,"SL_Rectangle_"+i,OBJPROP_SELECTABLE,true);
               }
 
@@ -1539,7 +1539,7 @@ void CControlsDialog::OnClickDrawPositionsBtn(void)
               {
                ObjectCreate(0, "TP_Rectangle_"+i, OBJ_RECTANGLE, 0, time1, price1, time2, price3);
                ObjectSetInteger(0,"TP_Rectangle_"+i,OBJPROP_COLOR,clrDarkGreen);
-               ObjectSetInteger(0,"TP_Rectangle_"+i,OBJPROP_FILL,true);
+               ObjectSetInteger(0,"TP_Rectangle_"+i,OBJPROP_FILL,false);
                ObjectSetInteger(0,"TP_Rectangle_"+i,OBJPROP_SELECTABLE,true);
               }
            }
@@ -1678,6 +1678,64 @@ void OnTick()
 
                   double ma[];
                   CopyBuffer(handleMA,MAIN_LINE,1,MaShift,ma);
+                  
+                  
+                  
+                     //+------------------------------------------------------------------+
+                  //|         Break Even                                               |
+                  //+------------------------------------------------------------------+
+
+                  double oldPosSl;
+
+                  for(int j=0; j<originalPosSlArr.Size(); j++)
+                    {
+                     if(originalPosSlArr[j].posTicketArr==posTicket)
+                       {
+                        oldPosSl = NormalizeDouble(originalPosSlArr[j].posSlArr,4);
+                       }
+                    }
+
+                  if(autoBreakEven)
+                    {
+                     if(breakevenRatio > 0 && NormalizeDouble(posOpenPrice,4) != oldPosSl && posOpenPrice != posSl)
+                       {
+                        if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position if has type BUY
+                          {
+                           if(NormalizeDouble(bid - posOpenPrice,5) > NormalizeDouble((posOpenPrice - oldPosSl)*breakevenRatio,4)
+                              && posSl - spreadPos < posOpenPrice)
+                             {
+                              double sl = posOpenPrice;
+                              if(trade.PositionModify(posTicket, sl, posTp))
+
+                                {
+                                 Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven BUY");
+                                }
+                             }
+                          }
+
+                        if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL) // checking if the open position has type SELL
+                          {
+                           if(NormalizeDouble(posOpenPrice - ask,4) > NormalizeDouble((oldPosSl - posOpenPrice)*breakevenRatio,4)
+                              && posSl + spreadPos > posOpenPrice)
+                             {
+                              double sl = posOpenPrice;
+                              if(trade.PositionModify(posTicket, sl, posTp))
+
+                                {
+                                 Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven SELL");
+                                }
+                             }
+
+                          }
+                       } // Breakeven ratio > 0
+
+                    }
+                  
+                  
+                  
+                  
+                  
+                  
 
                   if(fractalsTSL)
                     {
@@ -1773,55 +1831,7 @@ void OnTick()
 
                     } // end of moving average
 
-                  //+------------------------------------------------------------------+
-                  //|         Break Even                                               |
-                  //+------------------------------------------------------------------+
-
-                  double oldPosSl;
-
-                  for(int j=0; j<originalPosSlArr.Size(); j++)
-                    {
-                     if(originalPosSlArr[j].posTicketArr==posTicket)
-                       {
-                        oldPosSl = NormalizeDouble(originalPosSlArr[j].posSlArr,4);
-                       }
-                    }
-
-                  if(autoBreakEven)
-                    {
-                     if(breakevenRatio > 0 && NormalizeDouble(posOpenPrice,4) != oldPosSl && posOpenPrice != posSl)
-                       {
-                        if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position if has type BUY
-                          {
-                           if(NormalizeDouble(bid - posOpenPrice,5) > NormalizeDouble((posOpenPrice - oldPosSl)*breakevenRatio,4)
-                              && posSl - spreadPos < posOpenPrice)
-                             {
-                              double sl = posOpenPrice;
-                              if(trade.PositionModify(posTicket, sl, posTp))
-
-                                {
-                                 Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven BUY");
-                                }
-                             }
-                          }
-
-                        if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL) // checking if the open position has type SELL
-                          {
-                           if(NormalizeDouble(posOpenPrice - ask,4) > NormalizeDouble((oldPosSl - posOpenPrice)*breakevenRatio,4)
-                              && posSl + spreadPos > posOpenPrice)
-                             {
-                              double sl = posOpenPrice;
-                              if(trade.PositionModify(posTicket, sl, posTp))
-
-                                {
-                                 Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven SELL");
-                                }
-                             }
-
-                          }
-                       } // Breakeven ratio > 0
-
-                    }
+               
 
                   // -----------------------
 
