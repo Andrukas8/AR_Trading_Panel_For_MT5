@@ -803,7 +803,7 @@ bool CControlsDialog::CreateDoubleOrderBtn(void)
 //--- create
    if(!m_DoubleOrderBtn.Create(m_chart_id,m_name+"DoubleOrderBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_DoubleOrderBtn.Text("D Order"))
+   if(!m_DoubleOrderBtn.Text("2 "+"\x00BD"+"\x2714"))
       return(false);
    if(!Add(m_DoubleOrderBtn))
       return(false);
@@ -845,7 +845,7 @@ bool CControlsDialog::CreateClearInputsBtn(void)
 //--- create
    if(!m_ClearInputsBtn.Create(m_chart_id,m_name+"ClearInputsBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_ClearInputsBtn.Text("CE"))
+   if(!m_ClearInputsBtn.Text("Clear"))
       return(false);
    if(!Add(m_ClearInputsBtn))
       return(false);
@@ -909,7 +909,7 @@ bool CControlsDialog::CreateShowLinesBtn(void)
 //--- create
    if(!m_ShowLinesBtn.Create(m_chart_id,m_name+"ShowLinesBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_ShowLinesBtn.Text("Lines"))
+   if(!m_ShowLinesBtn.Text("\x4E09"))
       return(false);
    if(!Add(m_ShowLinesBtn))
       return(false);
@@ -1005,7 +1005,7 @@ bool CControlsDialog::CreateLimitToggleBtn(void)
   }
 
 //+------------------------------------------------------------------+
-//| Create the "Send Order"  button                                 |
+//| Create the "Send Order"  button                                  |
 //+------------------------------------------------------------------+
 bool CControlsDialog::CreateSendOrderBtn(void)
   {
@@ -1017,7 +1017,7 @@ bool CControlsDialog::CreateSendOrderBtn(void)
 //--- create
    if(!m_SendOrderBtn.Create(m_chart_id,m_name+"SendOrderBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_SendOrderBtn.Text("Order"))
+   if(!m_SendOrderBtn.Text("\x2714"))
       return(false);
    if(!Add(m_SendOrderBtn))
       return(false);
@@ -1073,7 +1073,7 @@ bool CControlsDialog::CreateDrawPositionsBtn(void)
 //--- create
    if(!m_DrawPositionsBtn.Create(m_chart_id,m_name+"DrawPositionsBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_DrawPositionsBtn.Text("Draw"))
+   if(!m_DrawPositionsBtn.Text("\x270F"))
       return(false);
    if(!Add(m_DrawPositionsBtn))
       return(false);
@@ -1353,7 +1353,7 @@ void CControlsDialog::OnClickShowLinesBtn(void)
       if(lineInput)
         {
          lineInput = false;
-         m_ShowLinesBtn.Text("Lines");
+         m_ShowLinesBtn.Text("\x4E09");
          ObjectDelete(0,"priceLine");
          ObjectDelete(0,"stopLossLine");
          ObjectDelete(0,"takeProfitLine");
