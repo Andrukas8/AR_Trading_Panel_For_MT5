@@ -25,7 +25,9 @@ input int MaShift = 5; // MA Shift
 input ENUM_MA_METHOD TslMaMethod = MODE_SMMA; // MA Method
 input ENUM_APPLIED_PRICE TslMaAppPrice = PRICE_MEDIAN; // MA Price
 input double breakevenRatio = 1; // Break Even Ratio
+
 input bool autoBreakEven = false; // Auto Break Even
+
 input bool fractalsTSL = false; // Fractal Trailing Stoploss
 input bool movingAverageTSL = false; // Moving Average Trailing Stoploss
 
@@ -366,7 +368,7 @@ bool CControlsDialog::CreateLotsLbl(void)
 //--- create
    if(!m_LotsLbl.Create(m_chart_id,m_name+"LotsLbl",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_LotsLbl.Text("Lots"))
+   if(!m_LotsLbl.Text("L"))
       return(false);
    if(!Add(m_LotsLbl))
       return(false);
@@ -455,7 +457,7 @@ bool CControlsDialog::CreateRiskLbl(void)
 //--- create
    if(!m_RiskLbl.Create(m_chart_id,m_name+"RiskLbl",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_RiskLbl.Text("Risk %"))
+   if(!m_RiskLbl.Text("R %"))
       return(false);
    if(!Add(m_RiskLbl))
       return(false);
@@ -477,7 +479,7 @@ bool CControlsDialog::CreatePriceLbl(void)
 //--- create
    if(!m_PriceLbl.Create(m_chart_id,m_name+"PriceLbl",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_PriceLbl.Text("Price"))
+   if(!m_PriceLbl.Text("$"))
       return(false);
    if(!Add(m_PriceLbl))
       return(false);
@@ -779,7 +781,7 @@ bool CControlsDialog::CreateCloseAllBtn(void)
 //--- create
    if(!m_CloseAllBtn.Create(m_chart_id,m_name+"CloseAllBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_CloseAllBtn.Text("Close All"))
+   if(!m_CloseAllBtn.Text("Close"))
       return(false);
    if(!Add(m_CloseAllBtn))
       return(false);
@@ -801,7 +803,7 @@ bool CControlsDialog::CreateDoubleOrderBtn(void)
 //--- create
    if(!m_DoubleOrderBtn.Create(m_chart_id,m_name+"DoubleOrderBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_DoubleOrderBtn.Text("Send D Order"))
+   if(!m_DoubleOrderBtn.Text("D Order"))
       return(false);
    if(!Add(m_DoubleOrderBtn))
       return(false);
@@ -822,7 +824,7 @@ bool CControlsDialog::CreateCalculatePosBtn(void)
 //--- create
    if(!m_CalculatePosBtn.Create(m_chart_id,m_name+"CalculatePosBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_CalculatePosBtn.Text("Calc Position"))
+   if(!m_CalculatePosBtn.Text("Calc"))
       return(false);
    if(!Add(m_CalculatePosBtn))
       return(false);
@@ -843,7 +845,7 @@ bool CControlsDialog::CreateClearInputsBtn(void)
 //--- create
    if(!m_ClearInputsBtn.Create(m_chart_id,m_name+"ClearInputsBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_ClearInputsBtn.Text("Clear Inputs"))
+   if(!m_ClearInputsBtn.Text("CE"))
       return(false);
    if(!Add(m_ClearInputsBtn))
       return(false);
@@ -864,7 +866,7 @@ bool CControlsDialog::CreateBreakEvenBtn(void)
 //--- create
    if(!m_BreakEvenBtn.Create(m_chart_id,m_name+"BreakEvenBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_BreakEvenBtn.Text("Break Even All"))
+   if(!m_BreakEvenBtn.Text("BE"))
       return(false);
    if(!Add(m_BreakEvenBtn))
       return(false);
@@ -886,7 +888,7 @@ bool CControlsDialog::CreateMarketPendingBtn(void)
 //--- create
    if(!m_MarketPendingBtn.Create(m_chart_id,m_name+"MarketPending",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_MarketPendingBtn.Text("[=Market=]"))
+   if(!m_MarketPendingBtn.Text("[=M=]"))
       return(false);
    if(!Add(m_MarketPendingBtn))
       return(false);
@@ -895,7 +897,7 @@ bool CControlsDialog::CreateMarketPendingBtn(void)
   }
 
 //+------------------------------------------------------------------+
-//| Create the "Show Lines"  button                              |
+//| Create the "Show Lines"  button                                  |
 //+------------------------------------------------------------------+
 bool CControlsDialog::CreateShowLinesBtn(void)
   {
@@ -907,7 +909,7 @@ bool CControlsDialog::CreateShowLinesBtn(void)
 //--- create
    if(!m_ShowLinesBtn.Create(m_chart_id,m_name+"ShowLinesBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_ShowLinesBtn.Text("Show Lines"))
+   if(!m_ShowLinesBtn.Text("Lines"))
       return(false);
    if(!Add(m_ShowLinesBtn))
       return(false);
@@ -1015,7 +1017,7 @@ bool CControlsDialog::CreateSendOrderBtn(void)
 //--- create
    if(!m_SendOrderBtn.Create(m_chart_id,m_name+"SendOrderBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_SendOrderBtn.Text("Send Order"))
+   if(!m_SendOrderBtn.Text("Order"))
       return(false);
    if(!Add(m_SendOrderBtn))
       return(false);
@@ -1244,13 +1246,13 @@ void CControlsDialog::OnClickMarketPendingBtn(void)
   {
    if(pendingToggle)
      {
-      m_MarketPendingBtn.Text("[=Market=]");
+      m_MarketPendingBtn.Text("[=M=]");
       pendingToggle = false;
      }
    else
       if(!pendingToggle)
         {
-         m_MarketPendingBtn.Text("[=Pending=]");
+         m_MarketPendingBtn.Text("[=P=]");
          pendingToggle = true;
         }
    Comment(__FUNCTION__);
@@ -1265,7 +1267,7 @@ void CControlsDialog::OnClickShowLinesBtn(void)
    if(!lineInput)
      {
       lineInput = true;
-      m_ShowLinesBtn.Text("Hide Lines");
+      m_ShowLinesBtn.Text("Hide");
 
       // Line Price
       ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
@@ -1341,7 +1343,7 @@ void CControlsDialog::OnClickShowLinesBtn(void)
 
          if(pendingToggle)
            {
-            m_PriceEdit.Text("Market");
+            m_PriceEdit.Text("M");
            }
         }
 
@@ -1351,7 +1353,7 @@ void CControlsDialog::OnClickShowLinesBtn(void)
       if(lineInput)
         {
          lineInput = false;
-         m_ShowLinesBtn.Text("Show Lines");
+         m_ShowLinesBtn.Text("Lines");
          ObjectDelete(0,"priceLine");
          ObjectDelete(0,"stopLossLine");
          ObjectDelete(0,"takeProfitLine");
@@ -1630,25 +1632,6 @@ void OnTick()
       int bars = iBars(_Symbol, TimeFrame);
       int totalPos = PositionsTotal();
 
-      //if(barsTotal != bars && totalPos > 0)  // New bar appeared on the chart
-      //{
-      barsTotal = bars;
-
-      double fracUpper[];
-      double fracLower[];
-
-      CopyBuffer(handleFractal, UPPER_LINE, 3, 1, fracUpper);
-      CopyBuffer(handleFractal, LOWER_LINE, 3, 1, fracLower);
-
-      if(fracUpper[0] != EMPTY_VALUE)
-        {
-         mainUpper = NormalizeDouble(fracUpper[0] + (TslOffsetPoints + spreadPos) * _Point, 4);
-        }
-
-      if(fracLower[0] != EMPTY_VALUE)
-        {
-         mainLower = NormalizeDouble(fracLower[0] - (TslOffsetPoints + spreadPos) * _Point, 4);
-        }
 
       text = "-----------------------------\nPosition Management EA\n " + _Symbol + " " +_Period + "\n";
       text += "------------------------------\n";
@@ -1661,42 +1644,35 @@ void OnTick()
       text += "TSL MA  = [ " + (string)movingAverageTSL + " ]\n";
       text += "Auto BE  = [ " + (string)autoBreakEven + " ]";
 
+      Comment(text);
+      text="";
 
-      for(int i = 0; i < totalPos; i++)
+      //+------------------------------------------------------------------+
+      //|        Trailing SL activated by a new Tick                       |
+      //+------------------------------------------------------------------+
+      if(autoBreakEven)
         {
-         ulong posTicket = PositionGetTicket(i);
-
-         if(PositionSelectByTicket(posTicket))
+         for(int i = 0; i < totalPos; i++)
            {
-            if(PositionGetString(POSITION_SYMBOL) == _Symbol)
+            ulong posTicket = PositionGetTicket(i);
+
+            if(PositionSelectByTicket(posTicket))
               {
-               CTrade trade;
-               double posOpenPrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),4);
-               double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),4);
-               double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),4);
-
-               double bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),4);
-               double ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),4);
-
-               double ma[];
-               CopyBuffer(handleMA,MAIN_LINE,1,MaShift,ma);
-
-               //+------------------------------------------------------------------+
-               //|         Break Even                                               |
-               //+------------------------------------------------------------------+
-
-               double oldPosSl;
-
-               for(int j=0; j<originalPosSlArr.Size(); j++)
+               if(PositionGetString(POSITION_SYMBOL) == _Symbol)
                  {
-                  if(originalPosSlArr[j].posTicketArr==posTicket)
-                    {
-                     oldPosSl = NormalizeDouble(originalPosSlArr[j].posSlArr,4);
-                    }
-                 }
+                  CTrade trade;
+                  double posOpenPrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),4);
+                  double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),4);
+                  double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),4);
 
-               if(autoBreakEven)
-                 {
+                  double bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),4);
+                  double ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),4);
+                  //+------------------------------------------------------------------+
+                  //|         Break Even                                               |
+                  //+------------------------------------------------------------------+
+
+                  double oldPosSl;
+
                   if(breakevenRatio > 0 && NormalizeDouble(posOpenPrice,4) != oldPosSl && posOpenPrice != posSl)
                     {
                      if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position has type BUY
@@ -1718,7 +1694,6 @@ void OnTick()
 
                      if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL) // checking if the open position has type SELL
                        {
-
                         double posTriggerSell = NormalizeDouble((posSl - posOpenPrice) * breakevenRatio,_Digits);
                         if(posSl > posOpenPrice)
                           {
@@ -1728,16 +1703,70 @@ void OnTick()
                               Print("BUY Break Even Conditions Met...  Position Open Price = ",posOpenPrice);
                               if(trade.PositionModify(posTicket, posOpenPrice, posTp))
                                 {
-                                 Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven BUY");
+                                 Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven SELL");
                                 }
                              }
                           }
                        }
                     } // Breakeven ratio > 0
                  } // End of Auto Breakeven
+               //+------------------------------------------------------------------+
+               //|        End of Break Even                                         |
+               //+------------------------------------------------------------------+
+              }
+           }
+        }
 
-               if(barsTotal != bars && totalPos > 0)  // New bar appeared on the chart
+      //+------------------------------------------------------------------+
+      //|        Trailing SL activated by a new bar                        |
+      //+------------------------------------------------------------------+
+
+
+      if(barsTotal != bars && totalPos > 0)  // New bar appeared on the chart
+        {
+         barsTotal = bars;
+
+         double fracUpper[];
+         double fracLower[];
+
+         CopyBuffer(handleFractal, UPPER_LINE, 3, 1, fracUpper);
+         CopyBuffer(handleFractal, LOWER_LINE, 3, 1, fracLower);
+
+         if(fracUpper[0] != EMPTY_VALUE)
+           {
+            mainUpper = NormalizeDouble(fracUpper[0] + (TslOffsetPoints + spreadPos) * _Point, 4);
+           }
+
+         if(fracLower[0] != EMPTY_VALUE)
+           {
+            mainLower = NormalizeDouble(fracLower[0] - (TslOffsetPoints + spreadPos) * _Point, 4);
+           }
+
+         for(int i = 0; i < totalPos; i++)
+           {
+            ulong posTicket = PositionGetTicket(i);
+
+            if(PositionSelectByTicket(posTicket))
+              {
+               if(PositionGetString(POSITION_SYMBOL) == _Symbol)
                  {
+                  CTrade trade;
+                  double posOpenPrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),4);
+                  double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),4);
+                  double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),4);
+
+                  double bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),4);
+                  double ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),4);
+
+                  double ma[];
+                  CopyBuffer(handleMA,MAIN_LINE,1,MaShift,ma);
+
+
+
+
+                  //+------------------------------------------------------------------+
+                  //|         Fractals                                                 |
+                  //+------------------------------------------------------------------+
 
                   if(fractalsTSL)
                     {
@@ -1785,84 +1814,82 @@ void OnTick()
                     } // end of if fractals
 
 
-                  if(barsTotal != bars && totalPos > 0) // New bar appeared on the chart
+                  //+------------------------------------------------------------------+
+                  //|        End of Fractals                                           |
+                  //+------------------------------------------------------------------+
+
+
+                  //+------------------------------------------------------------------+
+                  //|         MA                                                       |
+                  //+------------------------------------------------------------------+
+
+                  if(movingAverageTSL)
                     {
-                     barsTotal = bars;
+                     // --------------------
+                     // --- BUY POSITION ---
+                     // --------------------
 
-
-                     if(movingAverageTSL)
+                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
                        {
-                        int bars = iBars(_Symbol,TimeFrame);
-                        int totalPos = PositionsTotal();
-
-                        if(barsTotal != bars && totalPos > 0) // New bar appeared on the chart
+                        if(ArraySize(ma) > 0)
                           {
-                           barsTotal = bars;
+                           double sl = NormalizeDouble(NormalizeDouble(ma[MaShift - 1],4) - (TslOffsetPoints + spreadPos) * _Point,4);
 
-
-
-                           // --------------------
-                           // --- BUY POSITION ---
-                           // --------------------
-
-
-                           if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
+                           if(sl > posSl && sl < bid)
                              {
-                              if(ArraySize(ma) > 0)
+                              if(trade.PositionModify(posTicket,sl,posTp))
                                 {
-                                 double sl = NormalizeDouble(NormalizeDouble(ma[MaShift - 1],4) - (TslOffsetPoints + spreadPos) * _Point,4);
-
-                                 if(sl > posSl && sl < bid)
-                                   {
-                                    if(trade.PositionModify(posTicket,sl,posTp))
-                                      {
-                                       Print(NormalizeDouble(sl - posSl,4), " ", NormalizeDouble(bid - sl,4));
-                                       Print("SL = ",sl, " TP = ", posTp);
-                                       Print(__FUNCTION__," > Position #",posTicket," was modified by ma tsl.");
-                                      }
-                                   }
-                                }
-                             }
-
-                           // ---------------------
-                           // --- SELL POSITION ---
-                           // ---------------------
-
-                           if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
-                             {
-                              if(ArraySize(ma) > 0)
-                                {
-                                 double sl = NormalizeDouble(NormalizeDouble(ma[MaShift - 1],4) + (TslOffsetPoints + spreadPos) * _Point,4);
-                                 if(sl < posSl || posSl == 0)
-                                   {
-                                    if(trade.PositionModify(posTicket,sl,posTp))
-                                      {
-                                       Print("SL = ",sl, " TP = ", posTp);
-                                       Print(__FUNCTION__," > Position #",posTicket," was modified by ma tsl.");
-                                      }
-                                   }
+                                 Print(NormalizeDouble(sl - posSl,4), " ", NormalizeDouble(bid - sl,4));
+                                 Print("SL = ",sl, " TP = ", posTp);
+                                 Print(__FUNCTION__," > Position #",posTicket," was modified by ma tsl.");
                                 }
                              }
                           }
-                       } // end of moving average
-                    }
-                 }
 
-               // -----------------------
+                       }
 
-              } // PositionGetString(POSITION_SYMBOL) == _Symbol
+                     // ---------------------
+                     // --- SELL POSITION ---
+                     // ---------------------
 
-           } // PositionSelectByTicket(posTicket)
+                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
+                       {
+                        if(ArraySize(ma) > 0)
+                          {
+                           double sl = NormalizeDouble(NormalizeDouble(ma[MaShift - 1],4) + (TslOffsetPoints + spreadPos) * _Point,4);
+                           if(sl < posSl || posSl == 0)
+                             {
+                              if(trade.PositionModify(posTicket,sl,posTp))
+                                {
+                                 Print("SL = ",sl, " TP = ", posTp);
+                                 Print(__FUNCTION__," > Position #",posTicket," was modified by ma tsl.");
+                                }
+                             }
+                          }
+                       }
 
-        } // for loop
+                    }// end of moving average
 
 
-      Comment(text);
-      text="";
-      //  } // if(barsTotal != bars && totalPos > 0)
-     }
+                  //+------------------------------------------------------------------+
+                  //|       end of MA                                                  |
+                  //+------------------------------------------------------------------+
 
-  } // OnTick
+
+
+                 } // if pos symbol
+              } // if pos ticket
+           } // for loop
+        } // bars total
+     } // autoPosMgmtToggle
+  }// OnTick
+
+
+
+
+
+
+
 
 //+---------------------------------------------------------------------------------------+
 //+---------------------------------------------------------------------------------------+
@@ -2389,8 +2416,6 @@ bool CControlsDialog::CalculatePosition()
 
    return(true);
   }
-
-//+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
 
