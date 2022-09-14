@@ -13,24 +13,29 @@
 #include <Controls\Button.mqh>
 #include <Controls\Edit.mqh>
 #include <Controls\Label.mqh>
-
+sinput string ______________1 = ""; // ------------- Position Variables ----------------------------
 input string posLotsDef = "0.1"; // Lot size
 input string slPipsDef = "10"; // Stoploss in pips
 input string RiskToRewardDef = "2"; // Risk to Reward Ratio
 
-input ENUM_TIMEFRAMES TimeFrame = 5; // Time frame
-input int TslOffsetPoints = 20; // Points above/below the MA
+sinput string ______________2  = ""; // ------------- Auto Position Management Controls ------------
+input bool autoBreakEven = false; // Auto Break Even
+input bool pointsTSL = false; // Regular Trailing SL in points
+input bool fractalsTSL = false; // Fractal Trailing SL
+input bool movingAverageTSL = false; // Moving Average Trailing SL
+input bool tenkansenTSL = false; // Ichimoku Kijunsen Line Trailing SL
+input bool kijunsenTSL = false; // Ichimoku Kijunsen Line Trailing SL
+
+
+sinput string ______________3 = ""; // ------------- Auto Position Management Settings -------------
+input int TslOffsetPoints = 10; // Points Above/Below the MA
+input int TslPoints = 50; // Points for Regular TSL
+input ENUM_TIMEFRAMES TimeFrame = 1; // Time frame
+input double breakevenRatio = 1; // Break Even Ratio
 input int MaPeriod = 8; // MA Period
 input int MaShift = 5; // MA Shift
 input ENUM_MA_METHOD TslMaMethod = MODE_SMMA; // MA Method
 input ENUM_APPLIED_PRICE TslMaAppPrice = PRICE_MEDIAN; // MA Price
-input double breakevenRatio = 1; // Break Even Ratio
-
-input bool autoBreakEven = false; // Auto Break Even
-
-input bool fractalsTSL = false; // Fractal Trailing Stoploss
-input bool movingAverageTSL = false; // Moving Average Trailing Stoploss
-
 
 int barsTotal;
 
@@ -44,6 +49,7 @@ int maShift;
 
 int handleFractal;
 int handleMA;
+int handleIchimoku;
 
 string text;
 
@@ -108,6 +114,7 @@ double lineTpNew;
 #define LIST_HEIGHT                         (179)     // size by Y coordinate
 #define RADIO_HEIGHT                        (56)      // size by Y coordinate
 #define CHECK_HEIGHT                        (93)      // size by Y coordinate
+
 //+------------------------------------------------------------------+
 //| Class CControlsDialog                                            |
 //| Usage: main dialog of the Controls application                   |
@@ -1571,27 +1578,40 @@ int OnInit()
    ExtDialog.Run();
 
 // Auto Position Management EA initialization
-   handleFractal = iFractals(_Symbol, TimeFrame);
-   handleMA = iMA(_Symbol, TimeFrame, MaPeriod, MaShift, TslMaMethod, TslMaAppPrice);
 
-   long totalPos = PositionsTotal();
-
-   for(int i = 0; i < totalPos; i++)
+   if(fractalsTSL)
      {
-      ulong originalPosTicket = PositionGetTicket(i);
-      if(PositionSelectByTicket(originalPosTicket))
-
-        {
-         double originalPosSl = NormalizeDouble(PositionGetDouble(POSITION_SL),5);
-         if(PositionGetString(POSITION_SYMBOL) == _Symbol)
-           {
-            ArrayResize(originalPosSlArr,i+1);
-            originalPosSlArr[i].posTicketArr = originalPosTicket;
-            originalPosSlArr[i].posSlArr = originalPosSl;
-
-           }
-        }
+      handleFractal = iFractals(_Symbol, TimeFrame);
      }
+
+   if(movingAverageTSL)
+     {
+      handleMA = iMA(_Symbol, TimeFrame, MaPeriod, MaShift, TslMaMethod, TslMaAppPrice);
+     }
+
+   if(kijunsenTSL || tenkansenTSL)
+     {
+      handleIchimoku = iIchimoku(_Symbol,PERIOD_CURRENT,9,26,52);
+     }
+
+
+   /*   ------ NOT SURE if this code is needed. 2022-09-13
+    long totalPos = PositionsTotal();
+    for(int i = 0; i < totalPos; i++)
+      {
+       ulong originalPosTicket = PositionGetTicket(i);
+       if(PositionSelectByTicket(originalPosTicket))
+         {
+          double originalPosSl = NormalizeDouble(PositionGetDouble(POSITION_SL),5);
+          if(PositionGetString(POSITION_SYMBOL) == _Symbol)
+            {
+             ArrayResize(originalPosSlArr,i+1);
+             originalPosSlArr[i].posTicketArr = originalPosTicket;
+             originalPosSlArr[i].posSlArr = originalPosSl;
+            }
+         }
+      }
+   */
 
 //--- succeed
    return(INIT_SUCCEEDED);
@@ -1625,13 +1645,11 @@ void OnChartEvent(const int id,         // event ID
 //+------------------------------------------------------------------+
 void OnTick()
   {
-
    if(autoPosMgmtToggle)
      {
       double spreadPos = SymbolInfoInteger(Symbol(),SYMBOL_SPREAD);
       int bars = iBars(_Symbol, TimeFrame);
       int totalPos = PositionsTotal();
-
 
       text = "-----------------------------\nPosition Management EA\n " + _Symbol + " " +_Period + "\n";
       text += "------------------------------\n";
@@ -1642,10 +1660,8 @@ void OnTick()
       text += "MA Period = " + (string)MaPeriod +  " | Shift = " + (string)MaShift + " | TF = "  + (string)TimeFrame + "\n";
       text += "TSL Fra   = [ " + (string)fractalsTSL + " ]\n";
       text += "TSL MA  = [ " + (string)movingAverageTSL + " ]\n";
-      text += "Auto BE  = [ " + (string)autoBreakEven + " ]";
-
-      Comment(text);
-      text="";
+      text += "Auto BE  = [ " + (string)autoBreakEven + " ]" + " ]\n";
+      text += "Points TSL = [ " + (string)pointsTSL + " ]";
 
       //+------------------------------------------------------------------+
       //|        Trailing SL activated by a new Tick                       |
@@ -1661,20 +1677,29 @@ void OnTick()
                if(PositionGetString(POSITION_SYMBOL) == _Symbol)
                  {
                   CTrade trade;
-                  double posOpenPrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),4);
-                  double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),4);
-                  double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),4);
+                  double posOpenPrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),_Digits);
+                  double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),_Digits);
+                  double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),_Digits);
 
-                  double bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),4);
-                  double ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),4);
+                  double bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
+                  double ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
+                  double oldPosSl;
+
                   //+------------------------------------------------------------------+
                   //|         Break Even                                               |
                   //+------------------------------------------------------------------+
 
-                  double oldPosSl;
+
 
                   if(breakevenRatio > 0 && NormalizeDouble(posOpenPrice,4) != oldPosSl && posOpenPrice != posSl)
+
                     {
+
+                     // --------------------
+                     // --- BUY POSITION ---
+                     // --------------------
+
+
                      if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position has type BUY
                        {
                         double posTriggerBuy = NormalizeDouble((posOpenPrice - posSl) * breakevenRatio,_Digits);
@@ -1691,6 +1716,12 @@ void OnTick()
                              }
                           }
                        }
+
+
+                     // --------------------
+                     // --- SELL POSITION --
+                     // --------------------
+
 
                      if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL) // checking if the open position has type SELL
                        {
@@ -1709,19 +1740,97 @@ void OnTick()
                           }
                        }
                     } // Breakeven ratio > 0
-                 } // End of Auto Breakeven
-               //+------------------------------------------------------------------+
-               //|        End of Break Even                                         |
-               //+------------------------------------------------------------------+
+                 }
               }
-           }
+           } // for loop
+        } // if autobreakeven
+      //+------------------------------------------------------------------+
+      //|        End of Break Even                                         |
+      //+------------------------------------------------------------------+
+
+
+      //+------------------------------------------------------------------+
+      //|       Regular TSL in Points                                      |
+      //+------------------------------------------------------------------+
+
+
+      if(pointsTSL && TslPoints > 0)
+        {
+         for(int i = 0; i < totalPos; i++)
+           {
+            ulong posTicket = PositionGetTicket(i);
+
+            if(PositionSelectByTicket(posTicket))
+              {
+               if(PositionGetString(POSITION_SYMBOL) == _Symbol)
+                 {
+                  CTrade trade;
+                  double posOpenPrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),_Digits);
+                  double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),_Digits);
+                  double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),_Digits);
+
+                  double bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
+                  double ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
+                  double oldPosSl;
+
+                  if(TslPoints > spreadPos)
+                    {
+                     // --------------------
+                     // --- BUY POSITION ---
+                     // --------------------
+
+                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
+                       {
+                        double sl = NormalizeDouble(bid - TslPoints * _Point,_Digits);
+
+                        if(sl > posSl && sl < bid)
+                          {
+
+                           if(trade.PositionModify(posTicket,sl,posTp))
+                             {
+                              Print(__FUNCTION__," > Position #",posTicket," was modified by Regular TSL BUY.");
+                             }
+                          }
+                       }
+
+                     // ---------------------
+                     // --- SELL POSITION ---
+                     // ---------------------
+
+                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
+                       {
+                        double sl = NormalizeDouble(ask + TslPoints * _Point,_Digits);
+
+                        if(sl < posSl && sl > ask || posSl == 0)
+                          {
+                           if(trade.PositionModify(posTicket,sl,posTp))
+                             {
+                              Print(__FUNCTION__," > Position #",posTicket," was modified by Regular TSL SELL.");
+                             }
+                          }
+                       }
+                    }
+                 } // +Symbol
+              } // posTicket
+           } // for loop
         }
+      //+------------------------------------------------------------------+
+      //|      End of Regular TSL in Points                                |
+      //+------------------------------------------------------------------+
+
+
+
+
+
 
       //+------------------------------------------------------------------+
       //|        Trailing SL activated by a new bar                        |
       //+------------------------------------------------------------------+
 
 
+      //+------------------------------------------------------------------+
+      //|                                                                  |
+      //+------------------------------------------------------------------+
       if(barsTotal != bars && totalPos > 0)  // New bar appeared on the chart
         {
          barsTotal = bars;
@@ -1734,12 +1843,12 @@ void OnTick()
 
          if(fracUpper[0] != EMPTY_VALUE)
            {
-            mainUpper = NormalizeDouble(fracUpper[0] + (TslOffsetPoints + spreadPos) * _Point, 4);
+            mainUpper = NormalizeDouble(fracUpper[0] + (TslOffsetPoints + spreadPos) * _Point, _Digits);
            }
 
          if(fracLower[0] != EMPTY_VALUE)
            {
-            mainLower = NormalizeDouble(fracLower[0] - (TslOffsetPoints + spreadPos) * _Point, 4);
+            mainLower = NormalizeDouble(fracLower[0] - (TslOffsetPoints + spreadPos) * _Point, _Digits);
            }
 
          for(int i = 0; i < totalPos; i++)
@@ -1751,12 +1860,12 @@ void OnTick()
                if(PositionGetString(POSITION_SYMBOL) == _Symbol)
                  {
                   CTrade trade;
-                  double posOpenPrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),4);
-                  double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),4);
+                  double posOpenPrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),_Digits);
+                  double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),_Digits);
                   double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),4);
 
-                  double bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),4);
-                  double ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),4);
+                  double bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
+                  double ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
 
                   double ma[];
                   CopyBuffer(handleMA,MAIN_LINE,1,MaShift,ma);
@@ -1833,13 +1942,13 @@ void OnTick()
                        {
                         if(ArraySize(ma) > 0)
                           {
-                           double sl = NormalizeDouble(NormalizeDouble(ma[MaShift - 1],4) - (TslOffsetPoints + spreadPos) * _Point,4);
+                           double sl = NormalizeDouble(NormalizeDouble(ma[MaShift - 1],_Digits) - (TslOffsetPoints + spreadPos) * _Point,_Digits);
 
                            if(sl > posSl && sl < bid)
                              {
                               if(trade.PositionModify(posTicket,sl,posTp))
                                 {
-                                 Print(NormalizeDouble(sl - posSl,4), " ", NormalizeDouble(bid - sl,4));
+                                 Print(NormalizeDouble(sl - posSl,4), " ", NormalizeDouble(bid - sl,_Digits));
                                  Print("SL = ",sl, " TP = ", posTp);
                                  Print(__FUNCTION__," > Position #",posTicket," was modified by ma tsl.");
                                 }
@@ -1856,7 +1965,7 @@ void OnTick()
                        {
                         if(ArraySize(ma) > 0)
                           {
-                           double sl = NormalizeDouble(NormalizeDouble(ma[MaShift - 1],4) + (TslOffsetPoints + spreadPos) * _Point,4);
+                           double sl = NormalizeDouble(NormalizeDouble(ma[MaShift - 1],_Digits) + (TslOffsetPoints + spreadPos) * _Point,_Digits);
                            if(sl < posSl || posSl == 0)
                              {
                               if(trade.PositionModify(posTicket,sl,posTp))
@@ -1876,11 +1985,129 @@ void OnTick()
                   //+------------------------------------------------------------------+
 
 
+                  //+------------------------------------------------------------------+
+                  //|       Kinjunsen TSL                                              |
+                  //+------------------------------------------------------------------+
+
+
+                  if(kijunsenTSL)
+                    {
+                     double KijunsenArr[];
+                     CopyBuffer(handleIchimoku,1,0,2,KijunsenArr);
+
+
+                     // --------------------
+                     // --- BUY POSITION ---
+                     // --------------------
+
+                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
+                       {
+                        if(ArraySize(KijunsenArr) > 0)
+                          {
+                           double sl = NormalizeDouble(NormalizeDouble(KijunsenArr[0],_Digits) - (TslOffsetPoints + spreadPos) * _Point,_Digits);
+
+                           if(sl > posSl && sl < bid)
+                             {
+                              if(trade.PositionModify(posTicket,sl,posTp))
+                                {
+                                 Print(__FUNCTION__," > Position #",posTicket," was modified by Kijunsen tsl.");
+                                }
+                             }
+                          }
+
+                       }
+
+                     // ---------------------
+                     // --- SELL POSITION ---
+                     // ---------------------
+
+                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
+                       {
+                        if(ArraySize(KijunsenArr) > 0)
+                          {
+                           double sl = NormalizeDouble(NormalizeDouble(KijunsenArr[0],_Digits) + (TslOffsetPoints + spreadPos) * _Point,_Digits);
+                           if(sl < posSl || posSl == 0)
+                             {
+                              if(trade.PositionModify(posTicket,sl,posTp))
+                                {
+                                 Print(__FUNCTION__," > Position #",posTicket," was modified by Kijunsen tsl.");
+                                }
+                             }
+                          }
+                       }
+                    }
+                  //+------------------------------------------------------------------+
+                  //|       End of Kinjunsen TSL                                       |
+                  //+------------------------------------------------------------------+
+
+
+
+                  //+------------------------------------------------------------------+
+                  //|       Tenkansen TSL                                              |
+                  //+------------------------------------------------------------------+
+
+
+                  if(tenkansenTSL)
+                    {
+                     double TenkansenArr[];
+                     CopyBuffer(handleIchimoku,1,0,2,TenkansenArr);
+
+
+                     // --------------------
+                     // --- BUY POSITION ---
+                     // --------------------
+
+                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
+                       {
+                        if(ArraySize(TenkansenArr) > 0)
+                          {
+                           double sl = NormalizeDouble(NormalizeDouble(TenkansenArr[0],_Digits) - (TslOffsetPoints + spreadPos) * _Point,_Digits);
+
+                           if(sl > posSl && sl < bid)
+                             {
+                              if(trade.PositionModify(posTicket,sl,posTp))
+                                {
+                                 Print(__FUNCTION__," > Position #",posTicket," was modified by Tenkansen tsl.");
+                                }
+                             }
+                          }
+                       }
+
+                     // ---------------------
+                     // --- SELL POSITION ---
+                     // ---------------------
+
+                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
+                       {
+                        if(ArraySize(TenkansenArr) > 0)
+                          {
+                           double sl = NormalizeDouble(NormalizeDouble(TenkansenArr[0],_Digits) + (TslOffsetPoints + spreadPos) * _Point,_Digits);
+                           if(sl < posSl || posSl == 0)
+                             {
+                              if(trade.PositionModify(posTicket,sl,posTp))
+                                {
+                                 Print(__FUNCTION__," > Position #",posTicket," was modified by Tenkansen tsl.");
+                                }
+                             }
+                          }
+                       }
+                    }
+                  //+------------------------------------------------------------------+
+                  //|       End of Tenkansen TSL                                       |
+                  //+------------------------------------------------------------------+
+
+
 
                  } // if pos symbol
               } // if pos ticket
            } // for loop
         } // bars total
+
+      //+------------------------------------------------------------------+
+      //|                                                                  |
+      //+------------------------------------------------------------------+
+      Comment(text);
+      text="";
      } // autoPosMgmtToggle
   }// OnTick
 
@@ -1909,11 +2136,11 @@ bool CControlsDialog::GetOrderData()
    ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
    bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);
 
-   slSell = NormalizeDouble(bid + slPips*_Point*10,4);
-   slBuy = NormalizeDouble(ask - slPips*_Point*10,4);
+   slSell = NormalizeDouble(bid + slPips*_Point*10,_Digits);
+   slBuy = NormalizeDouble(ask - slPips*_Point*10,_Digits);
 
-   tpSell = NormalizeDouble(bid - RiskToReward * (slSell - bid),4);
-   tpBuy = NormalizeDouble(ask + RiskToReward * (ask - slBuy),4);
+   tpSell = NormalizeDouble(bid - RiskToReward * (slSell - bid),_Digits);
+   tpBuy = NormalizeDouble(ask + RiskToReward * (ask - slBuy),_Digits);
    return(true);
   }
 
@@ -1923,13 +2150,13 @@ bool CControlsDialog::GetOrderData()
 //+------------------------------------------------------------------+
 bool CControlsDialog::GetDataFromLines()
   {
-   linePriceNew = NormalizeDouble(ObjectGetDouble(0,"priceLine",OBJPROP_PRICE),4);
-   lineSlNew =  NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),4);
-   lineTpNew =  NormalizeDouble(ObjectGetDouble(0,"takeProfitLine",OBJPROP_PRICE),4);
+   linePriceNew = NormalizeDouble(ObjectGetDouble(0,"priceLine",OBJPROP_PRICE),_Digits);
+   lineSlNew =  NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),_Digits);
+   lineTpNew =  NormalizeDouble(ObjectGetDouble(0,"takeProfitLine",OBJPROP_PRICE),_Digits);
 
-   m_PriceEdit.Text(DoubleToString(linePriceNew,4));
-   m_SlEdit.Text(DoubleToString(lineSlNew,4));
-   m_TpEdit.Text(DoubleToString(lineTpNew,4));
+   m_PriceEdit.Text(DoubleToString(linePriceNew,_Digits));
+   m_SlEdit.Text(DoubleToString(lineSlNew,_Digits));
+   m_TpEdit.Text(DoubleToString(lineTpNew,_Digits));
    return(true);
   }
 
@@ -1945,8 +2172,8 @@ bool CControlsDialog::MarketSellOrder()
      {
       GetOrderData();
 
-      Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,4),
-            " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,4));
+      Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,_Digits),
+            " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,_Digits));
 
       if(posLots > 0 && slPips > 0 && RiskToReward > 0)
         {
@@ -1979,8 +2206,8 @@ bool  CControlsDialog::MarketBuyOrder()
      {
       GetOrderData();
 
-      Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,5),
-            " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,5));
+      Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,_Digits),
+            " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,_Digits));
 
       if(posLots > 0 && slPips > 0 && RiskToReward > 0)
         {
@@ -2114,8 +2341,8 @@ bool CControlsDialog::MarketSellDoubleOrder()
       tpSell =  slSell - 2*(slSell - bid);
       posLots = NormalizeDouble(0.5 * posLots,2);
 
-      Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,4),
-            " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,4));
+      Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,_Digits),
+            " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,_Digits));
 
       if(posLots > 0 && slPips > 0 && RiskToReward > 0)
         {
@@ -2155,8 +2382,8 @@ bool  CControlsDialog::MarketBuyDoubleOrder()
       tpBuy =  ask + ask - slBuy;
       posLots = NormalizeDouble(0.5 * posLots,2);
 
-      Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,5),
-            " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,5));
+      Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,_Digits),
+            " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,_Digits));
 
       if(posLots > 0 && slPips > 0 && RiskToReward > 0)
         {
@@ -2329,16 +2556,16 @@ bool CControlsDialog::CalculatePosition()
 
       if(pendingToggle)
         {
-         inputPrice = NormalizeDouble(ObjectGetDouble(0,"priceLine",OBJPROP_PRICE),4);
+         inputPrice = NormalizeDouble(ObjectGetDouble(0,"priceLine",OBJPROP_PRICE),_Digits);
          string inputPriceStr = DoubleToString(inputPrice,4);
          m_PriceEdit.Text(inputPriceStr);
         }
 
-      inputStopLoss = NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),4);
-      inputTakeProfit = NormalizeDouble(ObjectGetDouble(0,"takeProfitLine",OBJPROP_PRICE),4);
+      inputStopLoss = NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),_Digits);
+      inputTakeProfit = NormalizeDouble(ObjectGetDouble(0,"takeProfitLine",OBJPROP_PRICE),_Digits);
 
-      string inputStopLossStr = DoubleToString(inputStopLoss,4);
-      string inputTakeProfitStr = DoubleToString(inputTakeProfit,4);
+      string inputStopLossStr = DoubleToString(inputStopLoss,_Digits);
+      string inputTakeProfitStr = DoubleToString(inputTakeProfit,_Digits);
 
       m_SlEdit.Text(inputStopLossStr);
       m_TpEdit.Text(inputTakeProfitStr);
@@ -2416,6 +2643,10 @@ bool CControlsDialog::CalculatePosition()
 
    return(true);
   }
+
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
 
