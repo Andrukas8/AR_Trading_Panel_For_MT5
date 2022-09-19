@@ -80,6 +80,7 @@ bool buyToggle = false;
 bool stopToggle = false;
 bool limitToggle = false;
 bool autoPosMgmtToggle = false;
+bool boxOnToggle = false;
 
 double inputStopLoss;
 double inputTakeProfit;
@@ -159,6 +160,7 @@ private:
    CButton           m_AutoPosMgmtToggleBtn;
    CButton           m_DoubleOrderBtn;
    CButton           m_DrawPositionsBtn;
+   CButton           m_Box;
 
 public:
                      CControlsDialog(void);
@@ -186,6 +188,7 @@ protected:
    bool              CreateAutoPosMgmtToggleBtn(void);
    bool              CreateDoubleOrderBtn(void);
    bool              CreateDrawPositionsBtn(void);
+   bool              CreateBoxBtn(void);
 
    bool              CreateLotsEdit(void);
    bool              CreateSlPipsEdit(void);
@@ -240,6 +243,7 @@ protected:
    void              OnClickAutoPosMgmtToggleBtn(void);
    void              OnClickDoubleOrderBtn(void);
    void              OnClickDrawPositionsBtn(void);
+   void              OnclickBoxBtn(void);
 
   };
 //+------------------------------------------------------------------+
@@ -262,6 +266,7 @@ ON_EVENT(ON_CLICK,m_LimitToggleBtn,OnClickLimitToggleBtn)
 ON_EVENT(ON_CLICK,m_AutoPosMgmtToggleBtn,OnClickAutoPosMgmtToggleBtn)
 ON_EVENT(ON_CLICK,m_DoubleOrderBtn,OnClickDoubleOrderBtn)
 ON_EVENT(ON_CLICK,m_DrawPositionsBtn,OnClickDrawPositionsBtn)
+ON_EVENT(ON_CLICK,m_Box,OnclickBoxBtn)
 EVENT_MAP_END(CAppDialog)
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
@@ -352,6 +357,8 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
    if(!CreateDoubleOrderBtn())
       return(false);
    if(!CreateDrawPositionsBtn())
+      return(false);
+   if(!CreateBoxBtn())
       return(false);
 
 //--- succeed
@@ -783,7 +790,7 @@ bool CControlsDialog::CreateCloseAllBtn(void)
 //--- coordinates
    int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH;
+   int x2=x1+BUTTON_WIDTH/2;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_CloseAllBtn.Create(m_chart_id,m_name+"CloseAllBtn",m_subwin,x1,y1,x2,y2))
@@ -795,6 +802,30 @@ bool CControlsDialog::CreateCloseAllBtn(void)
 //--- succeed
    return(true);
   }
+
+
+//+------------------------------------------------------------------+
+//| Create the "Box"   button                                        |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateBoxBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+(BUTTON_WIDTH+BUTTON_WIDTH/2+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/2;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_Box.Create(m_chart_id,m_name+"BoxBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_Box.Text("Box"))
+      return(false);
+   if(!Add(m_Box))
+      return(false);
+//--- succeed
+   return(true);
+  }
+
+
 
 
 //+------------------------------------------------------------------+
@@ -1129,6 +1160,57 @@ void CControlsDialog::OnClickCloseAllBtn(void)
      } // end of for loop
    Comment(__FUNCTION__);
   }
+
+
+
+//+------------------------------------------------------------------+
+//| Event handler for Box Button                                     |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnclickBoxBtn(void)
+  {
+
+   if(boxOnToggle)
+     {
+      boxOnToggle = false;
+     }
+   else
+      if(!boxOnToggle)
+        {
+         boxOnToggle = true;
+
+
+        }
+
+   if(boxOnToggle)
+     {
+     Print("Making box");
+     
+     
+    //  datetime time1 = D'2002.04.25 12:00';
+      //int barTime_1 = 
+     // datetime time2 = time1+(PeriodSeconds(_Period)*15);
+      //double price1 = PositionGetDouble(POSITION_PRICE_OPEN);
+      //double price2 = PositionGetDouble(POSITION_SL);
+      //double price3 = PositionGetDouble(POSITION_TP);
+      
+      // use tf = 1 min
+      //iTime()
+      //iHighest()
+      //iLowest()
+      
+      //ObjectCreate(0, "BoxRectangle", OBJ_RECTANGLE, 0, time1, 109, time2, 108); //  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+      //ObjectSetInteger(0,"BoxRectangle",OBJPROP_COLOR,clrDarkRed);
+      //ObjectSetInteger(0,"BoxRectangle",OBJPROP_FILL,false);
+      //ObjectSetInteger(0,"BoxRectangle",OBJPROP_SELECTABLE,true);
+     } else if(!boxOnToggle)
+              {
+               // remove box
+               Print("Removing box");
+              }              
+
+   Comment(__FUNCTION__);
+  }
+
 
 
 
