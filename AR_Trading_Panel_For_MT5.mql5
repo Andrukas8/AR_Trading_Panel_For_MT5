@@ -37,6 +37,11 @@ input int MaShift = 5; // MA Shift
 input ENUM_MA_METHOD TslMaMethod = MODE_SMMA; // MA Method
 input ENUM_APPLIED_PRICE TslMaAppPrice = PRICE_MEDIAN; // MA Price
 
+
+sinput string ______________4 = ""; // ------------- Box Settings ----------------------------------
+input string timeFrom = "00:00"; // From Time
+input string timeTill = "03:00"; // Till Time
+
 int barsTotal;
 
 double mainUpper = 0;
@@ -1168,7 +1173,6 @@ void CControlsDialog::OnClickCloseAllBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnclickBoxBtn(void)
   {
-
    if(boxOnToggle)
      {
       boxOnToggle = false;
@@ -1177,37 +1181,34 @@ void CControlsDialog::OnclickBoxBtn(void)
       if(!boxOnToggle)
         {
          boxOnToggle = true;
-
-
         }
 
    if(boxOnToggle)
      {
-     Print("Making box");
-     
-     
-    //  datetime time1 = D'2002.04.25 12:00';
-      //int barTime_1 = 
-     // datetime time2 = time1+(PeriodSeconds(_Period)*15);
-      //double price1 = PositionGetDouble(POSITION_PRICE_OPEN);
-      //double price2 = PositionGetDouble(POSITION_SL);
-      //double price3 = PositionGetDouble(POSITION_TP);
-      
-      // use tf = 1 min
-      //iTime()
-      //iHighest()
-      //iLowest()
-      
-      //ObjectCreate(0, "BoxRectangle", OBJ_RECTANGLE, 0, time1, 109, time2, 108); //  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-      //ObjectSetInteger(0,"BoxRectangle",OBJPROP_COLOR,clrDarkRed);
-      //ObjectSetInteger(0,"BoxRectangle",OBJPROP_FILL,false);
-      //ObjectSetInteger(0,"BoxRectangle",OBJPROP_SELECTABLE,true);
-     } else if(!boxOnToggle)
-              {
-               // remove box
-               Print("Removing box");
-              }              
+      Print("Making box");
+      datetime time1 = StringToTime(timeFrom);
+      datetime time2 = StringToTime(timeTill);
+      int      time1_shift    = iBarShift(_Symbol,PERIOD_CURRENT,time1);
+      int      time2_shift    = iBarShift(_Symbol,PERIOD_CURRENT,time2);
+      int      bar_count   = time1_shift-time2_shift;
+      int      high_shift  = iHighest(_Symbol,PERIOD_CURRENT,MODE_HIGH,bar_count,time2_shift);
+      int      low_shift   = iLowest(_Symbol,PERIOD_CURRENT,MODE_LOW,bar_count,time2_shift);
+      double   price1        = iHigh(_Symbol,PERIOD_CURRENT,high_shift);
+      double   price2         = iLow(_Symbol,PERIOD_CURRENT,low_shift);
+      Print(time1," -> ",time2,":: High = ",price1," Low = ",price2);
 
+      ObjectCreate(0, "BoxRectangle", OBJ_RECTANGLE, 0, time1, price1, time2, price2);
+      ObjectSetInteger(0,"BoxRectangle",OBJPROP_COLOR,clrSkyBlue);
+      ObjectSetInteger(0,"BoxRectangle",OBJPROP_FILL,false);
+      ObjectSetInteger(0,"BoxRectangle",OBJPROP_SELECTABLE,true);
+     }
+   else
+      if(!boxOnToggle)
+        {
+         // remove box
+         Print("Removing box");
+         ObjectDelete(0,"BoxRectangle");
+        }
    Comment(__FUNCTION__);
   }
 
@@ -1356,7 +1357,6 @@ void CControlsDialog::OnClickShowLinesBtn(void)
    if(!lineInput)
      {
       lineInput = true;
-      m_ShowLinesBtn.Text("Hide");
 
       // Line Price
       ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
@@ -1442,7 +1442,6 @@ void CControlsDialog::OnClickShowLinesBtn(void)
       if(lineInput)
         {
          lineInput = false;
-         m_ShowLinesBtn.Text("\x4E09");
          ObjectDelete(0,"priceLine");
          ObjectDelete(0,"stopLossLine");
          ObjectDelete(0,"takeProfitLine");
