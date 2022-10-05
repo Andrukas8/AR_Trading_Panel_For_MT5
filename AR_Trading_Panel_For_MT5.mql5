@@ -13,21 +13,22 @@
 #include <Controls\Button.mqh>
 #include <Controls\Edit.mqh>
 #include <Controls\Label.mqh>
-sinput string ______________1 = ""; // ------------- Position Variables ----------------------------
+
+input group "------------- Position Variables ----------------------------"
 input string posLotsDef = "0.1"; // Lot size
 input string slPipsDef = "10"; // Stoploss in pips
 input string RiskToRewardDef = "2"; // Risk to Reward Ratio
+input string RiskLevelDef = "0.2"; // Risk % of Capital
 
-sinput string ______________2  = ""; // ------------- Auto Position Management Controls ------------
+input group "------------- Auto Position Management Controls ------------"
 input bool autoBreakEven = false; // Auto Break Even
 input bool pointsTSL = false; // Regular Trailing SL in points
 input bool fractalsTSL = false; // Fractal Trailing SL
 input bool movingAverageTSL = false; // Moving Average Trailing SL
-input bool tenkansenTSL = false; // Ichimoku Kijunsen Line Trailing SL
+input bool tenkansenTSL = false; // Ichimoku Tenkansen Line Trailing SL
 input bool kijunsenTSL = false; // Ichimoku Kijunsen Line Trailing SL
 
-
-sinput string ______________3 = ""; // ------------- Auto Position Management Settings -------------
+input group "------------- Auto Position Management Settings -------------"
 input int TslOffsetPoints = 10; // Points Above/Below the MA
 input int TslPoints = 50; // Points for Regular TSL
 input ENUM_TIMEFRAMES TimeFrame = 1; // Time frame
@@ -37,8 +38,7 @@ input int MaShift = 5; // MA Shift
 input ENUM_MA_METHOD TslMaMethod = MODE_SMMA; // MA Method
 input ENUM_APPLIED_PRICE TslMaAppPrice = PRICE_MEDIAN; // MA Price
 
-
-sinput string ______________4 = ""; // ------------- Box Settings ----------------------------------
+input group "------------- Box Settings ----------------------------------"
 input string timeFrom = "00:00"; // From Time
 input string timeTill = "03:00"; // Till Time
 
@@ -669,7 +669,9 @@ bool CControlsDialog::CreateRiskEdit(void)
 //--- allow editing the content
    if(!m_RiskEdit.ReadOnly(false))
       return(false);
-
+//--- Assign default value from the inputs
+   if(!m_RiskEdit.Text(RiskLevelDef))
+      return(false);
    if(!Add(m_RiskEdit))
       return(false);
 //--- succeed
