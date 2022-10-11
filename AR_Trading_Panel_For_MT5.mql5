@@ -229,7 +229,7 @@ protected:
    bool              PendingBuyStopDoubleOrder(void);
    bool              PendingBuyLimitDoubleOrder(void);
    bool              CalculatePosition(void);
-   bool              CheckPositionVolume(double lotSize);
+   double            CheckPositionVolume(double lotSize);
 
 
    //--- handlers of the dependent controls events
@@ -1276,6 +1276,7 @@ void CControlsDialog::OnClickDoubleOrderBtn(void)
 void CControlsDialog::OnClickCalculatePosBtn(void)
   {
    CalculatePosition();
+
    Comment(__FUNCTION__);
   }
 
@@ -1636,6 +1637,7 @@ CControlsDialog ExtDialog;
 //+------------------------------------------------------------------+
 int OnInit()
   {
+
    ObjectDelete(0,"priceLine");
    ObjectDelete(0,"stopLossLine");
    ObjectDelete(0,"takeProfitLine");
@@ -2163,19 +2165,13 @@ void OnTick()
 //+------------------------------------------------------------------+
 bool CControlsDialog::GetOrderData()
   {
-
-   posLots = CheckPositionVolume(NormalizeDouble(StringToDouble(m_LotsEdit.Text()),2));
-
+   posLots = CheckPositionVolume(NormalizeDouble(StringToDouble(m_LotsEdit.Text()),3));
    slPips = NormalizeDouble(StringToDouble(m_SlPipsEdit.Text()),2);
-
    RiskToReward = NormalizeDouble(StringToDouble(m_RiskToRewardRatioEdit.Text()),2);
-
    ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
    bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);
-
    slSell = NormalizeDouble(bid + slPips*_Point*10,_Digits);
    slBuy = NormalizeDouble(ask - slPips*_Point*10,_Digits);
-
    tpSell = NormalizeDouble(bid - RiskToReward * (slSell - bid),_Digits);
    tpBuy = NormalizeDouble(ask + RiskToReward * (ask - slBuy),_Digits);
    return(true);
@@ -2588,24 +2584,6 @@ bool CControlsDialog::PendingBuyLimitDoubleOrder()
   }
 
 
-//+--------------------------------------------------------------------------------------------+
-//|     Checking if position is greater than minimum lot size and if it is divisible by it     |
-//+--------------------------------------------------------------------------------------------+
-bool CControlsDialog::CheckPositionVolume(double lotSize)
-  {
-   double minVol = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
-   if(lotSize < minVol)
-      lotSize = minVol;
-
-   if(MathMod(lotSize,minVol) != 0)
-      lotSize = lotSize - MathMod(lotSize,minVol);
-
-   Print(__FUNCTION__," ",lotSize," ",minVol);
-
-   return(lotSize);
-  }
-
-
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -2664,9 +2642,9 @@ bool CControlsDialog::CalculatePosition()
       double LotsCalculated = CheckPositionVolume((0.01 * NormalizeDouble(AmountToRisk/calcSlPips*10/ValuePp,2)));
 
       string LotsCalculatedStr = DoubleToString(LotsCalculated,2);
+
       m_LotsEdit.Text(DoubleToString(LotsCalculated,2));
       Print("SL Pips = ",calcSlPips);
-      Print(calcRRR);
       Print("Lots = ", LotsCalculated, " ",LotsCalculatedStr);
      }
    else
@@ -2705,6 +2683,45 @@ bool CControlsDialog::CalculatePosition()
         }
 
    return(true);
+  }
+
+
+
+//+--------------------------------------------------------------------------------------------+
+//|     Checking if position is greater than minimum lot size and if it is divisible by it     |
+//+--------------------------------------------------------------------------------------------+
+
+//+--------------------------------------------------------------------------------------------+
+//|     Checking if position is greater than minimum lot size and if it is divisible by it     |
+//+--------------------------------------------------------------------------------------------+
+double CControlsDialog::CheckPositionVolume(double lotSize)
+  {
+   double MinLot = SymbolInfoDouble(_Symbol,SYMBOL_VOLUME_MIN);
+   double MaxLot = SymbolInfoDouble(_Symbol,SYMBOL_VOLUME_MAX);
+   double StepLot = SymbolInfoDouble(_Symbol,SYMBOL_VOLUME_STEP);
+
+   int LotDigits;
+
+   if(MinLot == 0.001)
+      LotDigits = 3;
+   if(MinLot == 0.01)
+      LotDigits = 2;
+   if(MinLot == 0.1)
+      LotDigits = 1;
+
+   lotSize = NormalizeDouble(lotSize,LotDigits);
+
+   if(lotSize < MinLot)
+      lotSize = MinLot;
+
+   if(lotSize > MaxLot)
+      lotSize = MaxLot;
+
+   if(MathMod(lotSize,StepLot) != 0)
+      lotSize = lotSize - MathMod(lotSize,StepLot);
+
+   return(lotSize);
+
   }
 
 //+------------------------------------------------------------------+
