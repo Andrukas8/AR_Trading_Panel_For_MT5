@@ -1129,7 +1129,6 @@ bool CControlsDialog::CreateDrawPositionsBtn(void)
   }
 
 
-
 //+------------------------------------------------------------------+
 //| +++   Event handlers   +++                                       |
 //+------------------------------------------------------------------+
@@ -1168,8 +1167,6 @@ void CControlsDialog::OnClickCloseAllBtn(void)
      } // end of for loop
    Comment(__FUNCTION__);
   }
-
-
 
 //+------------------------------------------------------------------+
 //| Event handler for Box Button                                     |
@@ -1214,8 +1211,6 @@ void CControlsDialog::OnclickBoxBtn(void)
         }
    Comment(__FUNCTION__);
   }
-
-
 
 
 //+------------------------------------------------------------------+
@@ -1458,7 +1453,6 @@ void CControlsDialog::OnClickShowLinesBtn(void)
    Comment(__FUNCTION__);
   }
 
-
 //+------------------------------------------------------------------+
 //| Event handler for Sell Toggle Button                             |
 //+------------------------------------------------------------------+
@@ -1629,7 +1623,6 @@ void CControlsDialog::OnClickDrawPositionsBtn(void)
            }
         }
      }
-
 
    Comment(__FUNCTION__);
   }
@@ -1923,8 +1916,6 @@ void OnTick()
                   CopyBuffer(handleMA,MAIN_LINE,1,MaShift,ma);
 
 
-
-
                   //+------------------------------------------------------------------+
                   //|         Fractals                                                 |
                   //+------------------------------------------------------------------+
@@ -2094,7 +2085,6 @@ void OnTick()
                   //+------------------------------------------------------------------+
 
 
-
                   //+------------------------------------------------------------------+
                   //|       Tenkansen TSL                                              |
                   //+------------------------------------------------------------------+
@@ -2149,8 +2139,6 @@ void OnTick()
                   //|       End of Tenkansen TSL                                       |
                   //+------------------------------------------------------------------+
 
-
-
                  } // if pos symbol
               } // if pos ticket
            } // for loop
@@ -2163,8 +2151,6 @@ void OnTick()
       text="";
      } // autoPosMgmtToggle
   }// OnTick
-
-
 
 //+---------------------------------------------------------------------------------------+
 //+---------------------------------------------------------------------------------------+
@@ -2210,8 +2196,6 @@ bool CControlsDialog::GetDataFromLines()
    m_TpEdit.Text(DoubleToString(lineTpNew,_Digits));
    return(true);
   }
-
-
 
 //+------------------------------------------------------------------+
 //|                          Market Order SELL                       |
@@ -2263,7 +2247,8 @@ bool  CControlsDialog::MarketBuyOrder()
 
       if(posLots > 0 && slPips > 0 && RiskToReward > 0)
         {
-         if(trade.Buy(posLots,_Symbol,ask,slBuy,tpBuy,"This is a BUY trade"))
+         string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " BUY MARKET";
+         if(trade.Buy(posLots,_Symbol,ask,slBuy,tpBuy,tradeComment))
            {
             Print("Bought ",posLots," Lots of ",_Symbol," @ ",ask," SL = ",slBuy, " TP = ",tpBuy);
            }
@@ -2293,7 +2278,8 @@ bool CControlsDialog::PendingSellStopOrder()
 
    if(lineSlNew > linePriceNew && (linePriceNew >= lineTpNew) && linePriceNew < ask)
      {
-      if(trade.SellStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+      string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " SELL STOP";
+      if(trade.SellStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("SellStop Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
         }
@@ -2304,9 +2290,6 @@ bool CControlsDialog::PendingSellStopOrder()
      }
    return(true);
   }
-
-
-
 
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -2319,7 +2302,8 @@ bool CControlsDialog::PendingSellLimitOrder()
 
    if(lineSlNew > linePriceNew && (linePriceNew >= lineTpNew) && linePriceNew > ask)
      {
-      if(trade.SellLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+      string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " SELL LIMIT";
+      if(trade.SellLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("SellLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
         }
@@ -2341,7 +2325,8 @@ bool CControlsDialog::PendingBuyStopOrder()
 
    if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew > bid)
      {
-      if(trade.BuyStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+      string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " BUY STOP";
+      if(trade.BuyStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("BuyStop Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
         }
@@ -2363,7 +2348,8 @@ bool CControlsDialog::PendingBuyLimitOrder()
 
    if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew < bid)
      {
-      if(trade.BuyLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+      string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " BUY LIMIT";
+      if(trade.BuyLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("BuyLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
         }
@@ -2396,14 +2382,18 @@ bool CControlsDialog::MarketSellDoubleOrder()
       Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,_Digits),
             " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,_Digits));
 
+
+      string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE MARKET SELL";
+
       if(posLots > 0 && slPips > 0 && RiskToReward > 0)
         {
-         if(trade.Sell(posLots,_Symbol,bid,slSell,tpSell,"This is a SELL trade"))
+
+         if(trade.Sell(posLots,_Symbol,bid,slSell,tpSell,tradeComment))
            {
             Print("Sold ",posLots," Lots of ",_Symbol," @ ",bid," SL = ",slSell, " TP = ",tpSell);
            }
          tpSell = 0;
-         if(trade.Sell(posLots,_Symbol,bid,slSell,0,"This is a SELL trade"))
+         if(trade.Sell(posLots,_Symbol,bid,slSell,0,tradeComment))
            {
             Print("Sold ",posLots," Lots of ",_Symbol," @ ",bid," SL = ",slSell, " TP = ",tpSell);
            }
@@ -2437,15 +2427,17 @@ bool  CControlsDialog::MarketBuyDoubleOrder()
       Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,_Digits),
             " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,_Digits));
 
+      string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE MARKET BUY";
+
       if(posLots > 0 && slPips > 0 && RiskToReward > 0)
         {
-         if(trade.Buy(posLots,_Symbol,ask,slBuy,tpBuy,"This is a BUY trade"))
+         if(trade.Buy(posLots,_Symbol,ask,slBuy,tpBuy,tradeComment))
            {
             Print("Bought ",posLots," Lots of ",_Symbol," @ ",ask," SL = ",slBuy, " TP = ",tpBuy);
            }
 
          tpBuy =  0;
-         if(trade.Buy(posLots,_Symbol,ask,slBuy,tpBuy,"This is a BUY trade"))
+         if(trade.Buy(posLots,_Symbol,ask,slBuy,tpBuy,tradeComment))
            {
             Print("Bought ",posLots," Lots of ",_Symbol," @ ",ask," SL = ",slBuy, " TP = ",tpBuy);
            }
@@ -2477,18 +2469,19 @@ bool CControlsDialog::PendingSellStopDoubleOrder()
    lineTpNew = lineSlNew - 2*(lineSlNew - linePriceNew);
    posLots = CheckPositionVolume(NormalizeDouble(0.5 * posLots,2));
 
+   string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE SELL STOP";
+
    if(lineSlNew > linePriceNew && (linePriceNew >= lineTpNew) && linePriceNew < ask)
      {
-      if(trade.SellStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+      if(trade.SellStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("SellStop Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
         }
       lineTpNew = 0;
-      if(trade.SellStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+      if(trade.SellStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("SellStop Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
         }
-
      }
    else
      {
@@ -2496,7 +2489,6 @@ bool CControlsDialog::PendingSellStopDoubleOrder()
      }
    return(true);
   }
-
 
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -2512,12 +2504,13 @@ bool CControlsDialog::PendingSellLimitDoubleOrder()
 
    if(lineSlNew > linePriceNew && (linePriceNew >= lineTpNew) && linePriceNew > ask)
      {
-      if(trade.SellLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+      string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE SELL LIMIT";
+      if(trade.SellLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("SellLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
         }
       lineTpNew = 0;
-      if(trade.SellLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+      if(trade.SellLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("SellLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
         }
@@ -2529,6 +2522,7 @@ bool CControlsDialog::PendingSellLimitDoubleOrder()
      }
    return(true);
   }
+
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -2543,12 +2537,13 @@ bool CControlsDialog::PendingBuyStopDoubleOrder()
 
    if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew > bid)
      {
-      if(trade.BuyStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+      string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE BUY STOP";
+      if(trade.BuyStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("BuyStop Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
         }
       lineTpNew = 0;
-      if(trade.BuyStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+      if(trade.BuyStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("BuyStop Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
         }
@@ -2559,6 +2554,7 @@ bool CControlsDialog::PendingBuyStopDoubleOrder()
      }
    return(true);
   }
+
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -2573,12 +2569,13 @@ bool CControlsDialog::PendingBuyLimitDoubleOrder()
 
    if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew < bid)
      {
-      if(trade.BuyLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+      string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE BUY LIMIT";
+      if(trade.BuyLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("BuyLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
         }
       lineTpNew = 0;
-      if(trade.BuyLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew))
+      if(trade.BuyLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("BuyLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
         }
@@ -2590,8 +2587,6 @@ bool CControlsDialog::PendingBuyLimitDoubleOrder()
    return(true);
   }
 
-
-//+------------------------------------------------------------------+
 
 //+--------------------------------------------------------------------------------------------+
 //|     Checking if position is greater than minimum lot size and if it is divisible by it     |
@@ -2609,7 +2604,6 @@ bool CControlsDialog::CheckPositionVolume(double lotSize)
 
    return(lotSize);
   }
-
 
 
 //+------------------------------------------------------------------+
