@@ -2633,7 +2633,7 @@ bool CControlsDialog::CalculatePosition()
                  }
            }
 
-      calcRRR = NormalizeDouble(calcTpPips/calcSlPips,1);
+      calcRRR = NormalizeDouble(calcTpPips/calcSlPips,2);
 
       m_TpPipsEdit.Text(DoubleToString(NormalizeDouble(MathRound(calcTpPips),1),0));
       m_SlPipsEdit.Text(DoubleToString(NormalizeDouble(MathRound(calcSlPips),1),0));
