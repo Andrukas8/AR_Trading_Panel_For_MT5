@@ -50,8 +50,6 @@ double mainLower = 0;
 double mainUpperFractal = 0;
 double mainLowerFractal = 0;
 
-double minVol;
-
 int maShift;
 
 int handleFractal;
@@ -2600,7 +2598,7 @@ bool CControlsDialog::PendingBuyLimitDoubleOrder()
 //+--------------------------------------------------------------------------------------------+
 bool CControlsDialog::CheckPositionVolume(double lotSize)
   {
-   minVol = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
+   double minVol = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
    if(lotSize < minVol)
       lotSize = minVol;
 
