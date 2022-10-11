@@ -50,6 +50,8 @@ double mainLower = 0;
 double mainUpperFractal = 0;
 double mainLowerFractal = 0;
 
+double minVol;
+
 int maShift;
 
 int handleFractal;
@@ -229,6 +231,7 @@ protected:
    bool              PendingBuyStopDoubleOrder(void);
    bool              PendingBuyLimitDoubleOrder(void);
    bool              CalculatePosition(void);
+   bool              CheckPositionVolume(double lotSize);
 
 
    //--- handlers of the dependent controls events
@@ -1454,11 +1457,6 @@ void CControlsDialog::OnClickShowLinesBtn(void)
          m_StopToggleBtn.Text("STP");
          m_LimitToggleBtn.Text("LMT");
         }
-
-
-//+------------------------------------------------------------------+
-//|                                                                  |
-//+------------------------------------------------------------------+
    Comment(__FUNCTION__);
   }
 
@@ -1672,25 +1670,6 @@ int OnInit()
      {
       handleIchimoku = iIchimoku(_Symbol,PERIOD_CURRENT,9,26,52);
      }
-
-
-   /*   ------ NOT SURE if this code is needed. 2022-09-13
-    long totalPos = PositionsTotal();
-    for(int i = 0; i < totalPos; i++)
-      {
-       ulong originalPosTicket = PositionGetTicket(i);
-       if(PositionSelectByTicket(originalPosTicket))
-         {
-          double originalPosSl = NormalizeDouble(PositionGetDouble(POSITION_SL),5);
-          if(PositionGetString(POSITION_SYMBOL) == _Symbol)
-            {
-             ArrayResize(originalPosSlArr,i+1);
-             originalPosSlArr[i].posTicketArr = originalPosTicket;
-             originalPosSlArr[i].posSlArr = originalPosSl;
-            }
-         }
-      }
-   */
 
 //--- succeed
    return(INIT_SUCCEEDED);
@@ -2189,11 +2168,6 @@ void OnTick()
 
 
 
-
-
-
-
-
 //+---------------------------------------------------------------------------------------+
 //+---------------------------------------------------------------------------------------+
 //|                              +++ DEFINED FUNCTIONS +++                                |
@@ -2205,8 +2179,11 @@ void OnTick()
 //+------------------------------------------------------------------+
 bool CControlsDialog::GetOrderData()
   {
-   posLots = NormalizeDouble(StringToDouble(m_LotsEdit.Text()),2);
+
+   posLots = CheckPositionVolume(NormalizeDouble(StringToDouble(m_LotsEdit.Text()),2));
+
    slPips = NormalizeDouble(StringToDouble(m_SlPipsEdit.Text()),2);
+
    RiskToReward = NormalizeDouble(StringToDouble(m_RiskToRewardRatioEdit.Text()),2);
 
    ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
@@ -2253,7 +2230,8 @@ bool CControlsDialog::MarketSellOrder()
 
       if(posLots > 0 && slPips > 0 && RiskToReward > 0)
         {
-         if(trade.Sell(posLots,_Symbol,bid,slSell,tpSell,"This is a SELL trade"))
+         string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " SELL MARKET";
+         if(trade.Sell(posLots,_Symbol,bid,slSell,tpSell,tradeComment))
            {
             Print("Sold ",posLots," Lots of ",_Symbol," @ ",bid," SL = ",slSell, " TP = ",tpSell);
            }
@@ -2415,7 +2393,7 @@ bool CControlsDialog::MarketSellDoubleOrder()
       GetOrderData();
 
       tpSell =  slSell - 2*(slSell - bid);
-      posLots = NormalizeDouble(0.5 * posLots,2);
+      posLots = CheckPositionVolume(NormalizeDouble(0.5 * posLots,2));
 
       Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,_Digits),
             " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,_Digits));
@@ -2456,7 +2434,7 @@ bool  CControlsDialog::MarketBuyDoubleOrder()
       GetOrderData();
 
       tpBuy =  ask + ask - slBuy;
-      posLots = NormalizeDouble(0.5 * posLots,2);
+      posLots = CheckPositionVolume(NormalizeDouble(0.5 * posLots,2));
 
       Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,_Digits),
             " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,_Digits));
@@ -2499,7 +2477,7 @@ bool CControlsDialog::PendingSellStopDoubleOrder()
    GetDataFromLines();
 
    lineTpNew = lineSlNew - 2*(lineSlNew - linePriceNew);
-   posLots = NormalizeDouble(0.5 * posLots,2);
+   posLots = CheckPositionVolume(NormalizeDouble(0.5 * posLots,2));
 
    if(lineSlNew > linePriceNew && (linePriceNew >= lineTpNew) && linePriceNew < ask)
      {
@@ -2532,7 +2510,7 @@ bool CControlsDialog::PendingSellLimitDoubleOrder()
    GetDataFromLines();
 
    lineTpNew = lineSlNew - 2*(lineSlNew - linePriceNew);
-   posLots = NormalizeDouble(0.5 * posLots,2);
+   posLots = CheckPositionVolume(NormalizeDouble(0.5 * posLots,2));
 
    if(lineSlNew > linePriceNew && (linePriceNew >= lineTpNew) && linePriceNew > ask)
      {
@@ -2563,7 +2541,7 @@ bool CControlsDialog::PendingBuyStopDoubleOrder()
    GetDataFromLines();
 
    lineTpNew = linePriceNew + linePriceNew - lineSlNew;
-   posLots = NormalizeDouble(0.5 * posLots,2);
+   posLots = CheckPositionVolume(NormalizeDouble(0.5 * posLots,2));
 
    if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew > bid)
      {
@@ -2593,7 +2571,7 @@ bool CControlsDialog::PendingBuyLimitDoubleOrder()
    GetDataFromLines();
 
    lineTpNew = linePriceNew + linePriceNew - lineSlNew;
-   posLots = NormalizeDouble(0.5 * posLots,2);
+   posLots = CheckPositionVolume(NormalizeDouble(0.5 * posLots,2));
 
    if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew < bid)
      {
@@ -2616,6 +2594,24 @@ bool CControlsDialog::PendingBuyLimitDoubleOrder()
 
 
 //+------------------------------------------------------------------+
+
+//+--------------------------------------------------------------------------------------------+
+//|     Checking if position is greater than minimum lot size and if it is divisible by it     |
+//+--------------------------------------------------------------------------------------------+
+bool CControlsDialog::CheckPositionVolume(double lotSize)
+  {
+   minVol = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
+   if(lotSize < minVol)
+      lotSize = minVol;
+
+   if(MathMod(lotSize,minVol) != 0)
+      lotSize = lotSize - MathMod(lotSize,minVol);
+
+   Print(__FUNCTION__," ",lotSize," ",minVol);
+
+   return(lotSize);
+  }
+
 
 
 //+------------------------------------------------------------------+
@@ -2673,7 +2669,7 @@ bool CControlsDialog::CalculatePosition()
       m_SlPipsEdit.Text(DoubleToString(NormalizeDouble(MathRound(calcSlPips),1),0));
       m_RiskToRewardRatioEdit.Text(DoubleToString(MathRound(calcRRR),1));
 
-      double LotsCalculated = 0.01 * NormalizeDouble(AmountToRisk/calcSlPips*10/ValuePp,2);
+      double LotsCalculated = CheckPositionVolume((0.01 * NormalizeDouble(AmountToRisk/calcSlPips*10/ValuePp,2)));
 
       string LotsCalculatedStr = DoubleToString(LotsCalculated,2);
       m_LotsEdit.Text(DoubleToString(LotsCalculated,2));
@@ -2691,7 +2687,7 @@ bool CControlsDialog::CalculatePosition()
             double AmountToRisk = NormalizeDouble(AccountBalance*percentRisk/100,2);
             double ValuePp = SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_VALUE);
 
-            double LotsCalculated = NormalizeDouble(AmountToRisk/(StringToDouble(m_SlPipsEdit.Text())*10)/ValuePp,2);
+            double LotsCalculated = CheckPositionVolume((NormalizeDouble(AmountToRisk/(StringToDouble(m_SlPipsEdit.Text())*10)/ValuePp,2)));
 
             string LotsCalculatedStr = DoubleToString(LotsCalculated,2);
 
