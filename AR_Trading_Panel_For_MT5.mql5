@@ -19,6 +19,7 @@ input string posLotsDef = "0.1"; // Lot size
 input string slPipsDef = "10"; // Stoploss in pips
 input string RiskToRewardDef = "2"; // Risk to Reward Ratio
 input string RiskLevelDef = "0.2"; // Risk % of Capital
+input double marginToBallancePercent = 80; // Margin to Ballance %
 
 input group "------------- Auto Position Management Controls ------------"
 input bool autoBreakEven = false; // Auto Break Even
@@ -41,6 +42,8 @@ input ENUM_APPLIED_PRICE TslMaAppPrice = PRICE_MEDIAN; // MA Price
 input group "------------- Box Settings ----------------------------------"
 input string timeFrom = "00:00"; // From Time
 input string timeTill = "03:00"; // Till Time
+
+
 
 int barsTotal;
 
@@ -2717,8 +2720,21 @@ double CControlsDialog::CheckPositionVolume(double lotSize)
    if(lotSize > MaxLot)
       lotSize = MaxLot;
 
+   double AccountFreeMargin = NormalizeDouble(AccountInfoDouble(ACCOUNT_MARGIN_FREE),2);
+   double rate = 0;
+   double price = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
+   if(!OrderCalcMargin(ORDER_TYPE_BUY,_Symbol,lotSize,price,rate))
+      Print("OrderCalcMargin Function Failed...");
+
+   if(rate > AccountFreeMargin * marginToBallancePercent / 100)
+     {
+      lotSize = 0.5 * lotSize;
+      Print("Needed margin is larger than available free margin. Reducing Lot Size by 50%");
+     }
+  
    if(MathMod(lotSize,StepLot) != 0)
       lotSize = lotSize - MathMod(lotSize,StepLot);
+
 
    return(lotSize);
 
@@ -2730,4 +2746,5 @@ double CControlsDialog::CheckPositionVolume(double lotSize)
 
 //+------------------------------------------------------------------+
 
+//+------------------------------------------------------------------+
 //+------------------------------------------------------------------+
