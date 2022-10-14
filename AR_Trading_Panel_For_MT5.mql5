@@ -43,8 +43,6 @@ input group "------------- Box Settings ----------------------------------"
 input string timeFrom = "00:00"; // From Time
 input string timeTill = "03:00"; // Till Time
 
-
-
 int barsTotal;
 
 double mainUpper = 0;
@@ -100,6 +98,7 @@ double calcRRR;
 double linePriceNew;
 double lineSlNew;
 double lineTpNew;
+double AccountFreeMargin;
 
 //+------------------------------------------------------------------+
 //| defines                                                          |
@@ -138,8 +137,15 @@ private:
    CLabel            m_RiskLbl;                       // Label for Risk percentage
    CLabel            m_TpPipsLbl;                     // Label for Take Profit price level
    CLabel            m_PriceLbl;                      // Label for Price for pending orders
-   CLabel            m_SlLbl;
-   CLabel            m_TpLbl;
+   CLabel            m_SlLbl;                         // Label for Stop Loss
+   CLabel            m_TpLbl;                         // Label for Take Profit
+   CLabel            m_MarginRequiredLbl;             // Label for Margin Required
+   CLabel            m_MarginRequiredDisplLbl;        // Label for Margin Required Display
+   CLabel            m_MarginAvailableLbl;            // Label for Margin Required
+   CLabel            m_MarginAvailableDisplLbl;       // Label for Margin Required Display
+   CLabel            m_SpreadLbl;                     // Label for Margin Required Display
+   CLabel            m_TimeTillCandleClose;           // Label for Margin Required Display
+
 
    // Edits
    CEdit             m_LotsEdit;                      // Edit field for the lots
@@ -215,6 +221,12 @@ protected:
    bool              CreatePriceLbl(void);
    bool              CreateSlLbl(void);
    bool              CreateTpLbl(void);
+   bool              CreateMarginRequiredLbl(void);
+   bool              CreateMarginRequiredDisplLbl(void);
+   bool              CreateMarginAvailableLbl(void);
+   bool              CreateMarginAvailableDisplLbl(void);
+   bool              CreateSpreadLbl(void);
+   bool              CreateTimeTillCandleCloseLbl(void);
 
    // -- Auxilary functions
    bool              GetOrderData(void);
@@ -233,7 +245,7 @@ protected:
    bool              PendingBuyLimitDoubleOrder(void);
    bool              CalculatePosition(void);
    double            CheckPositionVolume(double lotSize);
-
+   bool              DisplayInfo(void);
 
    //--- handlers of the dependent controls events
    void              OnClickSellBtn(void);
@@ -314,6 +326,18 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
    if(!CreateSlLbl())
       return(false);
    if(!CreateTpLbl())
+      return(false);
+   if(!CreateMarginRequiredLbl())
+      return(false);
+   if(!CreateMarginRequiredDisplLbl())
+      return(false);
+   if(!CreateMarginAvailableLbl())
+      return(false);
+   if(!CreateMarginAvailableDisplLbl())
+      return(false);
+   if(!CreateSpreadLbl())
+      return(false);
+   if(!CreateTimeTillCandleCloseLbl())
       return(false);
 
 // --- Create Edit fields
@@ -552,6 +576,155 @@ bool CControlsDialog::CreateTpLbl(void)
 //--- succeed
    return(true);
   }
+
+
+//+------------------------------------------------------------------+
+//| Create the Margin Required  label #9                             |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateMarginRequiredLbl(void)
+  {
+//--- coordinates
+
+   int x1=INDENT_LEFT;
+   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+
+//--- create
+   if(!m_MarginRequiredLbl.Create(m_chart_id,m_name+"MarginRequiredLbl",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_MarginRequiredLbl.Text("Margin Needed"))
+      return(false);
+   if(!Add(m_MarginRequiredLbl))
+      return(false);
+//--- succeed
+   return(true);
+  }
+
+
+//+------------------------------------------------------------------+
+//| Create the Margin Required Displ label #10                       |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateMarginRequiredDisplLbl(void)
+  {
+//--- coordinates
+
+   int x1=INDENT_LEFT;
+   int y1=INDENT_TOP+6*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+
+//--- create
+   if(!m_MarginRequiredDisplLbl.Create(m_chart_id,m_name+"MarginRequiredDisplLbl",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_MarginRequiredDisplLbl.Text("0"))
+      return(false);
+   if(!Add(m_MarginRequiredDisplLbl))
+      return(false);
+//--- succeed
+   return(true);
+  }
+
+
+//+------------------------------------------------------------------+
+//| Create the Margin Available  label #10                           |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateMarginAvailableLbl(void)
+  {
+//--- coordinates
+
+   int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+
+
+//--- create
+   if(!m_MarginAvailableLbl.Create(m_chart_id,m_name+"MarginAvailableLbl",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_MarginAvailableLbl.Text("Margin Available"))
+      return(false);
+   if(!Add(m_MarginAvailableLbl))
+      return(false);
+//--- succeed
+   return(true);
+  }
+
+
+
+//+------------------------------------------------------------------+
+//| Create the Margin Available Displ label #12                      |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateMarginAvailableDisplLbl(void)
+  {
+//--- coordinates
+
+   int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+6*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+
+//--- create
+   if(!m_MarginAvailableDisplLbl.Create(m_chart_id,m_name+"MarginAvailableDisplLbl",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_MarginAvailableDisplLbl.Text("0"))
+      return(false);
+   if(!Add(m_MarginAvailableDisplLbl))
+      return(false);
+//--- succeed
+   return(true);
+  }
+
+
+//+------------------------------------------------------------------+
+//| Create Spread  label #13                                         |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateSpreadLbl(void)
+  {
+//--- coordinates
+
+   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+
+//--- create
+   if(!m_SpreadLbl.Create(m_chart_id,m_name+"SpreadLbl",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_SpreadLbl.Text(""))
+      return(false);
+   if(!Add(m_SpreadLbl))
+      return(false);
+//--- succeed
+   return(true);
+  }
+
+
+//+------------------------------------------------------------------+
+//| Create the Time Till Candle Close label #14                      |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateTimeTillCandleCloseLbl(void)
+  {
+//--- coordinates
+
+   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+6*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+
+//--- create
+   if(!m_TimeTillCandleClose.Create(m_chart_id,m_name+"TimeTillCandleCloseLbl",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_TimeTillCandleClose.Text(""))
+      return(false);
+   if(!Add(m_TimeTillCandleClose))
+      return(false);
+//--- succeed
+   return(true);
+  }
+
+
+
 
 // Creating Edit Fields =====================================================================================================
 
@@ -1645,7 +1818,7 @@ int OnInit()
    ObjectDelete(0,"stopLossLine");
    ObjectDelete(0,"takeProfitLine");
 //--- create application dialog
-   if(!ExtDialog.Create(0,"Controls",0,10,20,475,180))
+   if(!ExtDialog.Create(0,"Controls",0,10,20,475,220))
       return(INIT_FAILED);
 //--- run application
    ExtDialog.Run();
@@ -1697,8 +1870,13 @@ void OnChartEvent(const int id,         // event ID
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
 void OnTick()
   {
+
    if(autoPosMgmtToggle)
      {
       double spreadPos = SymbolInfoInteger(Symbol(),SYMBOL_SPREAD);
@@ -2592,6 +2770,7 @@ bool CControlsDialog::PendingBuyLimitDoubleOrder()
 //+------------------------------------------------------------------+
 bool CControlsDialog::CalculatePosition()
   {
+
    if(lineInput)
      {
       double percentRisk = NormalizeDouble(StringToDouble(m_RiskEdit.Text()),2);
@@ -2699,6 +2878,10 @@ bool CControlsDialog::CalculatePosition()
 //+--------------------------------------------------------------------------------------------+
 double CControlsDialog::CheckPositionVolume(double lotSize)
   {
+
+   if(!DisplayInfo())
+      Print(__FUNCTION__,"failed...");
+
    double MinLot = SymbolInfoDouble(_Symbol,SYMBOL_VOLUME_MIN);
    double MaxLot = SymbolInfoDouble(_Symbol,SYMBOL_VOLUME_MAX);
    double StepLot = SymbolInfoDouble(_Symbol,SYMBOL_VOLUME_STEP);
@@ -2720,29 +2903,50 @@ double CControlsDialog::CheckPositionVolume(double lotSize)
    if(lotSize > MaxLot)
       lotSize = MaxLot;
 
-   double AccountFreeMargin = NormalizeDouble(AccountInfoDouble(ACCOUNT_MARGIN_FREE),2);
+
    double rate = 0;
    double price = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
+
    if(!OrderCalcMargin(ORDER_TYPE_BUY,_Symbol,lotSize,price,rate))
       Print("OrderCalcMargin Function Failed...");
 
+   m_MarginRequiredDisplLbl.Text(rate);
+
    if(rate > AccountFreeMargin * marginToBallancePercent / 100)
      {
-      lotSize = 0.5 * lotSize;
+      lotSize =  AccountFreeMargin * marginToBallancePercent / 100;
       Print("Needed margin is larger than available free margin. Reducing Lot Size by 50%");
      }
-  
+
    if(MathMod(lotSize,StepLot) != 0)
       lotSize = lotSize - MathMod(lotSize,StepLot);
 
-
    return(lotSize);
-
   }
 
 //+------------------------------------------------------------------+
+//| Function to display information on labels                        |
+//+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+bool CControlsDialog::DisplayInfo()
+  {
+   string spreadStr = IntegerToString(SymbolInfoInteger(_Symbol,SYMBOL_SPREAD));
+   datetime CandleCountDown_bar_Opened = iTime(_Symbol,PERIOD_CURRENT,0);
+   datetime CandleCountDown_bar_Closed = PeriodSeconds(PERIOD_CURRENT);
+   datetime CandleCountDown_counting   =  CandleCountDown_bar_Opened + CandleCountDown_bar_Closed - TimeCurrent();
+   string timeTillCloseStr = TimeToString(CandleCountDown_counting, TIME_MINUTES|TIME_SECONDS);
+   AccountFreeMargin = NormalizeDouble(AccountInfoDouble(ACCOUNT_MARGIN_FREE),2);
+
+   CControlsDialog::m_SpreadLbl.Text(spreadStr);
+   CControlsDialog::m_TimeTillCandleClose.Text(timeTillCloseStr);
+   CControlsDialog::m_MarginAvailableDisplLbl.Text(AccountFreeMargin);
+
+   return(true);
+  }
+
 
 //+------------------------------------------------------------------+
 
