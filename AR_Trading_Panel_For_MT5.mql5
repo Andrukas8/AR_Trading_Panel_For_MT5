@@ -13,6 +13,7 @@
 #include <Controls\Button.mqh>
 #include <Controls\Edit.mqh>
 #include <Controls\Label.mqh>
+#include <Controls\ComboBox.mqh>
 
 input group "------------- Position Variables ----------------------------"
 input string posLotsDef = "0.1"; // Lot size
@@ -100,6 +101,19 @@ double lineSlNew;
 double lineTpNew;
 double AccountFreeMargin;
 
+string StrategyStr[9] =
+  {
+   "None",
+   "KTS",
+   "T Br",
+   "Kumo Br",
+   "BW",
+   "3LS",
+   "LMI",
+   "PA",
+   "OB"
+  };
+
 //+------------------------------------------------------------------+
 //| defines                                                          |
 //+------------------------------------------------------------------+
@@ -175,6 +189,9 @@ private:
    CButton           m_DoubleOrderBtn;
    CButton           m_DrawPositionsBtn;
    CButton           m_Box;
+   CComboBox         m_StrategySelectorCBox;         // Dropdown list to select the strategy for the trade comment
+
+
 
 public:
                      CControlsDialog(void);
@@ -227,6 +244,8 @@ protected:
    bool              CreateMarginAvailableDisplLbl(void);
    bool              CreateSpreadLbl(void);
    bool              CreateTimeTillCandleCloseLbl(void);
+
+   bool              CreateStrategySelectorCBox(void);
 
    // -- Auxilary functions
    bool              GetOrderData(void);
@@ -393,6 +412,11 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
       return(false);
    if(!CreateBoxBtn())
       return(false);
+
+   if(!CreateStrategySelectorCBox())
+      return(false);
+
+
 
 //--- succeed
    return(true);
@@ -1303,6 +1327,37 @@ bool CControlsDialog::CreateDrawPositionsBtn(void)
 //--- succeed
    return(true);
   }
+
+
+//+------------------------------------------------------------------+
+//| Create the "Select Strategy"  Combobox                           |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateStrategySelectorCBox(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_StrategySelectorCBox.Create(m_chart_id,m_name+"StrategySelectorCBox",m_subwin,x1,y1,x2,y2))
+      return(false);
+
+   for(int i=0; i<StrategyStr.Size(); i++)
+      if(!m_StrategySelectorCBox.ItemAdd(StrategyStr[i]))
+         return(false);
+
+   if(!m_StrategySelectorCBox.SelectByText("None"))
+      return(false);
+
+   if(!Add(m_StrategySelectorCBox))
+      return(false);
+//--- succeed
+   return(true);
+  }
+
+
+
 
 
 //+------------------------------------------------------------------+
@@ -2389,7 +2444,7 @@ bool CControlsDialog::MarketSellOrder()
 
       if(posLots > 0 && slPips > 0 && RiskToReward > 0)
         {
-         string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " SELL MARKET";
+         string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " SELL MARKET";
          if(trade.Sell(posLots,_Symbol,bid,slSell,tpSell,tradeComment))
            {
             Print("Sold ",posLots," Lots of ",_Symbol," @ ",bid," SL = ",slSell, " TP = ",tpSell);
@@ -2424,7 +2479,7 @@ bool  CControlsDialog::MarketBuyOrder()
 
       if(posLots > 0 && slPips > 0 && RiskToReward > 0)
         {
-         string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " BUY MARKET";
+         string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " BUY MARKET";
          if(trade.Buy(posLots,_Symbol,ask,slBuy,tpBuy,tradeComment))
            {
             Print("Bought ",posLots," Lots of ",_Symbol," @ ",ask," SL = ",slBuy, " TP = ",tpBuy);
@@ -2455,7 +2510,7 @@ bool CControlsDialog::PendingSellStopOrder()
 
    if(lineSlNew > linePriceNew && (linePriceNew >= lineTpNew) && linePriceNew < ask)
      {
-      string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " SELL STOP";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " SELL STOP";
       if(trade.SellStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("SellStop Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
@@ -2479,7 +2534,7 @@ bool CControlsDialog::PendingSellLimitOrder()
 
    if(lineSlNew > linePriceNew && (linePriceNew >= lineTpNew) && linePriceNew > ask)
      {
-      string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " SELL LIMIT";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " SELL LIMIT";
       if(trade.SellLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("SellLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
@@ -2502,7 +2557,7 @@ bool CControlsDialog::PendingBuyStopOrder()
 
    if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew > bid)
      {
-      string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " BUY STOP";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " BUY STOP";
       if(trade.BuyStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("BuyStop Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
@@ -2525,7 +2580,7 @@ bool CControlsDialog::PendingBuyLimitOrder()
 
    if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew < bid)
      {
-      string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " BUY LIMIT";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " BUY LIMIT";
       if(trade.BuyLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("BuyLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
@@ -2560,7 +2615,7 @@ bool CControlsDialog::MarketSellDoubleOrder()
             " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,_Digits));
 
 
-      string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE MARKET SELL";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE MARKET SELL";
 
       if(posLots > 0 && slPips > 0 && RiskToReward > 0)
         {
@@ -2604,7 +2659,7 @@ bool  CControlsDialog::MarketBuyDoubleOrder()
       Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,_Digits),
             " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,_Digits));
 
-      string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE MARKET BUY";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE MARKET BUY";
 
       if(posLots > 0 && slPips > 0 && RiskToReward > 0)
         {
@@ -2612,7 +2667,6 @@ bool  CControlsDialog::MarketBuyDoubleOrder()
            {
             Print("Bought ",posLots," Lots of ",_Symbol," @ ",ask," SL = ",slBuy, " TP = ",tpBuy);
            }
-
          tpBuy =  0;
          if(trade.Buy(posLots,_Symbol,ask,slBuy,tpBuy,tradeComment))
            {
@@ -2631,7 +2685,6 @@ bool  CControlsDialog::MarketBuyDoubleOrder()
       Print("Not enough input");
      }
    return(true);
-
   }
 
 //+------------------------------------------------------------------+
@@ -2646,7 +2699,7 @@ bool CControlsDialog::PendingSellStopDoubleOrder()
    lineTpNew = lineSlNew - 2*(lineSlNew - linePriceNew);
    posLots = CheckPositionVolume(NormalizeDouble(0.5 * posLots,2));
 
-   string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE SELL STOP";
+   string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE SELL STOP";
 
    if(lineSlNew > linePriceNew && (linePriceNew >= lineTpNew) && linePriceNew < ask)
      {
@@ -2681,7 +2734,7 @@ bool CControlsDialog::PendingSellLimitDoubleOrder()
 
    if(lineSlNew > linePriceNew && (linePriceNew >= lineTpNew) && linePriceNew > ask)
      {
-      string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE SELL LIMIT";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE SELL LIMIT";
       if(trade.SellLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("SellLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
@@ -2714,7 +2767,7 @@ bool CControlsDialog::PendingBuyStopDoubleOrder()
 
    if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew > bid)
      {
-      string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE BUY STOP";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE BUY STOP";
       if(trade.BuyStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("BuyStop Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
@@ -2746,7 +2799,7 @@ bool CControlsDialog::PendingBuyLimitDoubleOrder()
 
    if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew < bid)
      {
-      string tradeComment = PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE BUY LIMIT";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE BUY LIMIT";
       if(trade.BuyLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("BuyLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
@@ -2949,6 +3002,5 @@ bool CControlsDialog::DisplayInfo()
 
 
 //+------------------------------------------------------------------+
-
 //+------------------------------------------------------------------+
 //+------------------------------------------------------------------+
