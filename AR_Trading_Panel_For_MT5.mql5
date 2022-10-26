@@ -31,6 +31,7 @@ input bool tenkansenTSL = false; // Ichimoku Tenkansen Line Trailing SL
 input bool kijunsenTSL = false; // Ichimoku Kijunsen Line Trailing SL
 
 input group "------------- Auto Position Management Settings -------------"
+input bool tslAfterBe = false; // Apply TSL only after BE
 input int TslOffsetPoints = 10; // Points Above/Below the MA
 input int TslPoints = 50; // Points for Regular TSL
 input ENUM_TIMEFRAMES TimeFrame = 1; // Time frame
@@ -43,6 +44,8 @@ input ENUM_APPLIED_PRICE TslMaAppPrice = PRICE_MEDIAN; // MA Price
 input group "------------- Box Settings ----------------------------------"
 input string timeFrom = "00:00"; // From Time
 input string timeTill = "03:00"; // Till Time
+
+bool tslMasterToggle = true;
 
 int barsTotal;
 
@@ -161,7 +164,6 @@ private:
    CLabel            m_SpreadLbl;                     // Label for Margin Required Display
    CLabel            m_TimeTillCandleCloseLbl;           // Label for Margin Required Display
 
-
    // Edits
    CEdit             m_LotsEdit;                      // Edit field for the lots
    CEdit             m_SlPipsEdit;                    // Edit field for the sl pips
@@ -191,8 +193,6 @@ private:
    CButton           m_DrawPositionsBtn;
    CButton           m_Box;
    CComboBox         m_StrategySelectorCBox;         // Dropdown list to select the strategy for the trade comment
-
-
 
 public:
                      CControlsDialog(void);
@@ -1942,6 +1942,14 @@ void OnTick()
 
    if(autoPosMgmtToggle)
      {
+
+      if(tslAfterBe)
+         tslMasterToggle = false;
+      else
+         if(!tslAfterBe)
+            tslMasterToggle = true;
+
+
       double spreadPos = SymbolInfoInteger(Symbol(),SYMBOL_SPREAD);
       int bars = iBars(_Symbol, TimeFrame);
       int totalPos = PositionsTotal();
@@ -2005,6 +2013,12 @@ void OnTick()
                               if(trade.PositionModify(posTicket, posOpenPrice, posTp))
                                 {
                                  Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven BUY");
+
+                                 if(tslAfterBe)
+                                   {
+                                    tslMasterToggle = true;
+                                   }
+
                                 }
                              }
                           }
@@ -2028,6 +2042,12 @@ void OnTick()
                               if(trade.PositionModify(posTicket, posOpenPrice, posTp))
                                 {
                                  Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven SELL");
+
+                                 if(tslAfterBe)
+                                   {
+                                    tslMasterToggle = true;
+                                   }
+
                                 }
                              }
                           }
@@ -2047,7 +2067,7 @@ void OnTick()
       //+------------------------------------------------------------------+
 
 
-      if(pointsTSL && TslPoints > 0)
+      if(pointsTSL && TslPoints > 0 && tslMasterToggle)
         {
          for(int i = 0; i < totalPos; i++)
            {
@@ -2173,7 +2193,7 @@ void OnTick()
                   //|         Fractals                                                 |
                   //+------------------------------------------------------------------+
 
-                  if(fractalsTSL)
+                  if(fractalsTSL && tslMasterToggle)
                     {
                      // --------------------
                      // --- BUY POSITION ---
@@ -2228,7 +2248,7 @@ void OnTick()
                   //|         MA                                                       |
                   //+------------------------------------------------------------------+
 
-                  if(movingAverageTSL)
+                  if(movingAverageTSL && tslMasterToggle)
                     {
                      // --------------------
                      // --- BUY POSITION ---
@@ -2286,7 +2306,7 @@ void OnTick()
                   //+------------------------------------------------------------------+
 
 
-                  if(kijunsenTSL)
+                  if(kijunsenTSL && tslMasterToggle)
                     {
                      double KijunsenArr[];
                      CopyBuffer(handleIchimoku,1,0,2,KijunsenArr);
@@ -2343,7 +2363,7 @@ void OnTick()
                   //+------------------------------------------------------------------+
 
 
-                  if(tenkansenTSL)
+                  if(tenkansenTSL && tslMasterToggle)
                     {
                      double TenkansenArr[];
                      CopyBuffer(handleIchimoku,0,0,2,TenkansenArr);
