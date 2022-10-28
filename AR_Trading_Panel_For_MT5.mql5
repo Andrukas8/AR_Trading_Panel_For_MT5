@@ -162,7 +162,7 @@ private:
    CLabel            m_MarginAvailableLbl;            // Label for Margin Required
    CLabel            m_MarginAvailableDisplLbl;       // Label for Margin Required Display
    CLabel            m_SpreadLbl;                     // Label for Margin Required Display
-   CLabel            m_TimeTillCandleCloseLbl;           // Label for Margin Required Display
+   CLabel            m_TimeTillCandleCloseLbl;        // Label for Margin Required Display
 
    // Edits
    CEdit             m_LotsEdit;                      // Edit field for the lots
@@ -1869,7 +1869,6 @@ CControlsDialog ExtDialog;
 //+------------------------------------------------------------------+
 int OnInit()
   {
-
    ObjectDelete(0,"priceLine");
    ObjectDelete(0,"stopLossLine");
    ObjectDelete(0,"takeProfitLine");
@@ -1910,7 +1909,10 @@ void OnDeinit(const int reason)
    ObjectDelete(0,"stopLossLine");
    ObjectDelete(0,"takeProfitLine");
 //--- destroy dialog
+
    ExtDialog.Destroy(reason);
+   ObjectsDeleteAll(0,-1,OBJ_LABEL); // patch to remove residual labels
+
   }
 
 //-------------------------------------------------------------------+
