@@ -61,7 +61,7 @@ int handleFractal;
 int handleMA;
 int handleIchimoku;
 
-string text;
+string textComment;
 
 struct StopLoss
   {
@@ -1345,8 +1345,10 @@ bool CControlsDialog::CreateStrategySelectorCBox(void)
       return(false);
 
    for(int i=0; i<StrategyStr.Size(); i++)
+     {
       if(!m_StrategySelectorCBox.ItemAdd(StrategyStr[i]))
          return(false);
+     }
 
    if(!m_StrategySelectorCBox.SelectByText("Strategy"))
       return(false);
@@ -1452,7 +1454,7 @@ void CControlsDialog::OnClickDoubleOrderBtn(void)
   {
    CTrade trade;
 
-   Print("Market/Pending = " + pendingToggle + " Sell = " + sellToggle + " Buy = " + buyToggle);
+   Print("Market/Pending = " + IntegerToString(pendingToggle) + " Sell = " + IntegerToString(sellToggle) + " Buy = " + IntegerToString(buyToggle));
 
    if(!pendingToggle && sellToggle && !buyToggle) // if market sell order
      {
@@ -1593,9 +1595,9 @@ void CControlsDialog::OnClickShowLinesBtn(void)
       ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
       bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);
 
-      double linePrice;
-      double lineSl;
-      double lineTp;
+      double linePrice = 0;
+      double lineSl = 0;
+      double lineTp = 0;
 
       if(sellToggle && !buyToggle)
         {
@@ -1767,7 +1769,7 @@ void CControlsDialog::OnClickSendOrderBtn(void)
 
    CTrade trade;
 
-   Print("Market/Pending = " + pendingToggle + " Sell = " + sellToggle + " Buy = " + buyToggle);
+   Print("Market/Pending = " + IntegerToString(pendingToggle) + " Sell = " + IntegerToString(sellToggle) + " Buy = " + IntegerToString(buyToggle));
 
    if(!pendingToggle && sellToggle && !buyToggle) // if market sell order
      {
@@ -1938,7 +1940,7 @@ void OnTick()
    string timeTillCloseStr = TimeToString(CandleCountDown_counting, TIME_MINUTES|TIME_SECONDS);
    AccountFreeMargin = NormalizeDouble(AccountInfoDouble(ACCOUNT_MARGIN_FREE),2);
 
-   ObjectSetString(0,ExtDialog.Name()+"MarginAvailableDisplLbl",OBJPROP_TEXT,AccountFreeMargin);
+   ObjectSetString(0,ExtDialog.Name()+"MarginAvailableDisplLbl",OBJPROP_TEXT,DoubleToString(AccountFreeMargin,2));
    ObjectSetString(0,ExtDialog.Name()+"SpreadLbl",OBJPROP_TEXT,"Spread: "+spreadStr);
    ObjectSetString(0,ExtDialog.Name()+"TimeTillCandleCloseLbl",OBJPROP_TEXT,timeTillCloseStr);
 
@@ -1952,21 +1954,21 @@ void OnTick()
             tslMasterToggle = true;
 
 
-      double spreadPos = SymbolInfoInteger(Symbol(),SYMBOL_SPREAD);
+      long spreadPos = SymbolInfoInteger(Symbol(),SYMBOL_SPREAD);
       int bars = iBars(_Symbol, TimeFrame);
       int totalPos = PositionsTotal();
 
-      text = "-----------------------------\nPosition Management EA\n " + _Symbol + " " +_Period + "\n";
-      text += "------------------------------\n";
-      text += "Spread = " + IntegerToString(spreadPos) + "\n";
-      text += "Lower Fractal = " + DoubleToString(mainLower, 4) + "\n";
-      text += "Upper Fractal = " + DoubleToString(mainUpper, 4) + "\n";
-      text += "BE Ratio = " + (string)breakevenRatio + "\n";
-      text += "MA Period = " + (string)MaPeriod +  " | Shift = " + (string)MaShift + " | TF = "  + (string)TimeFrame + "\n";
-      text += "TSL Fra   = [ " + (string)fractalsTSL + " ]\n";
-      text += "TSL MA  = [ " + (string)movingAverageTSL + " ]\n";
-      text += "Auto BE  = [ " + (string)autoBreakEven + " ]" + " ]\n";
-      text += "Points TSL = [ " + (string)pointsTSL + " ]";
+      textComment = "-----------------------------\nPosition Management EA\n " + _Symbol + " " +IntegerToString(_Period) + "\n";
+      textComment += "------------------------------\n";
+      textComment += "Spread = " + IntegerToString(spreadPos) + "\n";
+      textComment += "Lower Fractal = " + DoubleToString(mainLower, 4) + "\n";
+      textComment += "Upper Fractal = " + DoubleToString(mainUpper, 4) + "\n";
+      textComment += "BE Ratio = " + DoubleToString(breakevenRatio,2) + "\n";
+      textComment += "MA Period = " + IntegerToString(MaPeriod) +  " | Shift = " + IntegerToString(MaShift) + " | TF = "  + (string)TimeFrame + "\n";
+      textComment += "TSL Fra   = [ " + (string)fractalsTSL + " ]\n";
+      textComment += "TSL MA  = [ " + (string)movingAverageTSL + " ]\n";
+      textComment += "Auto BE  = [ " + (string)autoBreakEven + " ]" + " ]\n";
+      textComment += "Points TSL = [ " + (string)pointsTSL + " ]";
 
       //+------------------------------------------------------------------+
       //|        Trailing SL activated by a new Tick                       |
@@ -1986,9 +1988,9 @@ void OnTick()
                   double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),_Digits);
                   double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),_Digits);
 
-                  double bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
-                  double ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
-                  double oldPosSl;
+                  bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
+                  ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
+                  double oldPosSl = 0;
 
                   //+------------------------------------------------------------------+
                   //|         Break Even                                               |
@@ -2084,9 +2086,9 @@ void OnTick()
                   double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),_Digits);
                   double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),_Digits);
 
-                  double bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
-                  double ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
-                  double oldPosSl;
+                  bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
+                  ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
+                  double oldPosSl = 0;
 
                   if(TslPoints > spreadPos)
                     {
@@ -2116,7 +2118,7 @@ void OnTick()
                        {
                         double sl = NormalizeDouble(ask + TslPoints * _Point,_Digits);
 
-                        if(sl < posSl && sl > ask || posSl == 0)
+                        if((sl < posSl && sl > ask) || (posSl == 0))
                           {
                            if(trade.PositionModify(posTicket,sl,posTp))
                              {
@@ -2184,8 +2186,8 @@ void OnTick()
                   double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),_Digits);
                   double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),4);
 
-                  double bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
-                  double ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
+                  bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
+                  ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
 
                   double ma[];
                   CopyBuffer(handleMA,MAIN_LINE,1,MaShift,ma);
@@ -2422,8 +2424,8 @@ void OnTick()
       //+------------------------------------------------------------------+
       //|                                                                  |
       //+------------------------------------------------------------------+
-      Comment(text);
-      text="";
+      Comment(textComment);
+      textComment="";
      } // autoPosMgmtToggle
   }// OnTick
 
@@ -2481,7 +2483,7 @@ bool CControlsDialog::MarketSellOrder()
 
       if(posLots > 0 && slPips > 0 && RiskToReward > 0)
         {
-         string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " SELL MARKET";
+         string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + IntegerToString(PeriodSeconds(PERIOD_CURRENT)/60) + " SELL MARKET";
          if(trade.Sell(posLots,_Symbol,bid,slSell,tpSell,tradeComment))
            {
             Print("Sold ",posLots," Lots of ",_Symbol," @ ",bid," SL = ",slSell, " TP = ",tpSell);
@@ -2516,7 +2518,7 @@ bool  CControlsDialog::MarketBuyOrder()
 
       if(posLots > 0 && slPips > 0 && RiskToReward > 0)
         {
-         string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " BUY MARKET";
+         string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + IntegerToString(PeriodSeconds(PERIOD_CURRENT)/60) + " BUY MARKET";
          if(trade.Buy(posLots,_Symbol,ask,slBuy,tpBuy,tradeComment))
            {
             Print("Bought ",posLots," Lots of ",_Symbol," @ ",ask," SL = ",slBuy, " TP = ",tpBuy);
@@ -2547,7 +2549,7 @@ bool CControlsDialog::PendingSellStopOrder()
 
    if(lineSlNew > linePriceNew && (linePriceNew >= lineTpNew) && linePriceNew < ask)
      {
-      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " SELL STOP";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + IntegerToString(PeriodSeconds(PERIOD_CURRENT)/60) + " SELL STOP";
       if(trade.SellStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("SellStop Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
@@ -2571,7 +2573,7 @@ bool CControlsDialog::PendingSellLimitOrder()
 
    if(lineSlNew > linePriceNew && (linePriceNew >= lineTpNew) && linePriceNew > ask)
      {
-      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " SELL LIMIT";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + IntegerToString(PeriodSeconds(PERIOD_CURRENT)/60) + " SELL LIMIT";
       if(trade.SellLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("SellLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
@@ -2594,7 +2596,7 @@ bool CControlsDialog::PendingBuyStopOrder()
 
    if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew > bid)
      {
-      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " BUY STOP";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + IntegerToString(PeriodSeconds(PERIOD_CURRENT)/60) + " BUY STOP";
       if(trade.BuyStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("BuyStop Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
@@ -2617,7 +2619,7 @@ bool CControlsDialog::PendingBuyLimitOrder()
 
    if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew < bid)
      {
-      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " BUY LIMIT";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + StrategyStr[m_StrategySelectorCBox.Value()] + " " + IntegerToString(PeriodSeconds(PERIOD_CURRENT)/60) + " BUY LIMIT";
       if(trade.BuyLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("BuyLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
@@ -2652,7 +2654,7 @@ bool CControlsDialog::MarketSellDoubleOrder()
             " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,_Digits));
 
 
-      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE MARKET SELL";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + IntegerToString(PeriodSeconds(PERIOD_CURRENT)/60) + " DOUBLE MARKET SELL";
 
       if(posLots > 0 && slPips > 0 && RiskToReward > 0)
         {
@@ -2696,7 +2698,7 @@ bool  CControlsDialog::MarketBuyDoubleOrder()
       Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,_Digits),
             " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,_Digits));
 
-      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE MARKET BUY";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + IntegerToString(PeriodSeconds(PERIOD_CURRENT)/60) + " DOUBLE MARKET BUY";
 
       if(posLots > 0 && slPips > 0 && RiskToReward > 0)
         {
@@ -2736,7 +2738,7 @@ bool CControlsDialog::PendingSellStopDoubleOrder()
    lineTpNew = lineSlNew - 2*(lineSlNew - linePriceNew);
    posLots = CheckPositionVolume(NormalizeDouble(0.5 * posLots,2));
 
-   string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE SELL STOP";
+   string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + IntegerToString(PeriodSeconds(PERIOD_CURRENT)/60) + " DOUBLE SELL STOP";
 
    if(lineSlNew > linePriceNew && (linePriceNew >= lineTpNew) && linePriceNew < ask)
      {
@@ -2771,7 +2773,7 @@ bool CControlsDialog::PendingSellLimitDoubleOrder()
 
    if(lineSlNew > linePriceNew && (linePriceNew >= lineTpNew) && linePriceNew > ask)
      {
-      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE SELL LIMIT";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + IntegerToString(PeriodSeconds(PERIOD_CURRENT)/60) + " DOUBLE SELL LIMIT";
       if(trade.SellLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("SellLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
@@ -2804,7 +2806,7 @@ bool CControlsDialog::PendingBuyStopDoubleOrder()
 
    if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew > bid)
      {
-      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE BUY STOP";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + IntegerToString(PeriodSeconds(PERIOD_CURRENT)/60) + " DOUBLE BUY STOP";
       if(trade.BuyStop(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("BuyStop Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
@@ -2836,7 +2838,7 @@ bool CControlsDialog::PendingBuyLimitDoubleOrder()
 
    if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew < bid)
      {
-      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + PeriodSeconds(PERIOD_CURRENT)/60 + " DOUBLE BUY LIMIT";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + IntegerToString(PeriodSeconds(PERIOD_CURRENT)/60) + " DOUBLE BUY LIMIT";
       if(trade.BuyLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("BuyLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
@@ -2936,7 +2938,7 @@ bool CControlsDialog::CalculatePosition()
             if(
                percentRisk > 0 &&
                AccountBalance > 0 &&
-               AmountToRisk  > 0 &
+               AmountToRisk  > 0 &&
                ValuePp > 0 &&
                LotsCalculated > 0
             )
@@ -2976,7 +2978,7 @@ double CControlsDialog::CheckPositionVolume(double lotSize)
    double MaxLot = SymbolInfoDouble(_Symbol,SYMBOL_VOLUME_MAX);
    double StepLot = SymbolInfoDouble(_Symbol,SYMBOL_VOLUME_STEP);
 
-   int LotDigits;
+   int LotDigits = 0;
 
    if(MinLot == 0.001)
       LotDigits = 3;
@@ -3000,7 +3002,7 @@ double CControlsDialog::CheckPositionVolume(double lotSize)
    if(!OrderCalcMargin(ORDER_TYPE_BUY,_Symbol,lotSize,price,rate))
       Print("OrderCalcMargin Function Failed...");
 
-   m_MarginRequiredDisplLbl.Text(rate);
+   m_MarginRequiredDisplLbl.Text(DoubleToString(rate,2));
 
    if(rate > AccountFreeMargin * marginToBallancePercent / 100)
      {
@@ -3032,7 +3034,7 @@ bool CControlsDialog::DisplayInfo()
 
    CControlsDialog::m_SpreadLbl.Text(spreadStr);
    CControlsDialog::m_TimeTillCandleCloseLbl.Text(timeTillCloseStr);
-   CControlsDialog::m_MarginAvailableDisplLbl.Text(AccountFreeMargin);
+   CControlsDialog::m_MarginAvailableDisplLbl.Text(DoubleToString(AccountFreeMargin,2));
 
    return(true);
   }
