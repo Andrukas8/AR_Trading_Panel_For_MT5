@@ -19,7 +19,7 @@ input group "------------- Position Variables ----------------------------"
 input string posLotsDef = "0.1"; // Lot size
 input string slPipsDef = "10"; // Stoploss in pips
 input string RiskToRewardDef = "2"; // Risk to Reward Ratio
-input string RiskLevelDef = "0.2"; // Risk % of Capital
+input string RiskLevelDef = "2"; // Risk % of Capital
 input double marginToBallancePercent = 80; // Margin to Ballance %
 
 input group "------------- Auto Position Management Controls ------------"
@@ -1344,7 +1344,7 @@ bool CControlsDialog::CreateStrategySelectorCBox(void)
    if(!m_StrategySelectorCBox.Create(m_chart_id,m_name+"StrategySelectorCBox",m_subwin,x1,y1,x2,y2))
       return(false);
 
-   for(int i=0; i<StrategyStr.Size(); i++)
+   for(int i=0; i<10; i++)
      {
       if(!m_StrategySelectorCBox.ItemAdd(StrategyStr[i]))
          return(false);
@@ -2911,7 +2911,7 @@ bool CControlsDialog::CalculatePosition()
 
       m_TpPipsEdit.Text(DoubleToString(NormalizeDouble(MathRound(calcTpPips),1),0));
       m_SlPipsEdit.Text(DoubleToString(NormalizeDouble(MathRound(calcSlPips),1),0));
-      m_RiskToRewardRatioEdit.Text(DoubleToString(MathRound(calcRRR),1));
+      m_RiskToRewardRatioEdit.Text(DoubleToString(NormalizeDouble(calcRRR,1),1)); // RRR calculation
 
       double LotsCalculated = CheckPositionVolume((0.01 * NormalizeDouble(AmountToRisk/calcSlPips*10/ValuePp,2)));
 
