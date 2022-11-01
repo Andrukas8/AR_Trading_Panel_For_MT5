@@ -15,7 +15,39 @@
 #include <Controls\Label.mqh>
 #include <Controls\ComboBox.mqh>
 
+
+enum ENUM_STRATEGY
+  {
+   NOSTRATEGY,
+   KTS,
+   ICHI_TENKANBR,
+   ICHI_KINJUNBR,
+   ICHI_KUMOBR,
+   BILL_WILLIAMS,
+   THREELINESTRIKE,
+   RSILMI,
+   PRICEACTION,
+   ORDERBLOCK
+  };
+
+string StrategySelected = "";
+
+string StrategyStr[10] =
+  {
+   "NOSTRATEGY",
+   "KTS",
+   "ICHI_TENKANBR",
+   "ICHI_KINJUNBR",
+   "ICHI_KUMOBR",
+   "BILL_WILLIAMS",
+   "THREELINESTRIKE",
+   "RSILMI",
+   "PRICEACTION",
+   "ORDERBLOCK"
+  };
+
 input group "------------- Position Variables ----------------------------"
+input ENUM_STRATEGY StrategySelect = NOSTRATEGY;
 input string posLotsDef = "0.1"; // Lot size
 input string slPipsDef = "10"; // Stoploss in pips
 input string RiskToRewardDef = "2"; // Risk to Reward Ratio
@@ -104,19 +136,7 @@ double lineSlNew;
 double lineTpNew;
 double AccountFreeMargin;
 
-string StrategyStr[10] =
-  {
-   "Strategy",
-   "None",
-   "KTS",
-   "Tenkan Br",
-   "Kumo Br",
-   "BW",
-   "3LS",
-   "LMI",
-   "PA",
-   "OB"
-  };
+
 
 //+------------------------------------------------------------------+
 //| defines                                                          |
@@ -1350,7 +1370,7 @@ bool CControlsDialog::CreateStrategySelectorCBox(void)
          return(false);
      }
 
-   if(!m_StrategySelectorCBox.SelectByText("Strategy"))
+   if(!m_StrategySelectorCBox.SelectByText(StrategySelected))
       return(false);
 
    if(!Add(m_StrategySelectorCBox))
@@ -1871,6 +1891,7 @@ CControlsDialog ExtDialog;
 //+------------------------------------------------------------------+
 int OnInit()
   {
+   StrategySelected = EnumToString(StrategySelect);
    ObjectDelete(0,"priceLine");
    ObjectDelete(0,"stopLossLine");
    ObjectDelete(0,"takeProfitLine");
