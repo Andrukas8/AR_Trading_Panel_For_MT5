@@ -56,11 +56,12 @@ input double marginToBallancePercent = 80; // Margin to Ballance %
 
 input group "------------- Auto Position Management Controls ------------"
 input bool autoBreakEven = false; // Auto Break Even
+input bool movingAverageTSL = false; // Moving Average Trailing SL
 input bool pointsTSL = false; // Regular Trailing SL in points
 input bool fractalsTSL = false; // Fractal Trailing SL
-input bool movingAverageTSL = false; // Moving Average Trailing SL
 input bool tenkansenTSL = false; // Ichimoku Tenkansen Line Trailing SL
 input bool kijunsenTSL = false; // Ichimoku Kijunsen Line Trailing SL
+input bool NewBarAlert = false; // Alert on new bar
 
 input group "------------- Auto Position Management Settings -------------"
 input bool tslAfterBe = false; // Apply TSL only after BE
@@ -2161,6 +2162,8 @@ void OnTick()
       //|        Trailing SL activated by a new bar                        |
       //+------------------------------------------------------------------+
 
+      if(barsTotal != bars && NewBarAlert)
+         Alert("New Bar");
 
       if(barsTotal != bars && totalPos > 0)  // New bar appeared on the chart
         {
