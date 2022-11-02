@@ -55,7 +55,7 @@ input string RiskLevelDef = "2"; // RISK % OF DEPOSIT
 input double marginToBallancePercent = 80; // MARGIN TO DEPOSIT %
 
 input group "------------- Auto Position Management Controls ------------"
-input bool autoBreakEven = false; // AUTO BREADEVEN
+input bool autoBreakEven = false; // AUTO BREAKEVEN
 input double breakevenRatio = 1; //  _____ BE RATIO
 input bool movingAverageTSL = false; // TSL MA
 input int MaPeriod = 8; // _____ MA PERIOD
@@ -68,6 +68,9 @@ input bool fractalsTSL = false; // TSL FRACTALS
 input bool tenkansenTSL = false; // TSL ICHIMOKU TENKANSEN
 input bool kijunsenTSL = false; // TSL ICHIMOKU KIJUNSEN
 input bool NewBarAlert = false; // == NEW BAR ALERT ==
+
+input group "------------- Auto Closing Position on Condition ------------"
+input bool ClosePosTenkansen = false; // CLOSE ON CLOSE OVER TENKANSEN
 
 input group "------------- Auto Position Management Settings -------------"
 input bool tslAfterBe = false; // APPLY TSL ONLY AFTER BE REACHED
@@ -2205,6 +2208,92 @@ void OnTick()
                mainLower = NormalizeDouble(fracLowerValue - (TslOffsetPoints + spreadPos) * _Point, _Digits);
               }
 
+
+
+            //+------------------------------------------------------------------+
+            //|  ----- Close All Positions On Condition ----------               |
+            //+------------------------------------------------------------------+
+
+            //+------------------------------------------------------------------+
+            //|        Close Positions on Price Close Over Tenkansen             |
+            //+------------------------------------------------------------------+
+
+            if(ClosePosTenkansen)
+              {
+               CTrade trade;
+               double TenkansenArr[];
+               CopyBuffer(handleIchimoku,0,0,2,TenkansenArr);
+
+
+               double ClosePrevBar = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits); // previous close price
+               double TenkansenPrevBar = NormalizeDouble(TenkansenArr[0],_Digits); // previous kijunsen value
+
+               if(ArraySize(TenkansenArr))
+                 {
+                  // --------------------
+                  // --- BUY POSITION ---
+                  // --------------------
+                  if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
+                    {
+                     if(ClosePrevBar < TenkansenPrevBar)
+                       {
+                        for(int i = 0; i < totalPos; i++)
+                          {
+                           ulong posTicket = PositionGetTicket(i);
+
+                           if(PositionSelectByTicket(posTicket))
+                             {
+                              if(PositionGetString(POSITION_SYMBOL) == _Symbol)
+                                {
+                                 if(trade.PositionClose(posTicket))
+                                    Print(__FUNCTION__," > Position #",posTicket," was closed because price closed below Tenkansen. ",ClosePrevBar," < ",TenkansenPrevBar);
+                                }
+                             }
+                          }
+                       }
+
+                    }
+
+
+                  // --------------------
+                  // --- SELL POSITION --
+                  // --------------------
+                  if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
+                    {
+                     if(ClosePrevBar > TenkansenPrevBar)
+                       {
+                        for(int i = 0; i < totalPos; i++)
+                          {
+                           ulong posTicket = PositionGetTicket(i);
+
+                           if(PositionSelectByTicket(posTicket))
+                             {
+                              if(PositionGetString(POSITION_SYMBOL) == _Symbol)
+                                {
+                                 if(trade.PositionClose(posTicket))
+                                    Print(__FUNCTION__," > Position #",posTicket," was closed because price closed above Tenkansen. ",ClosePrevBar," > ",TenkansenPrevBar);
+                                }
+                             }
+                          }
+                       }
+
+                    }
+
+                 }
+              }
+            //+------------------------------------------------------------------+
+            //|      End Close Positions on Price Close Over Tenkansen           |
+            //+------------------------------------------------------------------+
+
+
+
+
+            //+------------------------------------------------------------------+
+            //|  ----- End Close All Positions On Condition ----------           |
+            //+------------------------------------------------------------------+
+
+
+
             for(int i = 0; i < totalPos; i++)
               {
                ulong posTicket = PositionGetTicket(i);
@@ -2397,7 +2486,6 @@ void OnTick()
                      //+------------------------------------------------------------------+
                      //|       Tenkansen TSL                                              |
                      //+------------------------------------------------------------------+
-
 
                      if(tenkansenTSL && tslMasterToggle)
                        {
@@ -3072,6 +3160,5 @@ bool CControlsDialog::DisplayInfo()
   }
 
 
-//+------------------------------------------------------------------+
-//+------------------------------------------------------------------+
+
 //+------------------------------------------------------------------+
