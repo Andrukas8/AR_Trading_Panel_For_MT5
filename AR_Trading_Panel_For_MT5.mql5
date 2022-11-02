@@ -48,35 +48,37 @@ string StrategyStr[10] =
 
 input group "------------- Position Variables ----------------------------"
 input ENUM_STRATEGY StrategySelect = NOSTRATEGY;
-input string posLotsDef = "0.1"; // Lot size
-input string slPipsDef = "10"; // Stoploss in pips
-input string RiskToRewardDef = "2"; // Risk to Reward Ratio
-input string RiskLevelDef = "2"; // Risk % of Capital
-input double marginToBallancePercent = 80; // Margin to Ballance %
+input string posLotsDef = "0.1"; // LOT SIZE
+input string slPipsDef = "10"; // SL pips
+input string RiskToRewardDef = "2"; // RRR
+input string RiskLevelDef = "2"; // RISK % OF DEPOSIT
+input double marginToBallancePercent = 80; // MARGIN TO DEPOSIT %
 
 input group "------------- Auto Position Management Controls ------------"
-input bool autoBreakEven = false; // Auto Break Even
-input bool movingAverageTSL = false; // Moving Average Trailing SL
-input bool pointsTSL = false; // Regular Trailing SL in points
-input bool fractalsTSL = false; // Fractal Trailing SL
-input bool tenkansenTSL = false; // Ichimoku Tenkansen Line Trailing SL
-input bool kijunsenTSL = false; // Ichimoku Kijunsen Line Trailing SL
-input bool NewBarAlert = false; // Alert on new bar
+input bool autoBreakEven = false; // AUTO BREADEVEN
+input double breakevenRatio = 1; //  _____ BE RATIO
+input bool movingAverageTSL = false; // TSL MA
+input int MaPeriod = 8; // _____ MA PERIOD
+input int MaShift = 5; // _____ MA SHIFT
+input ENUM_MA_METHOD TslMaMethod = MODE_SMMA; // _____ TSL MA METHOD
+input ENUM_APPLIED_PRICE TslMaAppPrice = PRICE_MEDIAN; // _____ TSL MA PRICE
+input bool pointsTSL = false; // TSL REGULAR IN POINTS
+input int TslPoints = 50; // _____ TSL REGULAR POINTS
+input bool fractalsTSL = false; // TSL FRACTALS
+input bool tenkansenTSL = false; // TSL ICHIMOKU TENKANSEN
+input bool kijunsenTSL = false; // TSL ICHIMOKU KIJUNSEN
+input bool NewBarAlert = false; // == NEW BAR ALERT ==
 
 input group "------------- Auto Position Management Settings -------------"
-input bool tslAfterBe = false; // Apply TSL only after BE
-input int TslOffsetPoints = 10; // Points Above/Below the MA
-input int TslPoints = 50; // Points for Regular TSL
-input ENUM_TIMEFRAMES TimeFrame = 1; // Time frame
-input double breakevenRatio = 1; // Break Even Ratio
-input int MaPeriod = 8; // MA Period
-input int MaShift = 5; // MA Shift
-input ENUM_MA_METHOD TslMaMethod = MODE_SMMA; // MA Method
-input ENUM_APPLIED_PRICE TslMaAppPrice = PRICE_MEDIAN; // MA Price
+input bool tslAfterBe = false; // APPLY TSL ONLY AFTER BE REACHED
+input int TslOffsetPoints = 10; // TSL BUFFER POINTS FOR MA/TKS/KJS
+input ENUM_TIMEFRAMES TimeFrame = 5; // TSL TIMEFRAME
+
+
 
 input group "------------- Box Settings ----------------------------------"
-input string timeFrom = "00:00"; // From Time
-input string timeTill = "03:00"; // Till Time
+input string timeFrom = "00:00"; // TIME FROM
+input string timeTill = "03:00"; // TIME TILL
 
 bool tslMasterToggle = true;
 
@@ -2162,289 +2164,295 @@ void OnTick()
       //|        Trailing SL activated by a new bar                        |
       //+------------------------------------------------------------------+
 
-      if(barsTotal != bars && NewBarAlert)
-         Alert("New Bar");
 
-      if(barsTotal != bars && totalPos > 0)  // New bar appeared on the chart
+      if(barsTotal != bars) // New bar appeared on the chart
         {
+
+         if(NewBarAlert && barsTotal > 0)
+            Alert("NEW BAR...");
+
          barsTotal = bars;
 
-         double fracUpper[];
-         double fracLower[];
-
-         ArraySetAsSeries(fracUpper,true);
-         ArraySetAsSeries(fracLower,true);
-
-         CopyBuffer(handleFractal, UPPER_LINE, 1, 3, fracUpper);
-         CopyBuffer(handleFractal, LOWER_LINE, 1, 3, fracLower);
-
-         double fracUpperValue = fracUpper[1];
-         double fracLowerValue = fracLower[1];
-
-         if(fracUpperValue == EMPTY_VALUE)
-            fracUpperValue = 0;
-
-         if(fracLowerValue == EMPTY_VALUE)
-            fracLowerValue = 0;
-
-         if(fracUpperValue != 0)
+         if(totalPos > 0)
            {
-            mainUpper = NormalizeDouble(fracUpperValue + (TslOffsetPoints + spreadPos) * _Point, _Digits);
-           }
+            // barsTotal = bars;
 
-         if(fracLowerValue != 0)
-           {
-            mainLower = NormalizeDouble(fracLowerValue - (TslOffsetPoints + spreadPos) * _Point, _Digits);
-           }
+            double fracUpper[];
+            double fracLower[];
 
-         for(int i = 0; i < totalPos; i++)
-           {
-            ulong posTicket = PositionGetTicket(i);
+            ArraySetAsSeries(fracUpper,true);
+            ArraySetAsSeries(fracLower,true);
 
-            if(PositionSelectByTicket(posTicket))
+            CopyBuffer(handleFractal, UPPER_LINE, 1, 3, fracUpper);
+            CopyBuffer(handleFractal, LOWER_LINE, 1, 3, fracLower);
+
+            double fracUpperValue = fracUpper[1];
+            double fracLowerValue = fracLower[1];
+
+            if(fracUpperValue == EMPTY_VALUE)
+               fracUpperValue = 0;
+
+            if(fracLowerValue == EMPTY_VALUE)
+               fracLowerValue = 0;
+
+            if(fracUpperValue != 0)
               {
-               if(PositionGetString(POSITION_SYMBOL) == _Symbol)
+               mainUpper = NormalizeDouble(fracUpperValue + (TslOffsetPoints + spreadPos) * _Point, _Digits);
+              }
+
+            if(fracLowerValue != 0)
+              {
+               mainLower = NormalizeDouble(fracLowerValue - (TslOffsetPoints + spreadPos) * _Point, _Digits);
+              }
+
+            for(int i = 0; i < totalPos; i++)
+              {
+               ulong posTicket = PositionGetTicket(i);
+
+               if(PositionSelectByTicket(posTicket))
                  {
-                  CTrade trade;
-                  double posOpenPrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),_Digits);
-                  double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),_Digits);
-                  double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),4);
-
-                  bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
-                  ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
-
-                  double ma[];
-                  CopyBuffer(handleMA,MAIN_LINE,1,MaShift,ma);
-
-
-                  //+------------------------------------------------------------------+
-                  //|         Fractals                                                 |
-                  //+------------------------------------------------------------------+
-
-                  if(fractalsTSL && tslMasterToggle)
+                  if(PositionGetString(POSITION_SYMBOL) == _Symbol)
                     {
-                     // --------------------
-                     // --- BUY POSITION ---
-                     // --------------------
+                     CTrade trade;
+                     double posOpenPrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),_Digits);
+                     double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),_Digits);
+                     double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),4);
 
-                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position if has type BUY
+                     bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
+                     ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
+
+                     double ma[];
+                     CopyBuffer(handleMA,MAIN_LINE,1,MaShift,ma);
+
+
+                     //+------------------------------------------------------------------+
+                     //|         Fractals                                                 |
+                     //+------------------------------------------------------------------+
+
+                     if(fractalsTSL && tslMasterToggle)
                        {
-                        // ---
-                        if(posSl < mainLower && bid > mainLower)
+                        // --------------------
+                        // --- BUY POSITION ---
+                        // --------------------
+
+                        if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position if has type BUY
                           {
-                           double sl = mainLower;
-
-                           if(sl > posSl)
+                           // ---
+                           if(posSl < mainLower && bid > mainLower)
                              {
-                              if(trade.PositionModify(posTicket, sl, posTp))
+                              double sl = mainLower;
 
+                              if(sl > posSl)
                                 {
-                                 Print(__FUNCTION__, " > Position #", posTicket, " was modified by Fractal tsl. BUY");
-                                }
-                             }
-                          }
-                       }
+                                 if(trade.PositionModify(posTicket, sl, posTp))
 
-                     // ---------------------
-                     // --- SELL POSITION ---
-                     // ---------------------
-                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
-                       {
-                        //---
-                        if(posSl > mainUpper && ask < mainUpper)
-                          {
-                           double sl = mainUpper;
-
-                           if(sl < posSl || posSl == 0)
-                             {
-                              if(trade.PositionModify(posTicket, sl, posTp))
-                                {
-                                 Print(__FUNCTION__, " > Position #", posTicket, " was modified by Fractal tsl. SELL");
-                                }
-                             }
-                          }
-                       }
-                    } // end of if fractals
-
-
-                  //+------------------------------------------------------------------+
-                  //|        End of Fractals                                           |
-                  //+------------------------------------------------------------------+
-
-
-                  //+------------------------------------------------------------------+
-                  //|         MA                                                       |
-                  //+------------------------------------------------------------------+
-
-                  if(movingAverageTSL && tslMasterToggle)
-                    {
-                     // --------------------
-                     // --- BUY POSITION ---
-                     // --------------------
-
-                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
-                       {
-                        if(ArraySize(ma) > 0)
-                          {
-                           double sl = NormalizeDouble(NormalizeDouble(ma[MaShift - 1],_Digits) - (TslOffsetPoints + spreadPos) * _Point,_Digits);
-
-                           if(sl > posSl && sl < bid)
-                             {
-                              if(trade.PositionModify(posTicket,sl,posTp))
-                                {
-                                 Print(NormalizeDouble(sl - posSl,4), " ", NormalizeDouble(bid - sl,_Digits));
-                                 Print("SL = ",sl, " TP = ", posTp);
-                                 Print(__FUNCTION__," > Position #",posTicket," was modified by ma tsl.");
+                                   {
+                                    Print(__FUNCTION__, " > Position #", posTicket, " was modified by Fractal tsl. BUY");
+                                   }
                                 }
                              }
                           }
 
-                       }
-
-                     // ---------------------
-                     // --- SELL POSITION ---
-                     // ---------------------
-
-                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
-                       {
-                        if(ArraySize(ma) > 0)
+                        // ---------------------
+                        // --- SELL POSITION ---
+                        // ---------------------
+                        if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
                           {
-                           double sl = NormalizeDouble(NormalizeDouble(ma[MaShift - 1],_Digits) + (TslOffsetPoints + spreadPos) * _Point,_Digits);
-                           if(sl < posSl || posSl == 0)
+                           //---
+                           if(posSl > mainUpper && ask < mainUpper)
                              {
-                              if(trade.PositionModify(posTicket,sl,posTp))
+                              double sl = mainUpper;
+
+                              if(sl < posSl || posSl == 0)
                                 {
-                                 Print("SL = ",sl, " TP = ", posTp);
-                                 Print(__FUNCTION__," > Position #",posTicket," was modified by ma tsl.");
+                                 if(trade.PositionModify(posTicket, sl, posTp))
+                                   {
+                                    Print(__FUNCTION__, " > Position #", posTicket, " was modified by Fractal tsl. SELL");
+                                   }
+                                }
+                             }
+                          }
+                       } // end of if fractals
+
+
+                     //+------------------------------------------------------------------+
+                     //|        End of Fractals                                           |
+                     //+------------------------------------------------------------------+
+
+
+                     //+------------------------------------------------------------------+
+                     //|         MA                                                       |
+                     //+------------------------------------------------------------------+
+
+                     if(movingAverageTSL && tslMasterToggle)
+                       {
+                        // --------------------
+                        // --- BUY POSITION ---
+                        // --------------------
+
+                        if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
+                          {
+                           if(ArraySize(ma) > 0)
+                             {
+                              double sl = NormalizeDouble(NormalizeDouble(ma[MaShift - 1],_Digits) - (TslOffsetPoints + spreadPos) * _Point,_Digits);
+
+                              if(sl > posSl && sl < bid)
+                                {
+                                 if(trade.PositionModify(posTicket,sl,posTp))
+                                   {
+                                    Print(NormalizeDouble(sl - posSl,4), " ", NormalizeDouble(bid - sl,_Digits));
+                                    Print("SL = ",sl, " TP = ", posTp);
+                                    Print(__FUNCTION__," > Position #",posTicket," was modified by ma tsl.");
+                                   }
+                                }
+                             }
+
+                          }
+
+                        // ---------------------
+                        // --- SELL POSITION ---
+                        // ---------------------
+
+                        if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
+                          {
+                           if(ArraySize(ma) > 0)
+                             {
+                              double sl = NormalizeDouble(NormalizeDouble(ma[MaShift - 1],_Digits) + (TslOffsetPoints + spreadPos) * _Point,_Digits);
+                              if(sl < posSl || posSl == 0)
+                                {
+                                 if(trade.PositionModify(posTicket,sl,posTp))
+                                   {
+                                    Print("SL = ",sl, " TP = ", posTp);
+                                    Print(__FUNCTION__," > Position #",posTicket," was modified by ma tsl.");
+                                   }
+                                }
+                             }
+                          }
+
+                       }// end of moving average
+
+
+                     //+------------------------------------------------------------------+
+                     //|       end of MA                                                  |
+                     //+------------------------------------------------------------------+
+
+
+                     //+------------------------------------------------------------------+
+                     //|       Kinjunsen TSL                                              |
+                     //+------------------------------------------------------------------+
+
+
+                     if(kijunsenTSL && tslMasterToggle)
+                       {
+                        double KijunsenArr[];
+                        CopyBuffer(handleIchimoku,1,0,2,KijunsenArr);
+
+
+                        // --------------------
+                        // --- BUY POSITION ---
+                        // --------------------
+
+                        if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
+                          {
+                           if(ArraySize(KijunsenArr) > 0)
+                             {
+                              double sl = NormalizeDouble(NormalizeDouble(KijunsenArr[0],_Digits) - (TslOffsetPoints + spreadPos) * _Point,_Digits);
+
+                              if(sl > posSl && sl < bid)
+                                {
+                                 if(trade.PositionModify(posTicket,sl,posTp))
+                                   {
+                                    Print(__FUNCTION__," > Position #",posTicket," was modified by Kijunsen tsl.");
+                                   }
+                                }
+                             }
+
+                          }
+
+                        // ---------------------
+                        // --- SELL POSITION ---
+                        // ---------------------
+
+                        if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
+                          {
+                           if(ArraySize(KijunsenArr) > 0)
+                             {
+                              double sl = NormalizeDouble(NormalizeDouble(KijunsenArr[0],_Digits) + (TslOffsetPoints + spreadPos) * _Point,_Digits);
+
+                              if(sl < posSl || posSl == 0)
+                                {
+                                 if(trade.PositionModify(posTicket,sl,posTp))
+                                   {
+                                    Print(__FUNCTION__," > Position #",posTicket," was modified by Kijunsen tsl.");
+                                   }
                                 }
                              }
                           }
                        }
-
-                    }// end of moving average
-
-
-                  //+------------------------------------------------------------------+
-                  //|       end of MA                                                  |
-                  //+------------------------------------------------------------------+
+                     //+------------------------------------------------------------------+
+                     //|       End of Kinjunsen TSL                                       |
+                     //+------------------------------------------------------------------+
 
 
-                  //+------------------------------------------------------------------+
-                  //|       Kinjunsen TSL                                              |
-                  //+------------------------------------------------------------------+
+                     //+------------------------------------------------------------------+
+                     //|       Tenkansen TSL                                              |
+                     //+------------------------------------------------------------------+
 
 
-                  if(kijunsenTSL && tslMasterToggle)
-                    {
-                     double KijunsenArr[];
-                     CopyBuffer(handleIchimoku,1,0,2,KijunsenArr);
-
-
-                     // --------------------
-                     // --- BUY POSITION ---
-                     // --------------------
-
-                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
+                     if(tenkansenTSL && tslMasterToggle)
                        {
-                        if(ArraySize(KijunsenArr) > 0)
-                          {
-                           double sl = NormalizeDouble(NormalizeDouble(KijunsenArr[0],_Digits) - (TslOffsetPoints + spreadPos) * _Point,_Digits);
+                        double TenkansenArr[];
+                        CopyBuffer(handleIchimoku,0,0,2,TenkansenArr);
 
-                           if(sl > posSl && sl < bid)
+                        // --------------------
+                        // --- BUY POSITION ---
+                        // --------------------
+
+                        if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
+                          {
+                           if(ArraySize(TenkansenArr) > 0)
                              {
-                              if(trade.PositionModify(posTicket,sl,posTp))
+                              double sl = NormalizeDouble(NormalizeDouble(TenkansenArr[0],_Digits) - (TslOffsetPoints + spreadPos) * _Point,_Digits);
+
+                              if(sl > posSl && sl < bid)
                                 {
-                                 Print(__FUNCTION__," > Position #",posTicket," was modified by Kijunsen tsl.");
+                                 if(trade.PositionModify(posTicket,sl,posTp))
+                                   {
+                                    Print(__FUNCTION__," > Position #",posTicket," was modified by Tenkansen tsl.");
+                                   }
                                 }
                              }
                           }
 
-                       }
+                        // ---------------------
+                        // --- SELL POSITION ---
+                        // ---------------------
 
-                     // ---------------------
-                     // --- SELL POSITION ---
-                     // ---------------------
-
-                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
-                       {
-                        if(ArraySize(KijunsenArr) > 0)
+                        if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
                           {
-                           double sl = NormalizeDouble(NormalizeDouble(KijunsenArr[0],_Digits) + (TslOffsetPoints + spreadPos) * _Point,_Digits);
-
-                           if(sl < posSl || posSl == 0)
+                           if(ArraySize(TenkansenArr) > 0)
                              {
-                              if(trade.PositionModify(posTicket,sl,posTp))
+                              double sl = NormalizeDouble(NormalizeDouble(TenkansenArr[0],_Digits) + (TslOffsetPoints + spreadPos)*_Point,_Digits);
+
+                              if(sl < posSl || posSl == 0)
                                 {
-                                 Print(__FUNCTION__," > Position #",posTicket," was modified by Kijunsen tsl.");
+                                 if(trade.PositionModify(posTicket,sl,posTp))
+                                   {
+                                    Print(__FUNCTION__," > Position #",posTicket," was modified by Tenkansen tsl.");
+                                   }
                                 }
                              }
                           }
                        }
-                    }
-                  //+------------------------------------------------------------------+
-                  //|       End of Kinjunsen TSL                                       |
-                  //+------------------------------------------------------------------+
+                     //+------------------------------------------------------------------+
+                     //|       End of Tenkansen TSL                                       |
+                     //+------------------------------------------------------------------+
 
-
-                  //+------------------------------------------------------------------+
-                  //|       Tenkansen TSL                                              |
-                  //+------------------------------------------------------------------+
-
-
-                  if(tenkansenTSL && tslMasterToggle)
-                    {
-                     double TenkansenArr[];
-                     CopyBuffer(handleIchimoku,0,0,2,TenkansenArr);
-
-                     // --------------------
-                     // --- BUY POSITION ---
-                     // --------------------
-
-                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
-                       {
-                        if(ArraySize(TenkansenArr) > 0)
-                          {
-                           double sl = NormalizeDouble(NormalizeDouble(TenkansenArr[0],_Digits) - (TslOffsetPoints + spreadPos) * _Point,_Digits);
-
-                           if(sl > posSl && sl < bid)
-                             {
-                              if(trade.PositionModify(posTicket,sl,posTp))
-                                {
-                                 Print(__FUNCTION__," > Position #",posTicket," was modified by Tenkansen tsl.");
-                                }
-                             }
-                          }
-                       }
-
-                     // ---------------------
-                     // --- SELL POSITION ---
-                     // ---------------------
-
-                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
-                       {
-                        if(ArraySize(TenkansenArr) > 0)
-                          {
-                           double sl = NormalizeDouble(NormalizeDouble(TenkansenArr[0],_Digits) + (TslOffsetPoints + spreadPos)*_Point,_Digits);
-
-                           if(sl < posSl || posSl == 0)
-                             {
-                              if(trade.PositionModify(posTicket,sl,posTp))
-                                {
-                                 Print(__FUNCTION__," > Position #",posTicket," was modified by Tenkansen tsl.");
-                                }
-                             }
-                          }
-                       }
-                    }
-                  //+------------------------------------------------------------------+
-                  //|       End of Tenkansen TSL                                       |
-                  //+------------------------------------------------------------------+
-
-                 } // if pos symbol
-              } // if pos ticket
-           } // for loop
-        } // bars total
-
+                    } // if pos symbol
+                 } // if pos ticket
+              } // for loop
+           } // totalPos > 0
+        } // barsTotal != bars
       //+------------------------------------------------------------------+
       //|                                                                  |
       //+------------------------------------------------------------------+
