@@ -2035,7 +2035,7 @@ void OnTick()
                   if(PositionSelectByTicket(posTicket))
                      if(PositionGetString(POSITION_SYMBOL) == _Symbol && PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
                        {
-                        int OpenBar = iBarShift(_Symbol,0,PositionGetInteger(POSITION_TIME));                        
+                        int OpenBar = iBarShift(_Symbol,0,PositionGetInteger(POSITION_TIME));
                         if(OpenBar > 1)
                            if(trade.PositionClose(posTicket))
                              {
@@ -2058,7 +2058,7 @@ void OnTick()
                   if(PositionSelectByTicket(posTicket))
                      if(PositionGetString(POSITION_SYMBOL) == _Symbol && PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
                        {
-                        int OpenBar = iBarShift(_Symbol,0,PositionGetInteger(POSITION_TIME));                        
+                        int OpenBar = iBarShift(_Symbol,0,PositionGetInteger(POSITION_TIME));
                         if(OpenBar > 1)
                            if(trade.PositionClose(posTicket))
                              {
