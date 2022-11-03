@@ -1919,7 +1919,7 @@ int OnInit()
       handleMA = iMA(_Symbol, TimeFrame, MaPeriod, MaShift, TslMaMethod, TslMaAppPrice);
      }
 
-   if(kijunsenTSL || tenkansenTSL)
+   if(kijunsenTSL || tenkansenTSL || ClosePosTenkansen)
      {
       handleIchimoku = iIchimoku(_Symbol,PERIOD_CURRENT,9,26,52);
      }
@@ -1995,7 +1995,84 @@ void OnTick()
       textComment += "TSL Fra   = [ " + (string)fractalsTSL + " ]\n";
       textComment += "TSL MA  = [ " + (string)movingAverageTSL + " ]\n";
       textComment += "Auto BE  = [ " + (string)autoBreakEven + " ]" + " ]\n";
-      textComment += "Points TSL = [ " + (string)pointsTSL + " ]";
+      textComment += "Points TSL = [ " + (string)pointsTSL + " ]" + " ]\n";
+
+      //+------------------------------------------------------------------+
+      //|                                                                  |
+      //|  ----- Close All Positions On Condition --------------           |
+      //|                                                                  |
+      //+------------------------------------------------------------------+
+
+      //+------------------------------------------------------------------+
+      //|        Close Positions on Price Close Over Tenkansen             |
+      //+------------------------------------------------------------------+
+
+      if(ClosePosTenkansen)
+        {
+         CTrade trade;
+         double TenkansenArr[];
+         CopyBuffer(handleIchimoku,0,0,2,TenkansenArr);
+
+         double ClosePrevBar = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits); // previous close price
+         double TenkansenPrevBar = NormalizeDouble(TenkansenArr[0],_Digits); // previous kijunsen value
+
+         // Print("ClosePosTenkansen = ",ClosePrevBar," ",TenkansenPrevBar); // for debugging
+
+         textComment += "Close Pri Prev bar = " + DoubleToString(ClosePrevBar,_Digits) + "\n";
+         textComment += "Tenkansen Prev Bar = " + DoubleToString(TenkansenPrevBar,_Digits) + "\n";
+
+
+         if(ArraySize(TenkansenArr) > 0)
+           {
+            // --------------------
+            // --- BUY POSITION ---
+            // --------------------
+            if(ClosePrevBar < TenkansenPrevBar)
+               for(int i = 0; i < totalPos; i++)
+                 {
+                  ulong posTicket = PositionGetTicket(i);
+                  if(PositionSelectByTicket(posTicket))
+                     if(PositionGetString(POSITION_SYMBOL) == _Symbol && PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
+                        if(trade.PositionClose(posTicket))
+                           Print(__FUNCTION__," > Position #",posTicket," was closed because price closed below Tenkansen. ",ClosePrevBar," < ",TenkansenPrevBar);
+                 }
+
+            // --------------------
+            // --- SELL POSITION --
+            // --------------------
+            if(ClosePrevBar > TenkansenPrevBar)
+               for(int i = 0; i < totalPos; i++)
+                 {
+                  ulong posTicket = PositionGetTicket(i);
+                  if(PositionSelectByTicket(posTicket))
+                     if(PositionGetString(POSITION_SYMBOL) == _Symbol && PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
+                        if(trade.PositionClose(posTicket))
+                           Print(__FUNCTION__," > Position #",posTicket," was closed because price closed above Tenkansen. ",ClosePrevBar," > ",TenkansenPrevBar);
+                 }
+
+           } // ArraySize(TenkansenArr) > 0
+        } // ClosePosTenkansen
+      //+------------------------------------------------------------------+
+      //|      End Close Positions on Price Close Over Tenkansen           |
+      //+------------------------------------------------------------------+
+
+
+
+
+      //+------------------------------------------------------------------+
+      //|                                                                  |
+      //|  ----- End Close All Positions On Condition ----------           |
+      //|                                                                  |
+      //+------------------------------------------------------------------+
+
+
+
+
+
+
+
+
+
 
       //+------------------------------------------------------------------+
       //|        Trailing SL activated by a new Tick                       |
@@ -2210,87 +2287,7 @@ void OnTick()
 
 
 
-            //+------------------------------------------------------------------+
-            //|  ----- Close All Positions On Condition ----------               |
-            //+------------------------------------------------------------------+
-
-            //+------------------------------------------------------------------+
-            //|        Close Positions on Price Close Over Tenkansen             |
-            //+------------------------------------------------------------------+
-
-            if(ClosePosTenkansen)
-              {
-               CTrade trade;
-               double TenkansenArr[];
-               CopyBuffer(handleIchimoku,0,0,2,TenkansenArr);
-
-
-               double ClosePrevBar = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits); // previous close price
-               double TenkansenPrevBar = NormalizeDouble(TenkansenArr[0],_Digits); // previous kijunsen value
-
-               if(ArraySize(TenkansenArr))
-                 {
-                  // --------------------
-                  // --- BUY POSITION ---
-                  // --------------------
-                  if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
-                    {
-                     if(ClosePrevBar < TenkansenPrevBar)
-                       {
-                        for(int i = 0; i < totalPos; i++)
-                          {
-                           ulong posTicket = PositionGetTicket(i);
-
-                           if(PositionSelectByTicket(posTicket))
-                             {
-                              if(PositionGetString(POSITION_SYMBOL) == _Symbol)
-                                {
-                                 if(trade.PositionClose(posTicket))
-                                    Print(__FUNCTION__," > Position #",posTicket," was closed because price closed below Tenkansen. ",ClosePrevBar," < ",TenkansenPrevBar);
-                                }
-                             }
-                          }
-                       }
-
-                    }
-
-
-                  // --------------------
-                  // --- SELL POSITION --
-                  // --------------------
-                  if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
-                    {
-                     if(ClosePrevBar > TenkansenPrevBar)
-                       {
-                        for(int i = 0; i < totalPos; i++)
-                          {
-                           ulong posTicket = PositionGetTicket(i);
-
-                           if(PositionSelectByTicket(posTicket))
-                             {
-                              if(PositionGetString(POSITION_SYMBOL) == _Symbol)
-                                {
-                                 if(trade.PositionClose(posTicket))
-                                    Print(__FUNCTION__," > Position #",posTicket," was closed because price closed above Tenkansen. ",ClosePrevBar," > ",TenkansenPrevBar);
-                                }
-                             }
-                          }
-                       }
-
-                    }
-
-                 }
-              }
-            //+------------------------------------------------------------------+
-            //|      End Close Positions on Price Close Over Tenkansen           |
-            //+------------------------------------------------------------------+
-
-
-
-
-            //+------------------------------------------------------------------+
-            //|  ----- End Close All Positions On Condition ----------           |
-            //+------------------------------------------------------------------+
+            // &&&&&&&&&&&&&&&&&&
 
 
 
@@ -3161,4 +3158,5 @@ bool CControlsDialog::DisplayInfo()
 
 
 
+//+------------------------------------------------------------------+
 //+------------------------------------------------------------------+
