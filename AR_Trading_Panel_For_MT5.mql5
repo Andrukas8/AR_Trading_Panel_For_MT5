@@ -71,6 +71,7 @@ input bool NewBarAlert = false; // == NEW BAR ALERT ==
 
 input group "------------- Auto Closing Position on Condition ------------"
 input bool ClosePosTenkansen = false; // CLOSE ON CLOSE OVER TENKANSEN
+input bool AlertAutoClosePosition = false; // ALERT ON POSITIONS CLOSE
 
 input group "------------- Auto Position Management Settings -------------"
 input bool tslAfterBe = false; // APPLY TSL ONLY AFTER BE REACHED
@@ -2034,7 +2035,11 @@ void OnTick()
                   if(PositionSelectByTicket(posTicket))
                      if(PositionGetString(POSITION_SYMBOL) == _Symbol && PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
                         if(trade.PositionClose(posTicket))
+                          {
                            Print(__FUNCTION__," > Position #",posTicket," was closed because price closed below Tenkansen. ",ClosePrevBar," < ",TenkansenPrevBar);
+                           if(AlertAutoClosePosition)
+                              Alert("Position #",posTicket," was closed because price closed below Tenkansen. ",ClosePrevBar," < ",TenkansenPrevBar);
+                          }
                  }
 
             // --------------------
@@ -2047,8 +2052,13 @@ void OnTick()
                   if(PositionSelectByTicket(posTicket))
                      if(PositionGetString(POSITION_SYMBOL) == _Symbol && PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
                         if(trade.PositionClose(posTicket))
+                          {
                            Print(__FUNCTION__," > Position #",posTicket," was closed because price closed above Tenkansen. ",ClosePrevBar," > ",TenkansenPrevBar);
+                           if(AlertAutoClosePosition)
+                              Alert("Position #",posTicket," was closed because price closed above Tenkansen. ",ClosePrevBar," > ",TenkansenPrevBar);
+                          }
                  }
+
 
            } // ArraySize(TenkansenArr) > 0
         } // ClosePosTenkansen
