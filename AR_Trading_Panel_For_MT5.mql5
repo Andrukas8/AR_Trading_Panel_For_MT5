@@ -72,6 +72,7 @@ input bool NewBarAlert = false; // == NEW BAR ALERT ==
 input group "------------- Auto Closing Position on Condition ------------"
 input bool ClosePosTenkansen = false; // CLOSE ON CLOSE OVER TENKANSEN
 input bool AlertAutoClosePosition = false; // ALERT ON POSITIONS CLOSE
+input bool SignalTenkansenBreak = true; // ALERT ON TK BREAK
 
 input group "------------- Auto Position Management Settings -------------"
 input bool tslAfterBe = false; // APPLY TSL ONLY AFTER BE REACHED
@@ -1920,7 +1921,7 @@ int OnInit()
       handleMA = iMA(_Symbol, TimeFrame, MaPeriod, MaShift, TslMaMethod, TslMaAppPrice);
      }
 
-   if(kijunsenTSL || tenkansenTSL || ClosePosTenkansen)
+   if(kijunsenTSL || tenkansenTSL || ClosePosTenkansen || SignalTenkansenBreak)
      {
       handleIchimoku = iIchimoku(_Symbol,PERIOD_CURRENT,9,26,52);
      }
@@ -2000,6 +2001,164 @@ void OnTick()
 
       //+------------------------------------------------------------------+
       //|                                                                  |
+      //|  ----- Signal If TK Break Strategy Conditions Met -------------- |
+      //|                                                                  |
+      //+------------------------------------------------------------------+
+
+
+      if(SignalTenkansenBreak)
+        {
+
+
+         if(barsTotal != bars) // New bar appeared on the chart
+           {
+
+
+
+            barsTotal = bars;
+
+
+            bool BuySignal_1 = false;
+            bool BuySignal_2 = false;
+            bool BuySignal_3 = false;
+            bool BuySignal_4 = false;
+            bool BuySignal_GO = false;
+
+            bool SellSignal_1 = false;
+            bool SellSignal_2 = false;
+            bool SellSignal_3 = false;
+            bool SellSignal_4 = false;
+            bool SellSignal_GO = false;
+
+            static datetime timeStamp;
+
+            double ClosePrice_1 = iClose(_Symbol,PERIOD_CURRENT,1);
+            double ClosePrice_2 = iClose(_Symbol,PERIOD_CURRENT,2);
+            double ClosePrice_3 = iClose(_Symbol,PERIOD_CURRENT,3);
+
+            datetime time = iTime(_Symbol,PERIOD_CURRENT,0);
+
+            double TenkansenArr[];
+            double KijunsenArr[];
+            double SenkouspanAArr[];
+            double SenkouspanBArr[];
+
+            double ShiftedSenkouspanAArr[];
+            double ShiftedSenkouspanBArr[];
+
+            double ChikouspanArr[];
+
+            double Bar26High = iHigh(_Symbol,PERIOD_CURRENT,26);
+            double Bar26Low = iLow(_Symbol,PERIOD_CURRENT,26);
+            double CurrentHigh = iHigh(_Symbol,PERIOD_CURRENT,0);
+            double CurrentLow = iLow(_Symbol,PERIOD_CURRENT,0);
+
+            CopyBuffer(handleIchimoku,0,0,3,TenkansenArr);
+            CopyBuffer(handleIchimoku,1,0,3,KijunsenArr);
+            CopyBuffer(handleIchimoku,2,0,3,SenkouspanAArr);
+            CopyBuffer(handleIchimoku,3,0,3,SenkouspanBArr);
+
+            CopyBuffer(handleIchimoku,2,-26,3,ShiftedSenkouspanAArr);
+            CopyBuffer(handleIchimoku,3,-26,3,ShiftedSenkouspanBArr);
+
+            CopyBuffer(handleIchimoku,4,26,1,ChikouspanArr);
+
+            if(timeStamp != time)
+              {
+               timeStamp = time;
+
+               BuySignal_4 = false;
+               SellSignal_4 = false;
+
+               // Buy Signal
+
+               if(TenkansenArr[2] > KijunsenArr[2])
+                 {
+                  BuySignal_1 = true; // TK Cross
+                  SellSignal_1 = false; // cancelling sell signal
+                 }
+
+
+               if(ChikouspanArr[0] > Bar26High) // Chikou span above prices
+                 {
+                  BuySignal_2 = true;
+                  SellSignal_2 = false;
+                 }
+               else
+                  BuySignal_2 = false;
+
+               if((ShiftedSenkouspanAArr[0] > ShiftedSenkouspanBArr[0])) // Kumo green
+                 {
+                  BuySignal_3 = true;
+                  SellSignal_3 = false;
+                 }
+
+
+               if(ClosePrice_2 < TenkansenArr[0] && ClosePrice_1 > TenkansenArr[1]) // <<<<<<<<<<<<<<<<<<<<<<<< Buy Signal
+                 {
+                  BuySignal_4 = true;
+                  SellSignal_4 = false;
+                 }
+
+
+               if(BuySignal_4)
+                 {
+                  Print("Tenkansen Break Strategy: Buy Signal = ",BuySignal_4);
+                  Alert("Tenkansen Break Strategy: Buy Signal = ",BuySignal_4);
+                  BuySignal_GO = false;
+                 }
+
+               // SELL trades
+
+               if(TenkansenArr[2] < KijunsenArr[2])
+                 {
+                  SellSignal_1 = true; // KT Cross
+                  BuySignal_1 = false; // cancelling buy signal
+                 }
+
+               if(ChikouspanArr[0] < Bar26Low) // Chikous span
+                 {
+                  SellSignal_2 = true;
+                  BuySignal_2 = false;
+                 }
+               else
+                 {
+                  SellSignal_2 = false;
+                 }
+
+               if((ShiftedSenkouspanAArr[0] < ShiftedSenkouspanBArr[0]))
+                 {
+                  SellSignal_3 = true; // Kumo red
+                  BuySignal_3 = false;
+                 }
+
+
+               if(ClosePrice_2 > TenkansenArr[0] && ClosePrice_1 < TenkansenArr[1]) // <<<<<<<<<<<<<<<<<<<<<<<< Sell Signal
+                 {
+                  BuySignal_4 = false;
+                  SellSignal_4 = true;
+                 }
+
+
+               if(SellSignal_4)
+                 {
+                  Print("Tenkansen Break Strategy: Sell Signal = ",SellSignal_4);
+                  Alert("Tenkansen Break Strategy: Sell Signal = ",SellSignal_4);
+                  SellSignal_GO = false;
+                 }
+
+               Print("\nNew Bar:\nTK Break Buy_: ",BuySignal_1," ",BuySignal_2," ",BuySignal_3," ",BuySignal_4,"\nTK Break Sell: ",SellSignal_1," ",SellSignal_2," ",SellSignal_3," ",SellSignal_4);
+
+               textComment += "\n\nShiftedSenkouspanAArr[0] = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + "\nShiftedSenkouspanBArr[0] = " + DoubleToString(ShiftedSenkouspanBArr[0],_Digits) + "\n";
+               textComment += "Buy Signels  = " + IntegerToString(BuySignal_1) + " " + IntegerToString(BuySignal_2) + " " + IntegerToString(BuySignal_3) + " " + IntegerToString(BuySignal_4) + "\n";
+               textComment += "Sell Signals = " + IntegerToString(SellSignal_1) + " " + IntegerToString(SellSignal_2) + " " + IntegerToString(SellSignal_3) + " " + IntegerToString(SellSignal_4) + "\n";
+              }
+           } // timeStamp != time
+
+        }
+
+      //+------------------------------------------------------------------+
+      //|                                                                  |
       //|  ----- Close All Positions On Condition --------------           |
       //|                                                                  |
       //+------------------------------------------------------------------+
@@ -2017,11 +2176,8 @@ void OnTick()
          double ClosePrevBar = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits); // previous close price
          double TenkansenPrevBar = NormalizeDouble(TenkansenArr[0],_Digits); // previous kijunsen value
 
-         // Print("ClosePosTenkansen = ",ClosePrevBar," ",TenkansenPrevBar); // for debugging
-
          textComment += "Close Pri Prev bar = " + DoubleToString(ClosePrevBar,_Digits) + "\n";
          textComment += "Tenkansen Prev Bar = " + DoubleToString(TenkansenPrevBar,_Digits) + "\n";
-
 
          if(ArraySize(TenkansenArr) > 0)
            {
@@ -3165,4 +3321,6 @@ bool CControlsDialog::DisplayInfo()
 
 
 //+------------------------------------------------------------------+
+//+------------------------------------------------------------------+
+
 //+------------------------------------------------------------------+
