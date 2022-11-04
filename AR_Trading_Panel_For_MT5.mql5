@@ -2098,17 +2098,17 @@ void OnTick()
                  {
                   BuySignal_GO = true;
                   SellSignal_GO = false;
-                  BuySignal_1 = false;
-                  BuySignal_2 = false;
-                  BuySignal_3 = false;
-                  BuySignal_4 = false;
                  }
 
-               if(BuySignal_4)
+               if(BuySignal_GO)
                  {
                   Print("Tenkansen Break Strategy: Buy Signal = ",BuySignal_GO);
                   Alert("Tenkansen Break Strategy: Buy Signal = ",BuySignal_GO);
                   BuySignal_GO = false;
+                  BuySignal_1 = false;
+                  BuySignal_2 = false;
+                  BuySignal_3 = false;
+                  BuySignal_4 = false;
                  }
 
                // SELL trades
@@ -2145,17 +2145,17 @@ void OnTick()
                  {
                   SellSignal_GO = true;
                   BuySignal_GO = false;
-                  SellSignal_1 = false;
-                  SellSignal_2 = false;
-                  SellSignal_3 = false;
-                  SellSignal_4 = false;
                  }
 
-               if(SellSignal_4)
+               if(SellSignal_GO)
                  {
                   Print("Tenkansen Break Strategy: Sell Signal = ",SellSignal_GO);
                   Alert("Tenkansen Break Strategy: Sell Signal = ",SellSignal_GO);
                   SellSignal_GO = false;
+                  SellSignal_1 = false;
+                  SellSignal_2 = false;
+                  SellSignal_3 = false;
+                  SellSignal_4 = false;
                  }
 
                Print("\nNew Bar:\nTK Break Buy_: ",BuySignal_1," ",BuySignal_2," ",BuySignal_3," ",BuySignal_4," ",BuySignal_GO,"\nTK Break Sell: ",SellSignal_1," ",SellSignal_2," ",SellSignal_3," ",SellSignal_4," ",SellSignal_GO);
@@ -3004,7 +3004,6 @@ bool  CControlsDialog::MarketBuyDoubleOrder()
 
         }
       else
-
         {
          Print("Incorrect input");
         }
