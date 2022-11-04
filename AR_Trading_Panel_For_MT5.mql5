@@ -2078,7 +2078,6 @@ void OnTick()
                   SellSignal_1 = false; // cancelling sell signal
                  }
 
-
                if(ChikouspanArr[0] > Bar26High) // Chikou span above prices
                  {
                   BuySignal_2 = true;
@@ -2093,18 +2092,22 @@ void OnTick()
                   SellSignal_3 = false;
                  }
 
-
                if(ClosePrice_2 < TenkansenArr[0] && ClosePrice_1 > TenkansenArr[1]) // <<<<<<<<<<<<<<<<<<<<<<<< Buy Signal
                  {
                   BuySignal_4 = true;
                   SellSignal_4 = false;
                  }
 
+               if(BuySignal_1 && BuySignal_2 && BuySignal_3 && BuySignal_4)
+                 {
+                  BuySignal_GO = true;
+                  SellSignal_GO = false;
+                 }
 
                if(BuySignal_4)
                  {
-                  Print("Tenkansen Break Strategy: Buy Signal = ",BuySignal_4);
-                  Alert("Tenkansen Break Strategy: Buy Signal = ",BuySignal_4);
+                  Print("Tenkansen Break Strategy: Buy Signal = ",BuySignal_GO);
+                  Alert("Tenkansen Break Strategy: Buy Signal = ",BuySignal_GO);
                   BuySignal_GO = false;
                  }
 
@@ -2132,22 +2135,26 @@ void OnTick()
                   BuySignal_3 = false;
                  }
 
-
                if(ClosePrice_2 > TenkansenArr[0] && ClosePrice_1 < TenkansenArr[1]) // <<<<<<<<<<<<<<<<<<<<<<<< Sell Signal
                  {
                   BuySignal_4 = false;
                   SellSignal_4 = true;
                  }
 
+               if(SellSignal_1 && SellSignal_2 && SellSignal_3 && SellSignal_4)
+                 {
+                  SellSignal_GO = true;
+                  BuySignal_GO = false;
+                 }
 
                if(SellSignal_4)
                  {
-                  Print("Tenkansen Break Strategy: Sell Signal = ",SellSignal_4);
-                  Alert("Tenkansen Break Strategy: Sell Signal = ",SellSignal_4);
+                  Print("Tenkansen Break Strategy: Sell Signal = ",SellSignal_GO);
+                  Alert("Tenkansen Break Strategy: Sell Signal = ",SellSignal_GO);
                   SellSignal_GO = false;
                  }
 
-               Print("\nNew Bar:\nTK Break Buy_: ",BuySignal_1," ",BuySignal_2," ",BuySignal_3," ",BuySignal_4,"\nTK Break Sell: ",SellSignal_1," ",SellSignal_2," ",SellSignal_3," ",SellSignal_4);
+               Print("\nNew Bar:\nTK Break Buy_: ",BuySignal_1," ",BuySignal_2," ",BuySignal_3," ",BuySignal_4," ",BuySignal_GO,"\nTK Break Sell: ",SellSignal_1," ",SellSignal_2," ",SellSignal_3," ",SellSignal_4," ",SellSignal_GO);
 
                textComment += "\n\nShiftedSenkouspanAArr[0] = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + "\nShiftedSenkouspanBArr[0] = " + DoubleToString(ShiftedSenkouspanBArr[0],_Digits) + "\n";
                textComment += "Buy Signels  = " + IntegerToString(BuySignal_1) + " " + IntegerToString(BuySignal_2) + " " + IntegerToString(BuySignal_3) + " " + IntegerToString(BuySignal_4) + "\n";
