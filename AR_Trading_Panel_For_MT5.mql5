@@ -52,7 +52,7 @@ input string posLotsDef = "0.1"; // LOT SIZE
 input string slPipsDef = "10"; // SL pips
 input string RiskToRewardDef = "2"; // RRR
 input string RiskLevelDef = "2"; // RISK % OF DEPOSIT
-input double marginToBallancePercent = 80; // MARGIN TO DEPOSIT %
+input double marginToBallancePercent = 90; // MARGIN TO DEPOSIT %
 
 input group "------------- Auto Position Management Controls ------------"
 input bool autoBreakEven = false; // AUTO BREAKEVEN
@@ -1967,7 +1967,7 @@ void OnTick()
    datetime CandleCountDown_bar_Closed = PeriodSeconds(PERIOD_CURRENT);
    datetime CandleCountDown_counting   =  CandleCountDown_bar_Opened + CandleCountDown_bar_Closed - TimeCurrent();
    string timeTillCloseStr = TimeToString(CandleCountDown_counting, TIME_MINUTES|TIME_SECONDS);
-   AccountFreeMargin = NormalizeDouble(AccountInfoDouble(ACCOUNT_MARGIN_FREE),2);
+   AccountFreeMargin = NormalizeDouble(AccountInfoDouble(ACCOUNT_MARGIN_FREE) * marginToBallancePercent / 100,2);
 
    ObjectSetString(0,ExtDialog.Name()+"MarginAvailableDisplLbl",OBJPROP_TEXT,DoubleToString(AccountFreeMargin,2));
    ObjectSetString(0,ExtDialog.Name()+"SpreadLbl",OBJPROP_TEXT,"Spread: "+spreadStr);
@@ -2008,8 +2008,6 @@ void OnTick()
 
       if(SignalTenkansenBreak)
         {
-
-
          if(barsTotal != bars) // New bar appeared on the chart
            {
             barsTotal = bars;
@@ -3293,11 +3291,15 @@ double CControlsDialog::CheckPositionVolume(double lotSize)
 
    m_MarginRequiredDisplLbl.Text(DoubleToString(rate,2));
 
+
    if(rate > AccountFreeMargin * marginToBallancePercent / 100)
      {
-      lotSize =  AccountFreeMargin * marginToBallancePercent / 100;
-      Print("Needed margin is larger than available free margin. Reducing Lot Size by 50%");
+      ObjectSetInteger(0,ExtDialog.Name()+"MarginRequiredDisplLbl",OBJPROP_COLOR,clrRed);
+      Print("Needed margin is larger than available free margin");
      }
+   else
+      if(rate < AccountFreeMargin * marginToBallancePercent / 100)
+         ObjectSetInteger(0,ExtDialog.Name()+"MarginRequiredDisplLbl",OBJPROP_COLOR,clrForestGreen);
 
    if(MathMod(lotSize,StepLot) != 0)
       lotSize = lotSize - MathMod(lotSize,StepLot);
@@ -3319,7 +3321,9 @@ bool CControlsDialog::DisplayInfo()
    datetime CandleCountDown_bar_Closed = PeriodSeconds(PERIOD_CURRENT);
    datetime CandleCountDown_counting   =  CandleCountDown_bar_Opened + CandleCountDown_bar_Closed - TimeCurrent();
    string timeTillCloseStr = TimeToString(CandleCountDown_counting, TIME_MINUTES|TIME_SECONDS);
-   AccountFreeMargin = NormalizeDouble(AccountInfoDouble(ACCOUNT_MARGIN_FREE),2);
+   AccountFreeMargin = NormalizeDouble(AccountInfoDouble(ACCOUNT_MARGIN_FREE) * marginToBallancePercent/100,2);
+
+   Print("AccountFreeMargin = ",AccountFreeMargin);
 
    CControlsDialog::m_SpreadLbl.Text(spreadStr);
    CControlsDialog::m_TimeTillCandleCloseLbl.Text(timeTillCloseStr);
