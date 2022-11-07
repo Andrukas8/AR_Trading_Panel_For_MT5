@@ -3292,13 +3292,13 @@ double CControlsDialog::CheckPositionVolume(double lotSize)
    m_MarginRequiredDisplLbl.Text(DoubleToString(rate,2));
 
 
-   if(rate > AccountFreeMargin * marginToBallancePercent / 100)
+   if(rate > AccountFreeMargin)
      {
       ObjectSetInteger(0,ExtDialog.Name()+"MarginRequiredDisplLbl",OBJPROP_COLOR,clrRed);
       Print("Needed margin is larger than available free margin");
      }
    else
-      if(rate < AccountFreeMargin * marginToBallancePercent / 100)
+      if(rate < AccountFreeMargin)
          ObjectSetInteger(0,ExtDialog.Name()+"MarginRequiredDisplLbl",OBJPROP_COLOR,clrForestGreen);
 
    if(MathMod(lotSize,StepLot) != 0)
