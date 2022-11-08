@@ -47,6 +47,7 @@ string StrategyStr[10] =
   };
 
 input group "------------- Position Variables ----------------------------"
+input bool showEAComment = false; // SHOW EA COMMENT
 input ENUM_STRATEGY StrategySelect = NOSTRATEGY;
 input string posLotsDef = "0.1"; // LOT SIZE
 input string slPipsDef = "10"; // SL pips
@@ -2007,7 +2008,7 @@ void OnTick()
 
 
       if(SignalTenkansenBreak)
-        {                 
+        {
          bool BuySignal_1 = false;
          bool BuySignal_2 = false;
          bool BuySignal_3 = false;
@@ -2155,8 +2156,8 @@ void OnTick()
 
             textComment += "\n\nShiftedSenkouspanAArr[0] = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + "\nShiftedSenkouspanBArr[0] = " + DoubleToString(ShiftedSenkouspanBArr[0],_Digits) + "\n";
             textComment += "Buy Signels  = " + IntegerToString(BuySignal_1) + " " + IntegerToString(BuySignal_2) + " " + IntegerToString(BuySignal_3) + " " + IntegerToString(BuySignal_4) + "\n";
-            textComment += "Sell Signals = " + IntegerToString(SellSignal_1) + " " + IntegerToString(SellSignal_2) + " " + IntegerToString(SellSignal_3) + " " + IntegerToString(SellSignal_4) + "\n";            
-     
+            textComment += "Sell Signals = " + IntegerToString(SellSignal_1) + " " + IntegerToString(SellSignal_2) + " " + IntegerToString(SellSignal_3) + " " + IntegerToString(SellSignal_4) + "\n";
+
            } // timeStamp != time
         }
 
@@ -2410,7 +2411,7 @@ void OnTick()
       //+------------------------------------------------------------------+
       //|        Trailing SL activated by a new bar                        |
       //+------------------------------------------------------------------+
-    
+
       static datetime timeStamp;
       datetime time = iTime(_Symbol,PERIOD_CURRENT,0);
 
@@ -2424,7 +2425,7 @@ void OnTick()
          barsTotal = bars;
 
          if(totalPos > 0)
-           {           
+           {
             double fracUpper[];
             double fracLower[];
 
@@ -2700,11 +2701,14 @@ void OnTick()
               } // for loop
            } // totalPos > 0
         } // timeStamp != time
-      
+
       //+------------------------------------------------------------------+
       //|                                                                  |
       //+------------------------------------------------------------------+
-      Comment(textComment);
+
+      if(showEAComment)
+         Comment(textComment);
+
       textComment="";
      } // autoPosMgmtToggle
   }// OnTick
