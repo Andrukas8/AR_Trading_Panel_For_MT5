@@ -1387,7 +1387,6 @@ bool CControlsDialog::CreateStrategySelectorCBox(void)
 void CControlsDialog::OnClickSellBtn(void)
   {
    MarketSellOrder();
-   Comment(__FUNCTION__);
   }
 //+------------------------------------------------------------------+
 //| Event handler for Buy Button                                     |
@@ -1395,7 +1394,6 @@ void CControlsDialog::OnClickSellBtn(void)
 void CControlsDialog::OnClickBuyBtn(void)
   {
    MarketBuyOrder();
-   Comment(__FUNCTION__);
   }
 
 
@@ -1413,7 +1411,6 @@ void CControlsDialog::OnClickCloseAllBtn(void)
          Print(i," Position #",posTicket," Was closed...");
         }
      } // end of for loop
-   Comment(__FUNCTION__);
   }
 
 //+------------------------------------------------------------------+
@@ -1457,7 +1454,6 @@ void CControlsDialog::OnclickBoxBtn(void)
          Print("Removing box");
          ObjectDelete(0,"BoxRectangle");
         }
-   Comment(__FUNCTION__);
   }
 
 
@@ -1513,8 +1509,6 @@ void CControlsDialog::OnClickDoubleOrderBtn(void)
                      PendingBuyStopDoubleOrder();
                     }
               }
-
-   Comment(__FUNCTION__);
   }
 
 
@@ -1524,8 +1518,6 @@ void CControlsDialog::OnClickDoubleOrderBtn(void)
 void CControlsDialog::OnClickCalculatePosBtn(void)
   {
    CalculatePosition();
-
-   Comment(__FUNCTION__);
   }
 
 
@@ -1542,7 +1534,6 @@ void CControlsDialog::OnClickClearInputsBtn(void)
    m_SlEdit.Text(NULL);
    m_TpEdit.Text(NULL);
    m_TpPipsEdit.Text(NULL);
-   Comment(__FUNCTION__);
   }
 
 //+------------------------------------------------------------------+
@@ -1573,7 +1564,6 @@ void CControlsDialog::OnClickBreakEvenBtn(void)
            }
         }
      } // end of for loop
-   Comment(__FUNCTION__);
   }
 
 //+------------------------------------------------------------------+
@@ -1592,7 +1582,6 @@ void CControlsDialog::OnClickMarketPendingBtn(void)
          m_MarketPendingBtn.Text("[=P=]");
          pendingToggle = true;
         }
-   Comment(__FUNCTION__);
   }
 
 //+------------------------------------------------------------------+
@@ -1699,7 +1688,6 @@ void CControlsDialog::OnClickShowLinesBtn(void)
          m_StopToggleBtn.Text("STP");
          m_LimitToggleBtn.Text("LMT");
         }
-   Comment(__FUNCTION__);
   }
 
 //+------------------------------------------------------------------+
@@ -1711,7 +1699,6 @@ void CControlsDialog::OnClickSellToggleBtn(void)
    buyToggle = false;
    m_SellToggleBtn.Text("[=S=]");
    m_BuyToggleBtn.Text("B");
-   Comment(__FUNCTION__);
   }
 
 //+------------------------------------------------------------------+
@@ -1723,7 +1710,6 @@ void CControlsDialog::OnClickBuyToggleBtn(void)
    buyToggle = true;
    m_SellToggleBtn.Text("S");
    m_BuyToggleBtn.Text("[=B=]");
-   Comment(__FUNCTION__);
   }
 
 
@@ -1737,7 +1723,6 @@ void CControlsDialog::OnClickStopToggleBtn(void)
    limitToggle  = false;
    m_StopToggleBtn.Text("[STP]");
    m_LimitToggleBtn.Text("LMT");
-   Comment(__FUNCTION__);
   }
 
 //+------------------------------------------------------------------+
@@ -1749,7 +1734,6 @@ void CControlsDialog::OnClickLimitToggleBtn(void)
    limitToggle = true;
    m_StopToggleBtn.Text("STP");
    m_LimitToggleBtn.Text("[LMT]");
-   Comment(__FUNCTION__);
   }
 
 //+------------------------------------------------------------------+
@@ -1769,9 +1753,7 @@ void CControlsDialog::OnClickAutoPosMgmtToggleBtn(void)
          autoPosMgmtToggle = true;
          m_AutoPosMgmtToggleBtn.Text("[=APM=]");
         }
-
    Print("APM = ",autoPosMgmtToggle);
-   Comment(__FUNCTION__);
   }
 
 
@@ -1828,8 +1810,6 @@ void CControlsDialog::OnClickSendOrderBtn(void)
                      PendingBuyStopOrder();
                     }
               }
-
-   Comment(__FUNCTION__);
   }
 
 
@@ -1872,8 +1852,6 @@ void CControlsDialog::OnClickDrawPositionsBtn(void)
            }
         }
      }
-
-   Comment(__FUNCTION__);
   }
 
 //+------------------------------------------------------------------+
