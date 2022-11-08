@@ -1909,7 +1909,7 @@ int OnInit()
 
    if(kijunsenTSL || tenkansenTSL || ClosePosTenkansen || SignalTenkansenBreak)
      {
-      handleIchimoku = iIchimoku(_Symbol,PERIOD_CURRENT,9,26,52);
+      handleIchimoku = iIchimoku(_Symbol,TimeFrame,9,26,52);
      }
 
 //--- succeed
@@ -1949,8 +1949,8 @@ void OnChartEvent(const int id,         // event ID
 void OnTick()
   {
    string spreadStr = IntegerToString(SymbolInfoInteger(_Symbol,SYMBOL_SPREAD));
-   datetime CandleCountDown_bar_Opened = iTime(_Symbol,PERIOD_CURRENT,0);
-   datetime CandleCountDown_bar_Closed = PeriodSeconds(PERIOD_CURRENT);
+   datetime CandleCountDown_bar_Opened = iTime(_Symbol,TimeFrame,0);
+   datetime CandleCountDown_bar_Closed = PeriodSeconds(TimeFrame);
    datetime CandleCountDown_counting   =  CandleCountDown_bar_Opened + CandleCountDown_bar_Closed - TimeCurrent();
    string timeTillCloseStr = TimeToString(CandleCountDown_counting, TIME_MINUTES|TIME_SECONDS);
    AccountFreeMargin = NormalizeDouble(AccountInfoDouble(ACCOUNT_MARGIN_FREE) * marginToBallancePercent / 100,2);
@@ -2010,11 +2010,11 @@ void OnTick()
          bool SellSignal_GO = false;
 
          static datetime timeStamp;
-         datetime time = iTime(_Symbol,PERIOD_CURRENT,0);
+         datetime time = iTime(_Symbol,TimeFrame,0);
 
-         double ClosePrice_1 = iClose(_Symbol,PERIOD_CURRENT,1);
-         double ClosePrice_2 = iClose(_Symbol,PERIOD_CURRENT,2);
-         double ClosePrice_3 = iClose(_Symbol,PERIOD_CURRENT,3);
+         double ClosePrice_1 = iClose(_Symbol,TimeFrame,1);
+         double ClosePrice_2 = iClose(_Symbol,TimeFrame,2);
+         double ClosePrice_3 = iClose(_Symbol,TimeFrame,3);
 
          double TenkansenArr[];
          double KijunsenArr[];
@@ -2026,10 +2026,10 @@ void OnTick()
 
          double ChikouspanArr[];
 
-         double Bar26High = iHigh(_Symbol,PERIOD_CURRENT,26);
-         double Bar26Low = iLow(_Symbol,PERIOD_CURRENT,26);
-         double CurrentHigh = iHigh(_Symbol,PERIOD_CURRENT,0);
-         double CurrentLow = iLow(_Symbol,PERIOD_CURRENT,0);
+         double Bar26High = iHigh(_Symbol,TimeFrame,26);
+         double Bar26Low = iLow(_Symbol,TimeFrame,26);
+         double CurrentHigh = iHigh(_Symbol,TimeFrame,0);
+         double CurrentLow = iLow(_Symbol,TimeFrame,0);
 
          CopyBuffer(handleIchimoku,0,0,3,TenkansenArr);
          CopyBuffer(handleIchimoku,1,0,3,KijunsenArr);
@@ -2180,7 +2180,7 @@ void OnTick()
          double TenkansenArr[];
          CopyBuffer(handleIchimoku,0,0,2,TenkansenArr);
 
-         double ClosePrevBar = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits); // previous close price
+         double ClosePrevBar = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price
          double TenkansenPrevBar = NormalizeDouble(TenkansenArr[0],_Digits); // previous kijunsen value
 
          textComment += "Close Pri Prev bar = " + DoubleToString(ClosePrevBar,_Digits) + "\n";
