@@ -81,8 +81,8 @@ input int TslOffsetPoints = 10; // TSL BUFFER POINTS FOR MA/TKS/KJS
 input ENUM_TIMEFRAMES TimeFrame = 5; // TSL TIMEFRAME
 
 input group "------------- Box Settings ----------------------------------"
-input string timeFrom = "00:00"; // TIME FROM
-input string timeTill = "03:00"; // TIME TILL
+input string timeFrom = "15:00"; // TIME FROM
+input string timeTill = "23:59"; // TIME TILL
 
 int barsTotal;
 
@@ -1845,7 +1845,8 @@ void CControlsDialog::OnClickDrawPositionsBtn(void)
                   ObjectCreate(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJ_TEXT,0,time1,price1);
                   ObjectSetString(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_TEXT,posProfit);
                   ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_COLOR,clrAqua);
-                  ObjectSetInteger(0, "AR_PositionProfitLbl" + IntegerToString(i), OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
+                  ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_SELECTABLE,true);
+                  ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
                  }
 
                if(price2 > 0)
