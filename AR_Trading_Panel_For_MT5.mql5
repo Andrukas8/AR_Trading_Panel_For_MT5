@@ -1822,7 +1822,24 @@ void CControlsDialog::OnClickDrawPositionsBtn(void)
   {
    int totalPos = PositionsTotal();
 
-   if(totalPos>0)
+
+// Find number of open positions on current chart
+   int totalPosCurrentChart = 0;
+   for(int i=0; i<totalPos; i++)
+     {
+      ulong posTicket = PositionGetTicket(i);
+      if(PositionSelectByTicket(posTicket))
+        {
+         if(PositionGetString(POSITION_SYMBOL) == _Symbol)
+           {
+            totalPosCurrentChart += 1;
+           }
+        }
+     }
+// End Find number of open positions on current chart
+
+
+   if(totalPosCurrentChart>0)
      {
       for(int i = 0; i < totalPos; i++)
         {
@@ -1869,12 +1886,8 @@ void CControlsDialog::OnClickDrawPositionsBtn(void)
         }
      }
    else
-      if(totalPos>0 == 0)
+      if(totalPosCurrentChart == 0)
         {
-         // Delete all graphical objects related to positions
-         //ObjectsDeleteAll(0,0,OBJ_RECTANGLE);
-         //ObjectsDeleteAll(0,0,OBJ_TEXT);
-
          string Name;
          for(int i = ObjectsTotal(0,0) -1 ; i >= 0; i--)
            {
