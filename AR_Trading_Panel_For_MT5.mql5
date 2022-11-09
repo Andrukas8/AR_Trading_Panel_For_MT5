@@ -46,6 +46,7 @@ string StrategyStr[10] =
   };
 
 input group "------------- Position Variables ----------------------------"
+input bool showProfitOnChart = true; // SHOW POSITION PROFIT ON CHART
 input bool showEAComment = false; // SHOW EA COMMENT
 input ENUM_STRATEGY StrategySelect = NOSTRATEGY;
 input string posLotsDef = "0.1"; // LOT SIZE
@@ -55,7 +56,6 @@ input string RiskLevelDef = "2"; // RISK % OF DEPOSIT
 input double marginToBallancePercent = 90; // MARGIN TO DEPOSIT %
 
 input group "------------- Auto Position Management Controls ------------"
-input bool showProfitOnChart = true; // SHOW POSITION PROFIT ON CHART
 bool updateProfitOnchart = false;
 input bool autoBreakEven = false; // AUTO BREAKEVEN
 input double breakevenRatio = 1; //  _____ BE RATIO
