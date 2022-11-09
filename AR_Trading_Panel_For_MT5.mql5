@@ -55,6 +55,8 @@ input string RiskLevelDef = "2"; // RISK % OF DEPOSIT
 input double marginToBallancePercent = 90; // MARGIN TO DEPOSIT %
 
 input group "------------- Auto Position Management Controls ------------"
+input bool showProfitOnChart = true; // SHOW POSITION PROFIT ON CHART
+bool updateProfitOnchart = false;
 input bool autoBreakEven = false; // AUTO BREAKEVEN
 input double breakevenRatio = 1; //  _____ BE RATIO
 input bool movingAverageTSL = false; // TSL MA
@@ -1820,38 +1822,66 @@ void CControlsDialog::OnClickDrawPositionsBtn(void)
   {
    int totalPos = PositionsTotal();
 
-   for(int i = 0; i < totalPos; i++)
+   if(totalPos>0)
      {
-      ulong posTicket = PositionGetTicket(i);
-
-      if(PositionSelectByTicket(posTicket))
+      for(int i = 0; i < totalPos; i++)
         {
-         if(PositionGetString(POSITION_SYMBOL) == _Symbol)
+         ulong posTicket = PositionGetTicket(i);
+
+         if(PositionSelectByTicket(posTicket))
            {
-            long time1 = PositionGetInteger(POSITION_TIME);
-            long time2 = time1+(PeriodSeconds(_Period)*15);
-            double price1 = PositionGetDouble(POSITION_PRICE_OPEN);
-            double price2 = PositionGetDouble(POSITION_SL);
-            double price3 = PositionGetDouble(POSITION_TP);
-
-            if(price2 > 0)
+            if(PositionGetString(POSITION_SYMBOL) == _Symbol)
               {
-               ObjectCreate(0, "SL_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price2);
-               ObjectSetInteger(0,"SL_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrDarkRed);
-               ObjectSetInteger(0,"SL_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
-               ObjectSetInteger(0,"SL_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
-              }
+               long time1 = PositionGetInteger(POSITION_TIME);
+               long time2 = time1+(PeriodSeconds(_Period)*15);
+               double price1 = PositionGetDouble(POSITION_PRICE_OPEN);
+               double price2 = PositionGetDouble(POSITION_SL);
+               double price3 = PositionGetDouble(POSITION_TP);
+               string posProfit = AccountInfoString(ACCOUNT_CURRENCY) + " " + DoubleToString(PositionGetDouble(POSITION_PROFIT),2);
 
-            if(price3 > 0)
-              {
-               ObjectCreate(0, "TP_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price3);
-               ObjectSetInteger(0,"TP_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrDarkGreen);
-               ObjectSetInteger(0,"TP_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
-               ObjectSetInteger(0,"TP_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
+               if(showProfitOnChart)
+                 {
+                  updateProfitOnchart = true;
+                  ObjectCreate(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJ_TEXT,0,time1,price1);
+                  ObjectSetString(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_TEXT,posProfit);
+                  ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_COLOR,clrAqua);
+                  ObjectSetInteger(0, "AR_PositionProfitLbl" + IntegerToString(i), OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
+                 }
+
+               if(price2 > 0)
+                 {
+                  ObjectCreate(0, "AR_SL_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price2);
+                  ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrDarkRed);
+                  ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
+                  ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
+                 }
+
+               if(price3 > 0)
+                 {
+                  ObjectCreate(0, "AR_TP_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price3);
+                  ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrDarkGreen);
+                  ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
+                  ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
+                 }
               }
            }
         }
      }
+   else
+      if(totalPos>0 == 0)
+        {
+         // Delete all graphical objects related to positions
+         //ObjectsDeleteAll(0,0,OBJ_RECTANGLE);
+         //ObjectsDeleteAll(0,0,OBJ_TEXT);
+
+         string Name;
+         for(int i = ObjectsTotal(0,0) -1 ; i >= 0; i--)
+           {
+            Name = ObjectName(0,i);
+            if(StringSubstr(Name, 0, 3) == "AR_")
+               ObjectDelete(0,Name);
+           }
+        }
   }
 
 //+------------------------------------------------------------------+
@@ -1926,6 +1956,58 @@ void OnChartEvent(const int id,         // event ID
 //+------------------------------------------------------------------+
 void OnTick()
   {
+
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//|  ----- Display Position Profit on the Chart -------------------- |
+//|                                                                  |
+//+------------------------------------------------------------------+
+
+   if(showProfitOnChart && updateProfitOnchart)
+     {
+      int totalPos = PositionsTotal();
+
+      for(int i = 0; i < totalPos; i++)
+        {
+         ulong posTicket = PositionGetTicket(i);
+
+         if(PositionSelectByTicket(posTicket))
+           {
+            if(PositionGetString(POSITION_SYMBOL) == _Symbol)
+              {
+               long time1 = PositionGetInteger(POSITION_TIME);
+               long time2 = time1+(PeriodSeconds(_Period)*15);
+               double price1 = PositionGetDouble(POSITION_PRICE_OPEN);
+               double price2 = PositionGetDouble(POSITION_SL);
+               double price3 = PositionGetDouble(POSITION_TP);
+               double posProfit = PositionGetDouble(POSITION_PROFIT);
+               string posProfitStr = AccountInfoString(ACCOUNT_CURRENCY) + " " + DoubleToString(posProfit,2);
+
+               if(showProfitOnChart)
+                 {
+                  ObjectSetString(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_TEXT,posProfitStr);
+                  if(posProfit>0)
+                     ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_COLOR,clrLimeGreen);
+                  else
+                     if(posProfit<0)
+                        ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_COLOR,clrOrangeRed);
+                     else
+                        if(posProfit==0)
+                           ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_COLOR,clrSilver);
+                 } // showProfitOnChart
+              } // PositionGetString(POSITION_SYMBOL) == _Symbol
+           } // PositionSelectByTicket(posTicket)
+        } // for loop
+     } // showProfitOnChart && updateProfitOnchart
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//|  ----- End of Display Position Profit on the Chart ------------- |
+//|                                                                  |
+//+------------------------------------------------------------------+
+
+
    string spreadStr = IntegerToString(SymbolInfoInteger(_Symbol,SYMBOL_SPREAD));
    datetime CandleCountDown_bar_Opened = iTime(_Symbol,TimeFrame,0);
    datetime CandleCountDown_bar_Closed = PeriodSeconds(TimeFrame);
@@ -3267,6 +3349,4 @@ bool CControlsDialog::DisplayInfo()
   }
 
 //+------------------------------------------------------------------+
-//+------------------------------------------------------------------+
-
 //+------------------------------------------------------------------+
