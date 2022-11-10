@@ -128,6 +128,7 @@ bool stopToggle = false;
 bool limitToggle = false;
 bool autoPosMgmtToggle = false;
 bool boxOnToggle = false;
+bool alertCloseLine = false;
 
 double inputStopLoss;
 double inputTakeProfit;
@@ -227,6 +228,8 @@ private:
    CButton           m_DoubleOrderBtn;
    CButton           m_DrawPositionsBtn;
    CButton           m_Box;
+   CButton           m_AlertCloseBtn;                // Sets a line, closing over which price triggers alarm
+
    CComboBox         m_StrategySelectorCBox;         // Dropdown list to select the strategy for the trade comment
 
 public:
@@ -256,6 +259,7 @@ protected:
    bool              CreateDoubleOrderBtn(void);
    bool              CreateDrawPositionsBtn(void);
    bool              CreateBoxBtn(void);
+   bool              CreateAlertCloseBtn(void);
 
    bool              CreateLotsEdit(void);
    bool              CreateSlPipsEdit(void);
@@ -320,6 +324,7 @@ protected:
    void              OnClickDoubleOrderBtn(void);
    void              OnClickDrawPositionsBtn(void);
    void              OnclickBoxBtn(void);
+   void              OnclickAlertCloseBtn(void);
 
   };
 //+------------------------------------------------------------------+
@@ -343,6 +348,7 @@ ON_EVENT(ON_CLICK,m_AutoPosMgmtToggleBtn,OnClickAutoPosMgmtToggleBtn)
 ON_EVENT(ON_CLICK,m_DoubleOrderBtn,OnClickDoubleOrderBtn)
 ON_EVENT(ON_CLICK,m_DrawPositionsBtn,OnClickDrawPositionsBtn)
 ON_EVENT(ON_CLICK,m_Box,OnclickBoxBtn)
+ON_EVENT(ON_CLICK,m_AlertCloseBtn,OnclickAlertCloseBtn)
 EVENT_MAP_END(CAppDialog)
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
@@ -448,11 +454,11 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
       return(false);
    if(!CreateBoxBtn())
       return(false);
+   if(!CreateAlertCloseBtn())
+      return(false);
 
    if(!CreateStrategySelectorCBox())
       return(false);
-
-
 
 //--- succeed
    return(true);
@@ -686,7 +692,7 @@ bool CControlsDialog::CreateMarginRequiredDisplLbl(void)
 
 
 //+------------------------------------------------------------------+
-//| Create the Margin Available  label #10                           |
+//| Create the Margin Available  label #11                           |
 //+------------------------------------------------------------------+
 bool CControlsDialog::CreateMarginAvailableLbl(void)
   {
@@ -1349,6 +1355,7 @@ bool CControlsDialog::CreateDrawPositionsBtn(void)
    return(true);
   }
 
+
 //+------------------------------------------------------------------+
 //| Create the "Select Strategy"  Combobox                           |
 //+------------------------------------------------------------------+
@@ -1375,8 +1382,37 @@ bool CControlsDialog::CreateStrategySelectorCBox(void)
    if(!Add(m_StrategySelectorCBox))
       return(false);
 //--- succeed
+
    return(true);
   }
+
+
+
+
+//+------------------------------------------------------------------+
+//| Create the "Alert Close Btn" button                              |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateAlertCloseBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/2;
+   int y1=INDENT_TOP+6*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/2;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_AlertCloseBtn.Create(m_chart_id,m_name+"AlertCloseBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_AlertCloseBtn.Text("\x270F\x23F0"))
+      return(false);
+   if(!Add(m_AlertCloseBtn))
+      return(false);
+
+//--- succeed
+   return(true);
+  }
+
+
+
 
 
 //+------------------------------------------------------------------+
@@ -1607,17 +1643,17 @@ void CControlsDialog::OnClickShowLinesBtn(void)
       if(sellToggle && !buyToggle)
         {
          // SELL
-         linePrice = NormalizeDouble(ask,4);
-         lineSl = NormalizeDouble(ask + StringToDouble(slPipsDef)*10*_Point,5);
-         lineTp = NormalizeDouble(ask - StringToDouble(slPipsDef)*StringToDouble(RiskToRewardDef)*10*_Point,5);
+         linePrice = NormalizeDouble(ask,_Digits);
+         lineSl = NormalizeDouble(ask + StringToDouble(slPipsDef)*10*_Point,_Digits);
+         lineTp = NormalizeDouble(ask - StringToDouble(slPipsDef)*StringToDouble(RiskToRewardDef)*10*_Point,_Digits);
         }
       else
          if(!sellToggle && buyToggle)
            {
             // BUY
-            linePrice = NormalizeDouble(bid,4);
-            lineSl = NormalizeDouble(bid - StringToDouble(slPipsDef)*10*_Point,5);
-            lineTp = NormalizeDouble(bid + StringToDouble(slPipsDef)*StringToDouble(RiskToRewardDef)*10*_Point,5);
+            linePrice = NormalizeDouble(bid,_Digits);
+            lineSl = NormalizeDouble(bid - StringToDouble(slPipsDef)*10*_Point,_Digits);
+            lineTp = NormalizeDouble(bid + StringToDouble(slPipsDef)*StringToDouble(RiskToRewardDef)*10*_Point,_Digits);
            }
 
       if(sellToggle || buyToggle)
@@ -1898,6 +1934,39 @@ void CControlsDialog::OnClickDrawPositionsBtn(void)
         }
   }
 
+
+
+//+------------------------------------------------------------------+
+//| Event handler for "Alert Close Btn" Button                       |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnclickAlertCloseBtn(void)
+  {
+
+// Alert Line
+
+   if(alertCloseLine)
+      alertCloseLine = false;
+   else
+      if(!alertCloseLine)
+         alertCloseLine = true;
+
+   if(alertCloseLine)
+     {
+      ObjectCreate(0,"alertCloseLine",OBJ_HLINE,0,0,NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_ASK),_Digits));
+      ObjectSetInteger(0, "alertCloseLine", OBJPROP_COLOR, clrOrange);
+      ObjectSetInteger(0, "alertCloseLine", OBJPROP_STYLE, STYLE_SOLID);
+      ObjectSetInteger(0, "alertCloseLine", OBJPROP_WIDTH, 2);
+      ObjectSetInteger(0, "alertCloseLine", OBJPROP_BACK, true);
+      ObjectSetInteger(0, "alertCloseLine", OBJPROP_SELECTABLE, true);
+      ObjectSetInteger(0, "alertCloseLine", OBJPROP_SELECTED, true);
+      ObjectSetInteger(0, "alertCloseLine", OBJPROP_HIDDEN, false);
+      ObjectSetInteger(0, "alertCloseLine", OBJPROP_ZORDER, 0);
+     }
+   else
+      if(!alertCloseLine)
+         ObjectDelete(0,"alertCloseLine");
+  }
+
 //+------------------------------------------------------------------+
 //| Global Variables                                                 |
 //+------------------------------------------------------------------+
@@ -1911,6 +1980,8 @@ int OnInit()
    ObjectDelete(0,"priceLine");
    ObjectDelete(0,"stopLossLine");
    ObjectDelete(0,"takeProfitLine");
+   ObjectDelete(0,"alertCloseLine");
+
 //--- create application dialog
    if(!ExtDialog.Create(0,"Controls",0,10,20,475,220))
       return(INIT_FAILED);
@@ -1947,6 +2018,8 @@ void OnDeinit(const int reason)
    ObjectDelete(0,"priceLine");
    ObjectDelete(0,"stopLossLine");
    ObjectDelete(0,"takeProfitLine");
+   ObjectDelete(0,"alertCloseLine");
+
 //--- destroy dialog
 
    ExtDialog.Destroy(reason);
@@ -1970,6 +2043,25 @@ void OnChartEvent(const int id,         // event ID
 //+------------------------------------------------------------------+
 void OnTick()
   {
+
+
+   if(alertCloseLine)
+     {
+      double alertLinePrice = NormalizeDouble(ObjectGetDouble(0,"alertCloseLine",OBJPROP_PRICE),_Digits);
+      double alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price
+      double alertClosePrevBar2 = NormalizeDouble(iClose(_Symbol,TimeFrame,2),_Digits); // previous close price
+
+      if((alertClosePrevBar1 > alertLinePrice && alertClosePrevBar2 < alertLinePrice) || (alertClosePrevBar1 < alertLinePrice && alertClosePrevBar2 > alertLinePrice))
+        {
+         Alert("Alert line crossed...");
+         alertCloseLine = false;
+         alertLinePrice = 0;
+         alertClosePrevBar1 = 0;
+         alertClosePrevBar2 = 0;
+        }
+
+     }
+
 
 
 //+------------------------------------------------------------------+
