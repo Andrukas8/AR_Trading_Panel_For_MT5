@@ -1402,7 +1402,7 @@ bool CControlsDialog::CreateAlertCloseBtn(void)
 //--- create
    if(!m_AlertCloseBtn.Create(m_chart_id,m_name+"AlertCloseBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_AlertCloseBtn.Text("\x270F\x23F0"))
+   if(!m_AlertCloseBtn.Text("\x23F0"))
       return(false);
    if(!Add(m_AlertCloseBtn))
       return(false);
@@ -1952,9 +1952,10 @@ void CControlsDialog::OnclickAlertCloseBtn(void)
 
    if(alertCloseLine)
      {
+      m_AlertCloseBtn.Text("[=\x23F0=]");
       ObjectCreate(0,"alertCloseLine",OBJ_HLINE,0,0,NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_ASK),_Digits));
       ObjectSetInteger(0, "alertCloseLine", OBJPROP_COLOR, clrOrange);
-      ObjectSetInteger(0, "alertCloseLine", OBJPROP_STYLE, STYLE_SOLID);
+      ObjectSetInteger(0, "alertCloseLine", OBJPROP_STYLE, STYLE_DASH);
       ObjectSetInteger(0, "alertCloseLine", OBJPROP_WIDTH, 2);
       ObjectSetInteger(0, "alertCloseLine", OBJPROP_BACK, true);
       ObjectSetInteger(0, "alertCloseLine", OBJPROP_SELECTABLE, true);
@@ -1964,7 +1965,11 @@ void CControlsDialog::OnclickAlertCloseBtn(void)
      }
    else
       if(!alertCloseLine)
+        {
          ObjectDelete(0,"alertCloseLine");
+         m_AlertCloseBtn.Text("\x23F0");
+        }
+
   }
 
 //+------------------------------------------------------------------+
