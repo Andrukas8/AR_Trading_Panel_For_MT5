@@ -2532,9 +2532,8 @@ void OnTick()
 
                      if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position has type BUY
                        {
-                        double posTriggerBuy = NormalizeDouble((posOpenPrice - posSl) * breakevenRatio,_Digits);
+                        double posTriggerBuy = NormalizeDouble((posOpenPrice - oldPosSl) * breakevenRatio,_Digits);
                         if(posSl < posOpenPrice)
-
                            if(bid > posOpenPrice + posTriggerBuy)
                              {
                               Print("BUY Break Even Conditions Met...  Position Open Price = ",posOpenPrice);
@@ -2543,15 +2542,13 @@ void OnTick()
                              }
                        }
 
-
                      // --------------------
                      // --- SELL POSITION --
                      // --------------------
 
-
                      if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL) // checking if the open position has type SELL
                        {
-                        double posTriggerSell = NormalizeDouble((posSl - posOpenPrice) * breakevenRatio,_Digits);
+                        double posTriggerSell = NormalizeDouble((oldPosSl - posOpenPrice) * breakevenRatio,_Digits);
                         if(posSl > posOpenPrice)
                            if(ask < posOpenPrice - posTriggerSell)
                              {
