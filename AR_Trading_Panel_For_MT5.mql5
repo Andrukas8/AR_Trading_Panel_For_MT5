@@ -134,7 +134,7 @@ double alertLinePrice1;
 double alertLinePrice2;
 double alertClosePrevBar1;
 double alertClosePrevBar2;
-bool removeAlertLines = false;
+bool setAlarmCloseLine = false;
 
 
 double inputStopLoss;
@@ -235,6 +235,7 @@ private:
    CButton           m_DoubleOrderBtn;
    CButton           m_DrawPositionsBtn;
    CButton           m_Box;
+   CButton           m_ShowAlertLinesBtn;            // Shows two alert lines to set price close alerts
    CButton           m_AlertCloseBtn;                // Sets a line, closing over which price triggers alarm
 
    CComboBox         m_StrategySelectorCBox;         // Dropdown list to select the strategy for the trade comment
@@ -266,6 +267,7 @@ protected:
    bool              CreateDoubleOrderBtn(void);
    bool              CreateDrawPositionsBtn(void);
    bool              CreateBoxBtn(void);
+   bool              CreateShowAlertLinesBtn(void);
    bool              CreateAlertCloseBtn(void);
 
    bool              CreateLotsEdit(void);
@@ -330,8 +332,9 @@ protected:
    void              OnClickAutoPosMgmtToggleBtn(void);
    void              OnClickDoubleOrderBtn(void);
    void              OnClickDrawPositionsBtn(void);
-   void              OnclickBoxBtn(void);
-   void              OnclickAlertCloseBtn(void);
+   void              OnClickBoxBtn(void);
+   void              OnClickShowAlertLinesBtn(void);
+   void              OnClickAlertCloseBtn(void);
 
   };
 //+------------------------------------------------------------------+
@@ -354,8 +357,9 @@ ON_EVENT(ON_CLICK,m_LimitToggleBtn,OnClickLimitToggleBtn)
 ON_EVENT(ON_CLICK,m_AutoPosMgmtToggleBtn,OnClickAutoPosMgmtToggleBtn)
 ON_EVENT(ON_CLICK,m_DoubleOrderBtn,OnClickDoubleOrderBtn)
 ON_EVENT(ON_CLICK,m_DrawPositionsBtn,OnClickDrawPositionsBtn)
-ON_EVENT(ON_CLICK,m_Box,OnclickBoxBtn)
-ON_EVENT(ON_CLICK,m_AlertCloseBtn,OnclickAlertCloseBtn)
+ON_EVENT(ON_CLICK,m_Box,OnClickBoxBtn)
+ON_EVENT(ON_CLICK,m_ShowAlertLinesBtn,OnClickShowAlertLinesBtn)
+ON_EVENT(ON_CLICK,m_AlertCloseBtn,OnClickAlertCloseBtn)
 EVENT_MAP_END(CAppDialog)
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
@@ -460,6 +464,8 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
    if(!CreateDrawPositionsBtn())
       return(false);
    if(!CreateBoxBtn())
+      return(false);
+   if(!CreateShowAlertLinesBtn())
       return(false);
    if(!CreateAlertCloseBtn())
       return(false);
@@ -1394,6 +1400,29 @@ bool CControlsDialog::CreateStrategySelectorCBox(void)
   }
 
 
+//+------------------------------------------------------------------+
+//| Create the "Show Alert Lines" button                             |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateShowAlertLinesBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+6*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/2;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_ShowAlertLinesBtn.Create(m_chart_id,m_name+"ShowAlertLinesBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+
+   if(!m_ShowAlertLinesBtn.Text("\x2F06"))
+      return(false);
+
+   if(!Add(m_ShowAlertLinesBtn))
+      return(false);
+
+//--- succeed
+   return(true);
+  }
 
 
 //+------------------------------------------------------------------+
@@ -1410,15 +1439,7 @@ bool CControlsDialog::CreateAlertCloseBtn(void)
    if(!m_AlertCloseBtn.Create(m_chart_id,m_name+"AlertCloseBtn",m_subwin,x1,y1,x2,y2))
       return(false);
 
-   string alertCloseLineBtnTxt = "\x23F0";
-
-   if(alertCloseLine)
-      alertCloseLineBtnTxt = "[=\x23F0=]";
-   else
-      if(!alertCloseLine)
-         alertCloseLineBtnTxt = "\x23F0";
-
-   if(!m_AlertCloseBtn.Text(alertCloseLineBtnTxt))
+   if(!m_AlertCloseBtn.Text("\x23F0"))
       return(false);
 
    if(!Add(m_AlertCloseBtn))
@@ -1468,7 +1489,7 @@ void CControlsDialog::OnClickCloseAllBtn(void)
 //+------------------------------------------------------------------+
 //| Event handler for Box Button                                     |
 //+------------------------------------------------------------------+
-void CControlsDialog::OnclickBoxBtn(void)
+void CControlsDialog::OnClickBoxBtn(void)
   {
    if(boxOnToggle)
      {
@@ -1949,63 +1970,68 @@ void CControlsDialog::OnClickDrawPositionsBtn(void)
   }
 
 
+//+------------------------------------------------------------------+
+//| Event handler for "Show Alert Lines" Button                      |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickShowAlertLinesBtn(void)
+  {
+
+   if(alertCloseLine)
+      alertCloseLine = false;
+   else
+      if(!alertCloseLine)
+         alertCloseLine = true;
+
+   if(alertCloseLine)
+     {
+      m_ShowAlertLinesBtn.Text("[=\x2F06=]");
+
+      ObjectCreate(0,"alertCloseLine_1",OBJ_HLINE,0,0,NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_ASK)+100*_Point,_Digits));
+      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrOrange);
+      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_STYLE, STYLE_DASH);
+      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_WIDTH, 2);
+      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_BACK, true);
+      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTABLE, true);
+      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTED, true);
+      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_HIDDEN, false);
+      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_ZORDER, 0);
+
+      ObjectCreate(0,"alertCloseLine_2",OBJ_HLINE,0,0,NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_BID)-100*_Point,_Digits));
+      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrOrange);
+      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_STYLE, STYLE_DASH);
+      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_WIDTH, 2);
+      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_BACK, true);
+      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTABLE, true);
+      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, true);
+      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_HIDDEN, false);
+      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_ZORDER, 0);
+     }
+   else
+      if(!alertCloseLine)
+        {
+         ObjectDelete(0,"alertCloseLine_1");
+         ObjectDelete(0,"alertCloseLine_2");
+         m_ShowAlertLinesBtn.Text("\x2F06");
+        }
+  }
+
 
 //+------------------------------------------------------------------+
 //| Event handler for "Alert Close Btn" Button                       |
 //+------------------------------------------------------------------+
-void CControlsDialog::OnclickAlertCloseBtn(void)
+void CControlsDialog::OnClickAlertCloseBtn(void)
   {
 
-   if(removeAlertLines)
+   if(setAlarmCloseLine)
      {
-      ObjectDelete(0,"alertCloseLine_1");
-      ObjectDelete(0,"alertCloseLine_2");
+      setAlarmCloseLine = false;
       m_AlertCloseBtn.Text("\x23F0");
-      removeAlertLines = false;
      }
-
    else
-      if(!removeAlertLines)
+      if(!setAlarmCloseLine)
         {
-
-         if(alertCloseLine)
-            alertCloseLine = false;
-         else
-            if(!alertCloseLine)
-               alertCloseLine = true;
-
-         if(alertCloseLine)
-           {
-            m_AlertCloseBtn.Text("[=\x23F0=]");
-
-            ObjectCreate(0,"alertCloseLine_1",OBJ_HLINE,0,0,NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_ASK)+100*_Point,_Digits));
-            ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrOrange);
-            ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_STYLE, STYLE_DASH);
-            ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_WIDTH, 2);
-            ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_BACK, true);
-            ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTABLE, true);
-            ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTED, true);
-            ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_HIDDEN, false);
-            ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_ZORDER, 0);
-
-            ObjectCreate(0,"alertCloseLine_2",OBJ_HLINE,0,0,NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_BID)-100*_Point,_Digits));
-            ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrOrange);
-            ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_STYLE, STYLE_DASH);
-            ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_WIDTH, 2);
-            ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_BACK, true);
-            ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTABLE, true);
-            ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, true);
-            ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_HIDDEN, false);
-            ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_ZORDER, 0);
-           }
-         else
-            if(!alertCloseLine)
-              {
-               ObjectDelete(0,"alertCloseLine_1");
-               ObjectDelete(0,"alertCloseLine_2");
-               m_AlertCloseBtn.Text("\x23F0");
-               alertCloseLine = false;
-              }
+         setAlarmCloseLine = true;
+         m_AlertCloseBtn.Text("[=\x23F0=]");
         }
   }
 
@@ -2091,7 +2117,7 @@ void OnTick()
 //|                                                                  |
 //+------------------------------------------------------------------+
 
-   if(alertCloseLine)
+   if(setAlarmCloseLine)
      {
       alertLinePrice1 = NormalizeDouble(ObjectGetDouble(0,"alertCloseLine_1",OBJPROP_PRICE),_Digits);
       alertLinePrice2 = NormalizeDouble(ObjectGetDouble(0,"alertCloseLine_2",OBJPROP_PRICE),_Digits);
@@ -2102,16 +2128,11 @@ void OnTick()
          (alertClosePrevBar1 > alertLinePrice1 && alertClosePrevBar2 < alertLinePrice1) || (alertClosePrevBar1 < alertLinePrice1 && alertClosePrevBar2 > alertLinePrice1)
          ||
          (alertClosePrevBar1 > alertLinePrice2 && alertClosePrevBar2 < alertLinePrice2) || (alertClosePrevBar1 < alertLinePrice2 && alertClosePrevBar2 > alertLinePrice2)
-
       )
         {
          Alert("ALERT: PRICE CLOSED OVER THE LINE ON ",_Symbol);
-         alertCloseLine = false;
-         removeAlertLines = true;
-         alertLinePrice1 = 0;
-         alertLinePrice2 = 0;
-         alertClosePrevBar1 = 0;
-         alertClosePrevBar2 = 0;
+         setAlarmCloseLine = false;
+         ObjectSetString(0,ExtDialog.Name()+"AlertCloseBtn",OBJPROP_TEXT,"\x23F0");
         }
 
      }
@@ -2215,7 +2236,7 @@ void OnTick()
       textComment += "UPPER FRACTAL = " + DoubleToString(mainUpper, 4) + "\n";
 
       textComment += "alertCloseLine      = [ " + IntegerToString(alertCloseLine) + " ]\n";
-      textComment += "removeAlertLines = [ " + IntegerToString(removeAlertLines) + " ]\n";
+      textComment += "setAlarmCloseLine = [ " + IntegerToString(setAlarmCloseLine) + " ]\n";
 
       //+------------------------------------------------------------------+
       //|                                                                  |
