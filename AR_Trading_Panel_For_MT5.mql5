@@ -1410,7 +1410,15 @@ bool CControlsDialog::CreateAlertCloseBtn(void)
    if(!m_AlertCloseBtn.Create(m_chart_id,m_name+"AlertCloseBtn",m_subwin,x1,y1,x2,y2))
       return(false);
 
-   if(!m_AlertCloseBtn.Text("\x23F0"))
+   string alertCloseLineBtnTxt = "\x23F0";
+
+   if(alertCloseLine)
+      alertCloseLineBtnTxt = "[=\x23F0=]";
+   else
+      if(!alertCloseLine)
+         alertCloseLineBtnTxt = "\x23F0";
+
+   if(!m_AlertCloseBtn.Text(alertCloseLineBtnTxt))
       return(false);
 
    if(!Add(m_AlertCloseBtn))
@@ -1419,9 +1427,6 @@ bool CControlsDialog::CreateAlertCloseBtn(void)
 //--- succeed
    return(true);
   }
-
-
-
 
 
 //+------------------------------------------------------------------+
@@ -2110,6 +2115,7 @@ void OnTick()
         }
 
      }
+
 //+------------------------------------------------------------------+
 //|                                                                  |
 //|  ----- End of Handling alert lines ----------------------------- |
@@ -2207,6 +2213,9 @@ void OnTick()
       textComment += "-------------------------------------\n";
       textComment += "LOWER FRACTAL = " + DoubleToString(mainLower, 4) + "\n";
       textComment += "UPPER FRACTAL = " + DoubleToString(mainUpper, 4) + "\n";
+
+      textComment += "alertCloseLine      = [ " + IntegerToString(alertCloseLine) + " ]\n";
+      textComment += "removeAlertLines = [ " + IntegerToString(removeAlertLines) + " ]\n";
 
       //+------------------------------------------------------------------+
       //|                                                                  |
