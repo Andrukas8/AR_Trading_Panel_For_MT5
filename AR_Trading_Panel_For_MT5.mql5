@@ -73,12 +73,18 @@ input bool NewBarAlert = false; // == NEW BAR ALERT ==
 
 input group "------------- Auto Closing Position on Condition ------------"
 input bool ClosePosTenkansen = false; // CLOSE ON CLOSE OVER TENKANSEN
+input bool ClosePosMa = true; // CLOSE ON CLOSE OVER MA
+input int ClosePosMaPeriod = 5; // _____ CLOSE MA PERIOD
+input int ClosePosMaShift = 3; // _____ CLOSE MA SHIFT
+input ENUM_MA_METHOD ClosePosMaMethod = MODE_SMMA; // _____ CLOSE MA METHOD
+input ENUM_APPLIED_PRICE ClosePosMaAppPrice = PRICE_MEDIAN; // _____ CLOSE MA PRICE
+
 input bool AlertAutoClosePosition = false; // ALERT ON POSITIONS CLOSE
-input bool SignalTenkansenBreak = true; // ALERT ON TK BREAK
+input bool SignalTenkansenBreak = false; // ALERT ON TK BREAK
 
 input group "------------- Auto Position Management Settings -------------"
 input int TslOffsetPoints = 10; // TSL BUFFER POINTS FOR MA/TKS/KJS
-input ENUM_TIMEFRAMES TimeFrame = 5; // TSL TIMEFRAME
+input ENUM_TIMEFRAMES TimeFrame = 1; // TSL TIMEFRAME
 
 input group "------------- Box Settings ----------------------------------"
 input string timeFrom = "15:00"; // TIME FROM
@@ -97,6 +103,7 @@ int maShift;
 int handleFractal;
 int handleMA;
 int handleIchimoku;
+int handleClosePosMA;
 
 string textComment;
 
@@ -2058,19 +2065,16 @@ int OnInit()
 // Auto Position Management EA initialization
 
    if(fractalsTSL)
-     {
       handleFractal = iFractals(_Symbol, TimeFrame);
-     }
 
    if(movingAverageTSL)
-     {
       handleMA = iMA(_Symbol, TimeFrame, MaPeriod, MaShift, TslMaMethod, TslMaAppPrice);
-     }
 
    if(kijunsenTSL || tenkansenTSL || ClosePosTenkansen || SignalTenkansenBreak)
-     {
       handleIchimoku = iIchimoku(_Symbol,TimeFrame,9,26,52);
-     }
+
+   if(ClosePosMa)
+      handleClosePosMA = iMA(_Symbol, TimeFrame, ClosePosMaPeriod, ClosePosMaShift, ClosePosMaMethod, ClosePosMaAppPrice);
 
 //--- succeed
    return(INIT_SUCCEEDED);
@@ -2228,6 +2232,17 @@ void OnTick()
       textComment += "TSL TK  = [ " + IntegerToString(tenkansenTSL) + " ]\n";
       textComment += "TSL KJ  = [ " + IntegerToString(kijunsenTSL) + " ]\n";
       textComment += "CLOSE ON TK CLOSE  = [ " + IntegerToString(ClosePosTenkansen) + " ]\n";
+
+      if(ClosePosMa)
+        {
+         textComment += "---------CLOSE ON CLOSE OVER MA SETTINGS----------------\n";
+         textComment += "CLOSE ON CLOSE OVER MA  = [ " + IntegerToString(ClosePosMa) + " ]\n";
+         textComment += "CLOSE MA PERIOD  = [ " + IntegerToString(ClosePosMaPeriod) + " ]\n";
+         textComment += "CLOSE MA SHIFT  = [ " + IntegerToString(ClosePosMaShift) + " ]\n";
+         textComment += "CLOSE MA METHOD  = [ " + IntegerToString(ClosePosMaMethod) + " ]\n";
+         textComment += "CLOSE MA PRICE  = [ " + IntegerToString(ClosePosMaAppPrice) + " ]\n";
+        }
+
       textComment += "ALERT AUTO CLOSE ON TK CLOSE  = [ " + IntegerToString(AlertAutoClosePosition) + " ]\n";
       textComment += "ALERT NEW BAR  = [ " + IntegerToString(NewBarAlert) + " ]\n";
       textComment += "ALERT TKB TRADE SIGNAL  = [ " + IntegerToString(SignalTenkansenBreak) + " ]\n";
@@ -2487,6 +2502,79 @@ void OnTick()
       //+------------------------------------------------------------------+
 
 
+      // =========================================================================
+
+
+      //+------------------------------------------------------------------+
+      //|        Close Positions on Price Close Over MA                    |
+      //+------------------------------------------------------------------+
+
+      if(ClosePosMa)
+        {
+         CTrade trade;
+         double ClosePosMaArr[];
+         CopyBuffer(handleClosePosMA,MAIN_LINE,1,ClosePosMaShift,ClosePosMaArr);
+
+         double ClosePrevBar = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price
+         double ClosePosMaPrevBar = NormalizeDouble(ClosePosMaArr[ClosePosMaShift-1],_Digits); // previous Close Pos MA value
+
+         textComment += "Close Pri Prev bar = " + DoubleToString(ClosePrevBar,_Digits) + "\n";
+         textComment += "ClosePosMaPrevBar = " + DoubleToString(ClosePosMaPrevBar,_Digits) + "\n";
+
+         if(ArraySize(ClosePosMaArr) > 0)
+           {
+            // --------------------
+            // --- BUY POSITION ---
+            // --------------------
+            if(ClosePrevBar < ClosePosMaPrevBar && ClosePosMaPrevBar > 0)
+               for(int i = 0; i < totalPos; i++)
+                 {
+                  ulong posTicket = PositionGetTicket(i);
+                  if(PositionSelectByTicket(posTicket))
+                     if(PositionGetString(POSITION_SYMBOL) == _Symbol && PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
+                       {
+                        int OpenBar = iBarShift(_Symbol,0,PositionGetInteger(POSITION_TIME));
+                        if(OpenBar > 1)
+                           if(trade.PositionClose(posTicket))
+                             {
+                              Print(__FUNCTION__," > Position #",posTicket," was closed because price closed below Moving Average. ",ClosePrevBar," < ",ClosePosMaPrevBar);
+                              if(AlertAutoClosePosition)
+                                 Alert("Position #",posTicket," was closed because price closed below Moving Average. ",ClosePrevBar," < ",ClosePosMaPrevBar);
+                             }
+                       }
+                 }
+
+            // --------------------
+            // --- SELL POSITION --
+            // --------------------
+            if(ClosePrevBar > ClosePosMaPrevBar && ClosePosMaPrevBar > 0)
+               for(int i = 0; i < totalPos; i++)
+                 {
+                  ulong posTicket = PositionGetTicket(i);
+                  if(PositionSelectByTicket(posTicket))
+                     if(PositionGetString(POSITION_SYMBOL) == _Symbol && PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
+                       {
+                        int OpenBar = iBarShift(_Symbol,0,PositionGetInteger(POSITION_TIME));
+                        if(OpenBar > 1)
+                           if(trade.PositionClose(posTicket))
+                             {
+                              Print(__FUNCTION__," > Position #",posTicket," was closed because price closed above Moving Average. ",ClosePrevBar," > ",ClosePosMaPrevBar);
+                              if(AlertAutoClosePosition)
+                                 Alert("Position #",posTicket," was closed because price closed above Moving Average. ",ClosePrevBar," > ",ClosePosMaPrevBar);
+                             }
+                       }
+                 }
+           } // ArraySize(ClosePosMaArr) > 0
+        } // ClosePosMa
+      //+------------------------------------------------------------------+
+      //|      End Close Positions on Price Close Over MA                  |
+      //+------------------------------------------------------------------+
+
+
+      // =========================================================================
+
+
+
       //+------------------------------------------------------------------+
       //|                                                                  |
       //|  ----- End Close All Positions On Condition ----------           |
@@ -2532,8 +2620,9 @@ void OnTick()
 
                      if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position has type BUY
                        {
-                        double posTriggerBuy = NormalizeDouble((posOpenPrice - oldPosSl) * breakevenRatio,_Digits);
+                        double posTriggerBuy = NormalizeDouble((posOpenPrice - posSl) * breakevenRatio,_Digits);
                         if(posSl < posOpenPrice)
+
                            if(bid > posOpenPrice + posTriggerBuy)
                              {
                               Print("BUY Break Even Conditions Met...  Position Open Price = ",posOpenPrice);
@@ -2542,13 +2631,15 @@ void OnTick()
                              }
                        }
 
+
                      // --------------------
                      // --- SELL POSITION --
                      // --------------------
 
+
                      if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL) // checking if the open position has type SELL
                        {
-                        double posTriggerSell = NormalizeDouble((oldPosSl - posOpenPrice) * breakevenRatio,_Digits);
+                        double posTriggerSell = NormalizeDouble((posSl - posOpenPrice) * breakevenRatio,_Digits);
                         if(posSl > posOpenPrice)
                            if(ask < posOpenPrice - posTriggerSell)
                              {
