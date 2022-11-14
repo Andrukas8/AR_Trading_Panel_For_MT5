@@ -59,6 +59,7 @@ input group "------------- Auto Position Management Controls ------------"
 bool updateProfitOnchart = false;
 input bool autoBreakEven = false; // AUTO BREAKEVEN
 input double breakevenRatio = 1; //  _____ BE RATIO
+input bool alertBreakEven = true; // _____ ALERT ON BE
 input bool movingAverageTSL = false; // TSL MA
 input int MaPeriod = 8; // _____ MA PERIOD
 input int MaShift = 5; // _____ MA SHIFT
@@ -2114,7 +2115,6 @@ void OnChartEvent(const int id,         // event ID
 void OnTick()
   {
 
-
 //+------------------------------------------------------------------+
 //|                                                                  |
 //|  ----- Handling alert lines ------------------------------------ |
@@ -2146,7 +2146,6 @@ void OnTick()
 //|  ----- End of Handling alert lines ----------------------------- |
 //|                                                                  |
 //+------------------------------------------------------------------+
-
 
 
 //+------------------------------------------------------------------+
@@ -2197,7 +2196,6 @@ void OnTick()
 //|  ----- End of Display Position Profit on the Chart ------------- |
 //|                                                                  |
 //+------------------------------------------------------------------+
-
 
    string spreadStr = IntegerToString(SymbolInfoInteger(_Symbol,SYMBOL_SPREAD));
    datetime CandleCountDown_bar_Opened = iTime(_Symbol,PERIOD_CURRENT,0);
@@ -2603,13 +2601,12 @@ void OnTick()
 
                   bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
                   ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
-                  double oldPosSl = 0;
 
                   //+------------------------------------------------------------------+
                   //|         Break Even                                               |
                   //+------------------------------------------------------------------+
 
-                  if(breakevenRatio > 0 && NormalizeDouble(posOpenPrice,4) != oldPosSl && posOpenPrice != posSl)
+                  if(breakevenRatio > 0 && posOpenPrice != posSl)
 
                     {
 
@@ -2627,7 +2624,12 @@ void OnTick()
                              {
                               Print("BUY Break Even Conditions Met...  Position Open Price = ",posOpenPrice);
                               if(trade.PositionModify(posTicket, posOpenPrice, posTp))
+                                {
                                  Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven BUY");
+                                 if(alertBreakEven)
+                                    Alert("Position #", posTicket, " was modified by Breakeven BUY");
+                                }
+
                              }
                        }
 
@@ -2645,7 +2647,11 @@ void OnTick()
                              {
                               Print("BUY Break Even Conditions Met...  Position Open Price = ",posOpenPrice);
                               if(trade.PositionModify(posTicket, posOpenPrice, posTp))
+                                {
                                  Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven SELL");
+                                 if(alertBreakEven)
+                                    Alert("Position #", posTicket, " was modified by Breakeven SELL");
+                                }
                              }
                        }
                     } // Breakeven ratio > 0
@@ -2679,7 +2685,6 @@ void OnTick()
 
                   bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
                   ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
-                  double oldPosSl = 0;
 
                   if(TslPoints > spreadPos)
                     {
