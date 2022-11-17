@@ -136,6 +136,7 @@ bool stopToggle = false;
 bool limitToggle = false;
 bool autoPosMgmtToggle = false;
 bool boxOnToggle = false;
+bool ManualBEToggle = false;
 
 bool alertCloseLine = false;
 double alertLinePrice1;
@@ -245,6 +246,7 @@ private:
    CButton           m_Box;
    CButton           m_ShowAlertLinesBtn;            // Shows two alert lines to set price close alerts
    CButton           m_AlertCloseBtn;                // Sets a line, closing over which price triggers alarm
+   CButton           m_ManualBEBtn;
 
    CComboBox         m_StrategySelectorCBox;         // Dropdown list to select the strategy for the trade comment
 
@@ -277,6 +279,7 @@ protected:
    bool              CreateBoxBtn(void);
    bool              CreateShowAlertLinesBtn(void);
    bool              CreateAlertCloseBtn(void);
+   bool              CreateManualBEBtn(void);
 
    bool              CreateLotsEdit(void);
    bool              CreateSlPipsEdit(void);
@@ -343,6 +346,7 @@ protected:
    void              OnClickBoxBtn(void);
    void              OnClickShowAlertLinesBtn(void);
    void              OnClickAlertCloseBtn(void);
+   void              OnClickManualBEBtn(void);
 
   };
 //+------------------------------------------------------------------+
@@ -368,6 +372,7 @@ ON_EVENT(ON_CLICK,m_DrawPositionsBtn,OnClickDrawPositionsBtn)
 ON_EVENT(ON_CLICK,m_Box,OnClickBoxBtn)
 ON_EVENT(ON_CLICK,m_ShowAlertLinesBtn,OnClickShowAlertLinesBtn)
 ON_EVENT(ON_CLICK,m_AlertCloseBtn,OnClickAlertCloseBtn)
+ON_EVENT(ON_CLICK,m_ManualBEBtn,OnClickManualBEBtn)
 EVENT_MAP_END(CAppDialog)
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
@@ -476,6 +481,8 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
    if(!CreateShowAlertLinesBtn())
       return(false);
    if(!CreateAlertCloseBtn())
+      return(false);
+   if(!CreateManualBEBtn())
       return(false);
 
    if(!CreateStrategySelectorCBox())
@@ -1416,7 +1423,7 @@ bool CControlsDialog::CreateShowAlertLinesBtn(void)
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+6*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH/2;
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_ShowAlertLinesBtn.Create(m_chart_id,m_name+"ShowAlertLinesBtn",m_subwin,x1,y1,x2,y2))
@@ -1439,9 +1446,9 @@ bool CControlsDialog::CreateShowAlertLinesBtn(void)
 bool CControlsDialog::CreateAlertCloseBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/2;
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/3;
    int y1=INDENT_TOP+6*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH/2;
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_AlertCloseBtn.Create(m_chart_id,m_name+"AlertCloseBtn",m_subwin,x1,y1,x2,y2))
@@ -1456,6 +1463,34 @@ bool CControlsDialog::CreateAlertCloseBtn(void)
 //--- succeed
    return(true);
   }
+
+
+//+------------------------------------------------------------------+
+//| Create the "Manual BE Btn" button                                |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateManualBEBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+2*BUTTON_WIDTH/3;
+   int y1=INDENT_TOP+6*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/3;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_ManualBEBtn.Create(m_chart_id,m_name+"ManualBEBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+
+   if(!m_ManualBEBtn.Text("MBE"))
+      return(false);
+
+   if(!Add(m_ManualBEBtn))
+      return(false);
+
+//--- succeed
+   return(true);
+  }
+
+
+
 
 
 //+------------------------------------------------------------------+
@@ -1992,7 +2027,7 @@ void CControlsDialog::OnClickShowAlertLinesBtn(void)
 
    if(alertCloseLine)
      {
-      m_ShowAlertLinesBtn.Text("[=\x2F06=]");
+      m_ShowAlertLinesBtn.Color(clrRed);
 
       ObjectCreate(0,"alertCloseLine_1",OBJ_HLINE,0,0,NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_ASK)+100*_Point,_Digits));
       ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrOrange);
@@ -2020,6 +2055,7 @@ void CControlsDialog::OnClickShowAlertLinesBtn(void)
          ObjectDelete(0,"alertCloseLine_1");
          ObjectDelete(0,"alertCloseLine_2");
          m_ShowAlertLinesBtn.Text("\x2F06");
+         m_ShowAlertLinesBtn.Color(clrBlack);
         }
   }
 
@@ -2034,14 +2070,36 @@ void CControlsDialog::OnClickAlertCloseBtn(void)
      {
       setAlarmCloseLine = false;
       m_AlertCloseBtn.Text("\x23F0");
+      m_AlertCloseBtn.Color(clrBlack);
      }
    else
       if(!setAlarmCloseLine)
         {
          setAlarmCloseLine = true;
-         m_AlertCloseBtn.Text("[=\x23F0=]");
+         m_AlertCloseBtn.Color(clrRed);
         }
   }
+
+
+//+------------------------------------------------------------------+
+//| Event handler for "Alert Close Btn" Button                       |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickManualBEBtn(void)
+  {
+
+   if(ManualBEToggle)
+     {
+      ManualBEToggle = false;
+      m_ManualBEBtn.Color(clrBlack);
+     }
+   else
+      if(!ManualBEToggle)
+        {
+         ManualBEToggle = true;
+         m_ManualBEBtn.Color(clrRed);
+        }
+  }
+
 
 //+------------------------------------------------------------------+
 //| Global Variables                                                 |
@@ -2117,6 +2175,95 @@ void OnTick()
 
 //+------------------------------------------------------------------+
 //|                                                                  |
+//|  ----- Handling Manual BE -------------------------------------- |
+//|                                                                  |
+//+------------------------------------------------------------------+
+
+   if(ManualBEToggle)
+     {
+      alertLinePrice1 = NormalizeDouble(ObjectGetDouble(0,"alertCloseLine_1",OBJPROP_PRICE),_Digits);
+      alertLinePrice2 = NormalizeDouble(ObjectGetDouble(0,"alertCloseLine_2",OBJPROP_PRICE),_Digits);
+      alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits); // previous close price
+      alertClosePrevBar2 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,2),_Digits); // previous close price
+
+      bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
+      ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
+
+      if((ask > alertLinePrice1) || (bid < alertLinePrice2))
+        {
+         int totalPos = PositionsTotal();
+
+         for(int i = 0; i < totalPos; i++)
+           {
+            ulong posTicket = PositionGetTicket(i);
+
+            if(PositionSelectByTicket(posTicket))
+              {
+               if(PositionGetString(POSITION_SYMBOL) == _Symbol)
+                 {
+                  CTrade trade;
+                  double posOpenPrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),_Digits);
+                  double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),_Digits);
+                  double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),_Digits);
+
+                  bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
+                  ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
+
+                  // --------------------
+                  // --- BUY POSITION ---
+                  // --------------------
+
+                  if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position has type BUY
+                    {
+                     if(posSl < posOpenPrice)
+                        if(bid > posOpenPrice)
+                          {
+                           Print("BUY Break Even Conditions Met...  Position Open Price = ",posOpenPrice);
+                           if(trade.PositionModify(posTicket, posOpenPrice, posTp))
+                             {
+                              Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven BUY");
+                              if(alertBreakEven)
+                                 Alert("Position #", posTicket, " was modified by Breakeven BUY");
+                             }
+                          }
+                    }
+
+                  // --------------------
+                  // --- SELL POSITION --
+                  // --------------------
+
+                  if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL) // checking if the open position has type SELL
+                    {
+                     if(posSl > posOpenPrice)
+                        if(ask < posOpenPrice)
+                          {
+                           Print("BUY Break Even Conditions Met...  Position Open Price = ",posOpenPrice);
+                           if(trade.PositionModify(posTicket, posOpenPrice, posTp))
+                             {
+                              Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven SELL");
+                              if(alertBreakEven)
+                                 Alert("Position #", posTicket, " was modified by Breakeven SELL");
+                             }
+                          }
+                    }
+                 } // PositionGetString(POSITION_SYMBOL) == _Symbol
+              } // PositionSelectByTicket(posTicket)
+           } // for loop
+
+        } // (ask > alertLinePrice1) || (bid < alertLinePrice1)
+
+     } // End of Manual BE
+
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//|  ----- End of Handling Manual BE ------------------------------- |
+//|                                                                  |
+//+------------------------------------------------------------------+
+
+
+//+------------------------------------------------------------------+
+//|                                                                  |
 //|  ----- Handling alert lines ------------------------------------ |
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -2134,7 +2281,7 @@ void OnTick()
          (alertClosePrevBar1 > alertLinePrice2 && alertClosePrevBar2 < alertLinePrice2) || (alertClosePrevBar1 < alertLinePrice2 && alertClosePrevBar2 > alertLinePrice2)
       )
         {
-         Alert("ALERT: PRICE CLOSED OVER THE LINE ON ",_Symbol);
+         Alert("ALERT: PRICE OVER THE LINE ON ",_Symbol);
          setAlarmCloseLine = false;
          ObjectSetString(0,ExtDialog.Name()+"AlertCloseBtn",OBJPROP_TEXT,"\x23F0");
         }
@@ -2461,16 +2608,15 @@ void OnTick()
                      if(PositionGetString(POSITION_SYMBOL) == _Symbol && PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
                        {
                         int OpenBar = iBarShift(_Symbol,0,PositionGetInteger(POSITION_TIME));
+                        double positionProfit = PositionGetDouble(POSITION_PROFIT);
                         if(OpenBar > 1)
                            if(trade.PositionClose(posTicket))
                              {
-                              Print(__FUNCTION__," > Position #",posTicket," was closed because price closed below Tenkansen. ",ClosePrevBar," < ",TenkansenPrevBar);
-                              if(AlertAutoClosePosition)
-                                 Alert("Position #",posTicket," was closed because price closed below Tenkansen. ",ClosePrevBar," < ",TenkansenPrevBar);
+                              //  Print(__FUNCTION__," > Position #",posTicket," was closed with profit ",positionProfit," because price closed below Tenkansen. ",ClosePrevBar," < ",TenkansenPrevBar);
+                              //  if(AlertAutoClosePosition)
+                              //   Alert(" > Position #",posTicket," was closed with profit ",positionProfit," because price closed below Tenkansen. ",ClosePrevBar," < ",TenkansenPrevBar);
                              }
-
                        }
-
                  }
 
             // --------------------
@@ -2484,12 +2630,13 @@ void OnTick()
                      if(PositionGetString(POSITION_SYMBOL) == _Symbol && PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
                        {
                         int OpenBar = iBarShift(_Symbol,0,PositionGetInteger(POSITION_TIME));
+                        double positionProfit = PositionGetDouble(POSITION_PROFIT);
                         if(OpenBar > 1)
                            if(trade.PositionClose(posTicket))
                              {
-                              Print(__FUNCTION__," > Position #",posTicket," was closed because price closed above Tenkansen. ",ClosePrevBar," > ",TenkansenPrevBar);
-                              if(AlertAutoClosePosition)
-                                 Alert("Position #",posTicket," was closed because price closed above Tenkansen. ",ClosePrevBar," > ",TenkansenPrevBar);
+                              //  Print(__FUNCTION__," > Position #",posTicket," was closed with profit ",positionProfit," because price closed above Tenkansen. ",ClosePrevBar," > ",TenkansenPrevBar);
+                              //   if(AlertAutoClosePosition)
+                              //     Alert(" > Position #",posTicket," was closed with profit ",positionProfit," because price closed above Tenkansen. ",ClosePrevBar," > ",TenkansenPrevBar);
                              }
                        }
                  }
@@ -2532,12 +2679,13 @@ void OnTick()
                      if(PositionGetString(POSITION_SYMBOL) == _Symbol && PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
                        {
                         int OpenBar = iBarShift(_Symbol,0,PositionGetInteger(POSITION_TIME));
+                        double positionProfit = PositionGetDouble(POSITION_PROFIT);
                         if(OpenBar > 1)
                            if(trade.PositionClose(posTicket))
                              {
-                              Print(__FUNCTION__," > Position #",posTicket," was closed because price closed below Moving Average. ",ClosePrevBar," < ",ClosePosMaPrevBar);
+                              Print(__FUNCTION__," > Position #",posTicket," was closed with profit ",positionProfit," because price closed above Moving Average. ",ClosePrevBar," < ",ClosePosMaPrevBar);
                               if(AlertAutoClosePosition)
-                                 Alert("Position #",posTicket," was closed because price closed below Moving Average. ",ClosePrevBar," < ",ClosePosMaPrevBar);
+                                 Alert(" > Position #",posTicket," was closed with profit ",positionProfit," because price closed above Moving Average. ",ClosePrevBar," < ",ClosePosMaPrevBar);
                              }
                        }
                  }
@@ -2553,12 +2701,13 @@ void OnTick()
                      if(PositionGetString(POSITION_SYMBOL) == _Symbol && PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
                        {
                         int OpenBar = iBarShift(_Symbol,0,PositionGetInteger(POSITION_TIME));
+                        double positionProfit = PositionGetDouble(POSITION_PROFIT);
                         if(OpenBar > 1)
                            if(trade.PositionClose(posTicket))
                              {
-                              Print(__FUNCTION__," > Position #",posTicket," was closed because price closed above Moving Average. ",ClosePrevBar," > ",ClosePosMaPrevBar);
+                              Print(__FUNCTION__," > Position #",posTicket," was closed with profit ",positionProfit," because price closed above Moving Average. ",ClosePrevBar," > ",ClosePosMaPrevBar);
                               if(AlertAutoClosePosition)
-                                 Alert("Position #",posTicket," was closed because price closed above Moving Average. ",ClosePrevBar," > ",ClosePosMaPrevBar);
+                                 Alert(" > Position #",posTicket," was closed with profit ",positionProfit," because price closed above Moving Average. ",ClosePrevBar," > ",ClosePosMaPrevBar);
                              }
                        }
                  }
@@ -2568,10 +2717,7 @@ void OnTick()
       //|      End Close Positions on Price Close Over MA                  |
       //+------------------------------------------------------------------+
 
-
       // =========================================================================
-
-
 
       //+------------------------------------------------------------------+
       //|                                                                  |
