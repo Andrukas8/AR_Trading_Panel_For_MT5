@@ -1661,10 +1661,10 @@ void CControlsDialog::OnClickBreakEvenBtn(void)
      {
       ulong posTicket = PositionGetTicket(i);
       string posSymbol = PositionGetSymbol(i);
-      double posOpen = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),4);
-      double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),4);
-      double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),4);
-      double posCurrent = NormalizeDouble(PositionGetDouble(POSITION_PRICE_CURRENT),4);
+      double posOpen = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),_Digits);
+      double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),_Digits);
+      double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),_Digits);
+      double posCurrent = NormalizeDouble(PositionGetDouble(POSITION_PRICE_CURRENT),_Digits);
 
       if(posSymbol == _Symbol)
         {
@@ -2954,7 +2954,7 @@ void OnTick()
                   CTrade trade;
                   double posOpenPrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),_Digits);
                   double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),_Digits);
-                  double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),4);
+                  double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),_Digits);
 
                   bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
                   ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
@@ -3037,7 +3037,7 @@ void OnTick()
                              {
                               if(trade.PositionModify(posTicket,sl,posTp))
                                 {
-                                 Print(NormalizeDouble(sl - posSl,4), " ", NormalizeDouble(bid - sl,_Digits));
+                                 Print(NormalizeDouble(sl - posSl,_Digits), " ", NormalizeDouble(bid - sl,_Digits));
                                  Print("SL = ",sl, " TP = ", posTp);
                                  Print(__FUNCTION__," > Position #",posTicket," was modified by ma tsl.");
                                 }
@@ -3809,5 +3809,4 @@ bool CControlsDialog::DisplayInfo()
    return(true);
   }
 
-//+------------------------------------------------------------------+
 //+------------------------------------------------------------------+
