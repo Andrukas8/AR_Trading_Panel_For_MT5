@@ -2,7 +2,7 @@
 
 [![Support Ukraine Badge](https://bit.ly/support-ukraine-now)](https://github.com/support-ukraine/support-ukraine)
 
-![Trading_Panel](https://user-images.githubusercontent.com/21954163/202742944-08046a2d-e85a-495a-9ebe-7f191b709b67.jpg)
+![image](https://user-images.githubusercontent.com/21954163/202746018-72f1f1a8-0c3f-4610-a5e1-48550ebd756d.png)
 
 A trading panel for MT5 trading platform, written in MQL5. All buttons and control of the panel are in one window.
 
