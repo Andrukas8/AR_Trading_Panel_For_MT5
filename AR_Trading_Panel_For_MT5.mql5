@@ -2027,10 +2027,10 @@ void CControlsDialog::OnClickShowAlertLinesBtn(void)
 
    if(alertCloseLine)
      {
-      m_ShowAlertLinesBtn.Color(clrRed);
+      m_ShowAlertLinesBtn.Text("[\x2F06]");
 
       ObjectCreate(0,"alertCloseLine_1",OBJ_HLINE,0,0,NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_ASK)+100*_Point,_Digits));
-      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrOrange);
+      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrSilver);
       ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_STYLE, STYLE_DASH);
       ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_WIDTH, 2);
       ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_BACK, true);
@@ -2040,7 +2040,7 @@ void CControlsDialog::OnClickShowAlertLinesBtn(void)
       ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_ZORDER, 0);
 
       ObjectCreate(0,"alertCloseLine_2",OBJ_HLINE,0,0,NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_BID)-100*_Point,_Digits));
-      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrOrange);
+      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
       ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_STYLE, STYLE_DASH);
       ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_WIDTH, 2);
       ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_BACK, true);
@@ -2056,6 +2056,7 @@ void CControlsDialog::OnClickShowAlertLinesBtn(void)
          ObjectDelete(0,"alertCloseLine_2");
          setAlarmCloseLine = false;
          manualBEToggle = false;
+         m_ShowAlertLinesBtn.Text("\x2F06");
          m_ShowAlertLinesBtn.Color(clrBlack);
          m_ManualBEBtn.Color(clrBlack);
          m_AlertCloseBtn.Color(clrBlack);
@@ -2081,17 +2082,22 @@ void CControlsDialog::OnClickAlertCloseBtn(void)
         {
          setAlarmCloseLine = true;
          manualBEToggle = false;
-         m_AlertCloseBtn.Color(clrRed);
+         m_AlertCloseBtn.Color(clrOrange);
          m_ManualBEBtn.Color(clrBlack);
 
          ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrOrange);
          ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrOrange);
+
+         ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTED, false);
+         ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, false);
         }
       else
          if(!setAlarmCloseLine)
            {
             setAlarmCloseLine = false;
             m_AlertCloseBtn.Color(clrBlack);
+            ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrSilver);
+            ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
            }
      }
 
@@ -2121,13 +2127,16 @@ void CControlsDialog::OnClickManualBEBtn(void)
          setAlarmCloseLine = false;
          ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrTomato);
          ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrTomato);
+
+         ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTED, false);
+         ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, false);
         }
       else
          if(!manualBEToggle)
            {
             m_ManualBEBtn.Color(clrBlack);
-            ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrOrange);
-            ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrOrange);
+            ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrSilver);
+            ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
            }
      }
 
@@ -3809,4 +3818,5 @@ bool CControlsDialog::DisplayInfo()
    return(true);
   }
 
+//+------------------------------------------------------------------+
 //+------------------------------------------------------------------+
