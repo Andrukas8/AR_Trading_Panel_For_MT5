@@ -136,7 +136,7 @@ bool stopToggle = false;
 bool limitToggle = false;
 bool autoPosMgmtToggle = false;
 bool boxOnToggle = false;
-bool ManualBEToggle = false;
+bool manualBEToggle = false;
 
 bool alertCloseLine = false;
 double alertLinePrice1;
@@ -144,7 +144,6 @@ double alertLinePrice2;
 double alertClosePrevBar1;
 double alertClosePrevBar2;
 bool setAlarmCloseLine = false;
-
 
 double inputStopLoss;
 double inputTakeProfit;
@@ -2025,6 +2024,7 @@ void CControlsDialog::OnClickShowAlertLinesBtn(void)
       if(!alertCloseLine)
          alertCloseLine = true;
 
+
    if(alertCloseLine)
      {
       m_ShowAlertLinesBtn.Color(clrRed);
@@ -2054,8 +2054,11 @@ void CControlsDialog::OnClickShowAlertLinesBtn(void)
         {
          ObjectDelete(0,"alertCloseLine_1");
          ObjectDelete(0,"alertCloseLine_2");
-         m_ShowAlertLinesBtn.Text("\x2F06");
+         setAlarmCloseLine = false;
+         manualBEToggle = false;
          m_ShowAlertLinesBtn.Color(clrBlack);
+         m_ManualBEBtn.Color(clrBlack);
+         m_AlertCloseBtn.Color(clrBlack);
         }
   }
 
@@ -2066,38 +2069,68 @@ void CControlsDialog::OnClickShowAlertLinesBtn(void)
 void CControlsDialog::OnClickAlertCloseBtn(void)
   {
 
-   if(setAlarmCloseLine)
+   if(alertCloseLine)
      {
-      setAlarmCloseLine = false;
-      m_AlertCloseBtn.Text("\x23F0");
-      m_AlertCloseBtn.Color(clrBlack);
-     }
-   else
-      if(!setAlarmCloseLine)
+      if(setAlarmCloseLine)
+         setAlarmCloseLine = false;
+      else
+         if(!setAlarmCloseLine)
+            setAlarmCloseLine = true;
+
+      if(setAlarmCloseLine)
         {
          setAlarmCloseLine = true;
+         manualBEToggle = false;
          m_AlertCloseBtn.Color(clrRed);
+         m_ManualBEBtn.Color(clrBlack);
+
+         ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrOrange);
+         ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrOrange);
         }
+      else
+         if(!setAlarmCloseLine)
+           {
+            setAlarmCloseLine = false;
+            m_AlertCloseBtn.Color(clrBlack);
+           }
+     }
+
+
   }
 
 
 //+------------------------------------------------------------------+
-//| Event handler for "Alert Close Btn" Button                       |
+//| Event handler for "Manual BE Btn" Button                         |
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickManualBEBtn(void)
   {
 
-   if(ManualBEToggle)
+   if(alertCloseLine)
      {
-      ManualBEToggle = false;
-      m_ManualBEBtn.Color(clrBlack);
-     }
-   else
-      if(!ManualBEToggle)
+
+      if(manualBEToggle)
+         manualBEToggle = false;
+      else
+         if(!manualBEToggle)
+            manualBEToggle = true;
+
+      if(manualBEToggle)
         {
-         ManualBEToggle = true;
          m_ManualBEBtn.Color(clrRed);
+         m_AlertCloseBtn.Color(clrBlack);
+         setAlarmCloseLine = false;
+         ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrTomato);
+         ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrTomato);
         }
+      else
+         if(!manualBEToggle)
+           {
+            m_ManualBEBtn.Color(clrBlack);
+            ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrOrange);
+            ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrOrange);
+           }
+     }
+
   }
 
 
@@ -2179,7 +2212,7 @@ void OnTick()
 //|                                                                  |
 //+------------------------------------------------------------------+
 
-   if(ManualBEToggle)
+   if(manualBEToggle)
      {
       alertLinePrice1 = NormalizeDouble(ObjectGetDouble(0,"alertCloseLine_1",OBJPROP_PRICE),_Digits);
       alertLinePrice2 = NormalizeDouble(ObjectGetDouble(0,"alertCloseLine_2",OBJPROP_PRICE),_Digits);
@@ -2397,7 +2430,7 @@ void OnTick()
 
       textComment += "alertCloseLine      = [ " + IntegerToString(alertCloseLine) + " ]\n";
       textComment += "setAlarmCloseLine = [ " + IntegerToString(setAlarmCloseLine) + " ]\n";
-
+      textComment += "manualBEToggle = [ " + IntegerToString(manualBEToggle) + " ]\n";
       //+------------------------------------------------------------------+
       //|                                                                  |
       //|  ----- Signal If TK Break Strategy Conditions Met -------------- |
