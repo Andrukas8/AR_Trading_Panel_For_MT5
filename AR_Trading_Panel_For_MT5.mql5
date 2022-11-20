@@ -46,7 +46,7 @@ string StrategyStr[10] =
   };
 
 input group "------------- Position Variables ----------------------------"
-input bool showProfitOnChart = true; // SHOW POSITION PROFIT ON CHART
+input bool showProfitOnChart = false; // SHOW POSITION PROFIT ON CHART
 input bool showEAComment = false; // SHOW EA COMMENT
 input ENUM_STRATEGY StrategySelect = NOSTRATEGY;
 input string posLotsDef = "0.1"; // LOT SIZE
@@ -71,6 +71,7 @@ input bool fractalsTSL = false; // TSL FRACTALS
 input bool tenkansenTSL = false; // TSL ICHIMOKU TENKANSEN
 input bool kijunsenTSL = false; // TSL ICHIMOKU KIJUNSEN
 input bool NewBarAlert = false; // == NEW BAR ALERT ==
+input bool DivergentBarToggle = true; // == DIVERGENT BAR ALERT ==
 
 input group "------------- Auto Closing Position on Condition ------------"
 input bool ClosePosTenkansen = false; // CLOSE ON CLOSE OVER TENKANSEN
@@ -101,10 +102,13 @@ double mainLowerFractal = 0;
 
 int maShift;
 
+// Handles
 int handleFractal;
 int handleMA;
 int handleIchimoku;
 int handleClosePosMA;
+int handleATR;
+int handleAlligator;
 
 string textComment;
 
@@ -2177,6 +2181,15 @@ int OnInit()
    if(ClosePosMa)
       handleClosePosMA = iMA(_Symbol, TimeFrame, ClosePosMaPeriod, ClosePosMaShift, ClosePosMaMethod, ClosePosMaAppPrice);
 
+   if(DivergentBarToggle)
+     {
+      handleATR = iATR(_Symbol,TimeFrame,14);
+      handleAlligator = iAlligator(_Symbol,TimeFrame,13,8,8,5,5,3,MODE_SMMA,PRICE_MEDIAN);
+     }
+
+
+
+
 //--- succeed
    return(INIT_SUCCEEDED);
   }
@@ -2214,6 +2227,113 @@ void OnChartEvent(const int id,         // event ID
 //+------------------------------------------------------------------+
 void OnTick()
   {
+
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//|  ----- Handling Divergent Bar Alert ---------------------------- |
+//|                                                                  |
+//+------------------------------------------------------------------+
+
+
+   if(DivergentBarToggle && autoPosMgmtToggle)
+     {
+      int bars = iBars(_Symbol, TimeFrame);
+      if(barsTotal != bars) // New bar appeared on the chart
+        {
+         barsTotal = bars;
+
+         //getting previous bar Close Open Low High values
+         double closePrevBar = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits);
+         double openPrevBar = NormalizeDouble(iOpen(_Symbol,PERIOD_CURRENT,1),_Digits);
+         double lowPrevBar = NormalizeDouble(iLow(_Symbol,PERIOD_CURRENT,1),_Digits);
+         double highPrevBar = NormalizeDouble(iHigh(_Symbol,PERIOD_CURRENT,1),_Digits);
+
+         double upperWickPrevBar = 0;
+         double lowerWickPrevBar = 0;
+         double bodyPrevBar = 0;
+         double distanceToTeethPrevBar = 0;
+
+
+         double atrPrevBarArr[];
+         double alligatorTeethPrevBarArr[];
+
+         CopyBuffer(handleATR,0,0,2,atrPrevBarArr);
+         CopyBuffer(handleAlligator,1,0,2,alligatorTeethPrevBarArr);
+
+         double atrPrevBar = atrPrevBarArr[1];
+         double alligatorTeethPrevBar = alligatorTeethPrevBarArr[1];
+
+
+         if(closePrevBar > openPrevBar)  // Bullish bar
+           {
+            upperWickPrevBar = NormalizeDouble(highPrevBar - closePrevBar,_Digits);
+            lowerWickPrevBar = NormalizeDouble(openPrevBar - lowPrevBar,_Digits);
+            bodyPrevBar = NormalizeDouble(closePrevBar - openPrevBar,_Digits);
+           }
+         else
+            if(closePrevBar <= openPrevBar) // Bearish bar
+              {
+               upperWickPrevBar = NormalizeDouble(highPrevBar - openPrevBar,_Digits);
+               lowerWickPrevBar = NormalizeDouble(closePrevBar - lowPrevBar,_Digits);
+               bodyPrevBar = NormalizeDouble(openPrevBar - closePrevBar,_Digits);
+               distanceToTeethPrevBar = NormalizeDouble(alligatorTeethPrevBar - openPrevBar,_Digits);
+              }
+
+
+         if(closePrevBar > alligatorTeethPrevBar)
+            distanceToTeethPrevBar = NormalizeDouble(closePrevBar - alligatorTeethPrevBar,_Digits);
+         else
+            if(closePrevBar < alligatorTeethPrevBar)
+               distanceToTeethPrevBar = NormalizeDouble(alligatorTeethPrevBar - closePrevBar,_Digits);
+
+
+         // Debugging
+         //         Print("Close = ",closePrevBar," Open = ", openPrevBar," High = ",highPrevBar," Low = ",lowPrevBar);
+         //         Print("Upper Wick = ",upperWickPrevBar," Lower Wick = ", lowerWickPrevBar," Body = ",bodyPrevBar," Distance to Teeth = ",distanceToTeethPrevBar," ATR = ",atrPrevBar);
+         //
+         //         string side = "Undetermined";
+         //
+         //         if(closePrevBar > alligatorTeethPrevBar)
+         //            side = "BULLISH";
+         //         else
+         //            if(closePrevBar < alligatorTeethPrevBar)
+         //               side = "BEARISH";
+         //
+         //         Print("Side = ",side, " AutoPosMgmtToggle = ", autoPosMgmtToggle);
+         // End Debugging
+
+
+         if(closePrevBar < alligatorTeethPrevBar && lowerWickPrevBar > upperWickPrevBar && lowerWickPrevBar > bodyPrevBar) // Bullish bar
+           {
+            Alert("=== DIVERGENT BAR === BULLISH");
+           }
+         else
+            if(closePrevBar > alligatorTeethPrevBar && upperWickPrevBar > lowerWickPrevBar && upperWickPrevBar > bodyPrevBar) // Bearish bar
+              {
+               Alert("=== DIVERGENT BAR === BEARISH");
+              }
+
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //+------------------------------------------------------------------+
+
+
+
+
+        }
+     }
+
+
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//|  ----- End Handling Divergent Bar Alert ------------------------ |
+//|                                                                  |
+//+------------------------------------------------------------------+
+
+
+
 
 //+------------------------------------------------------------------+
 //|                                                                  |
