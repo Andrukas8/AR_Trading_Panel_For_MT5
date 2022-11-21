@@ -141,6 +141,9 @@ bool limitToggle = false;
 bool autoPosMgmtToggle = false;
 bool boxOnToggle = false;
 bool manualBEToggle = false;
+bool wm1AlertToggle = false;
+bool wm2AlertToggle = false;
+bool wm3AlertToggle = false;
 
 bool alertCloseLine = false;
 double alertLinePrice1;
@@ -251,6 +254,10 @@ private:
    CButton           m_AlertCloseBtn;                // Sets a line, closing over which price triggers alarm
    CButton           m_ManualBEBtn;
 
+   CButton           m_wm1AlertBtn;                  // Bill Williams Wise Man 1 (divergent bar) alert toggle button
+   CButton           m_wm2AlertBtn;                  // Bill Williams Wise Man 2 (AO 3 bars of same color) alert toggle button
+   CButton           m_wm3AlertBtn;                  // Bill Williams Wise Man 3 (Fractal break) alert toggle button
+
    CComboBox         m_StrategySelectorCBox;         // Dropdown list to select the strategy for the trade comment
 
 public:
@@ -283,6 +290,9 @@ protected:
    bool              CreateShowAlertLinesBtn(void);
    bool              CreateAlertCloseBtn(void);
    bool              CreateManualBEBtn(void);
+   bool              CreateWm1AlertBtn(void);
+   bool              CreateWm2AlertBtn(void);
+   bool              CreateWm3AlertBtn(void);
 
    bool              CreateLotsEdit(void);
    bool              CreateSlPipsEdit(void);
@@ -350,6 +360,9 @@ protected:
    void              OnClickShowAlertLinesBtn(void);
    void              OnClickAlertCloseBtn(void);
    void              OnClickManualBEBtn(void);
+   void              OnClickWm1AlertBtn(void);
+   void              OnClickWm2AlertBtn(void);
+   void              OnClickWm3AlertBtn(void);
 
   };
 //+------------------------------------------------------------------+
@@ -376,6 +389,14 @@ ON_EVENT(ON_CLICK,m_Box,OnClickBoxBtn)
 ON_EVENT(ON_CLICK,m_ShowAlertLinesBtn,OnClickShowAlertLinesBtn)
 ON_EVENT(ON_CLICK,m_AlertCloseBtn,OnClickAlertCloseBtn)
 ON_EVENT(ON_CLICK,m_ManualBEBtn,OnClickManualBEBtn)
+ON_EVENT(ON_CLICK,m_wm1AlertBtn,OnClickWm1AlertBtn)
+ON_EVENT(ON_CLICK,m_wm2AlertBtn,OnClickWm2AlertBtn)
+ON_EVENT(ON_CLICK,m_wm3AlertBtn,OnClickWm3AlertBtn)
+
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
 EVENT_MAP_END(CAppDialog)
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
@@ -486,6 +507,12 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
    if(!CreateAlertCloseBtn())
       return(false);
    if(!CreateManualBEBtn())
+      return(false);
+   if(!CreateWm1AlertBtn())
+      return(false);
+   if(!CreateWm2AlertBtn())
+      return(false);
+   if(!CreateWm3AlertBtn())
       return(false);
 
    if(!CreateStrategySelectorCBox())
@@ -1109,7 +1136,7 @@ bool CControlsDialog::CreateDoubleOrderBtn(void)
 //--- coordinates
    int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH;
+   int x2=x1+BUTTON_WIDTH/2;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_DoubleOrderBtn.Create(m_chart_id,m_name+"DoubleOrderBtn",m_subwin,x1,y1,x2,y2))
@@ -1317,9 +1344,9 @@ bool CControlsDialog::CreateLimitToggleBtn(void)
 bool CControlsDialog::CreateSendOrderBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/2;
    int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH;
+   int x2=x1+BUTTON_WIDTH/2;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_SendOrderBtn.Create(m_chart_id,m_name+"SendOrderBtn",m_subwin,x1,y1,x2,y2))
@@ -1339,7 +1366,7 @@ bool CControlsDialog::CreateAutoPosMgmtToggleBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/2;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1371,7 +1398,7 @@ bool CControlsDialog::CreateDrawPositionsBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/2;
-   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/2;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1494,7 +1521,86 @@ bool CControlsDialog::CreateManualBEBtn(void)
 
 
 
+/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+
+//+------------------------------------------------------------------+
+//| Create the "WM1 Alert" button                                    |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateWm1AlertBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/3;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_wm1AlertBtn.Create(m_chart_id,m_name+"wm1AlertBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+
+   if(!m_wm1AlertBtn.Text("W1"))
+      return(false);
+
+   if(!Add(m_wm1AlertBtn))
+      return(false);
+
+//--- succeed
+   return(true);
+  }
+
+
+//+------------------------------------------------------------------+
+//| Create the "WM2 Alert" button                                    |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateWm2AlertBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/3;
+   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/3;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_wm2AlertBtn.Create(m_chart_id,m_name+"wm2AlertBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+
+   if(!m_wm2AlertBtn.Text("W2"))
+      return(false);
+
+   if(!Add(m_wm2AlertBtn))
+      return(false);
+
+//--- succeed
+   return(true);
+  }
+
+
+//+------------------------------------------------------------------+
+//| Create the "WM2 Alert" button                                    |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateWm3AlertBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+2*BUTTON_WIDTH/3;
+   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/3;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_wm3AlertBtn.Create(m_chart_id,m_name+"wm3AlertBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+
+   if(!m_wm3AlertBtn.Text("W3"))
+      return(false);
+
+   if(!Add(m_wm3AlertBtn))
+      return(false);
+
+//--- succeed
+   return(true);
+  }
+
+
+
+/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 //+------------------------------------------------------------------+
 //| +++   Event handlers   +++                                       |
@@ -2145,6 +2251,62 @@ void CControlsDialog::OnClickManualBEBtn(void)
      }
 
   }
+
+
+//+------------------------------------------------------------------+
+//| Event handler for "WM1 Alert" Button                             |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickWm1AlertBtn(void)
+  {
+   if(wm1AlertToggle)
+      wm1AlertToggle = false;
+   else
+      if(!wm1AlertToggle)
+         wm1AlertToggle = true;
+
+   if(wm1AlertToggle)
+      m_wm1AlertBtn.Text("[W1]");
+   else
+      if(!wm1AlertToggle)
+         m_wm1AlertBtn.Text("W1");
+  }
+
+//+------------------------------------------------------------------+
+//| Event handler for "WM2 Alert" Button                             |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickWm2AlertBtn(void)
+  {
+   if(wm2AlertToggle)
+      wm2AlertToggle = false;
+   else
+      if(!wm2AlertToggle)
+         wm2AlertToggle = true;
+
+   if(wm2AlertToggle)
+      m_wm2AlertBtn.Text("[W2]");
+   else
+      if(!wm2AlertToggle)
+         m_wm2AlertBtn.Text("W2");
+  }
+
+//+------------------------------------------------------------------+
+//| Event handler for "WM3 Alert" Button                             |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickWm3AlertBtn(void)
+  {
+   if(wm3AlertToggle)
+      wm3AlertToggle = false;
+   else
+      if(!wm3AlertToggle)
+         wm3AlertToggle = true;
+
+   if(wm3AlertToggle)
+      m_wm3AlertBtn.Text("[W3]");
+   else
+      if(!wm3AlertToggle)
+         m_wm3AlertBtn.Text("W3");
+  }
+
 
 
 //+------------------------------------------------------------------+
