@@ -71,7 +71,8 @@ input bool fractalsTSL = false; // TSL FRACTALS
 input bool tenkansenTSL = false; // TSL ICHIMOKU TENKANSEN
 input bool kijunsenTSL = false; // TSL ICHIMOKU KIJUNSEN
 input bool NewBarAlert = false; // == NEW BAR ALERT ==
-input bool DivergentBarToggle = true; // == DIVERGENT BAR ALERT ==
+input bool wiseMenAlertsToggle = true; // == ACTIVATE WISE MEN ALERTS ==
+input double atrMultiplier = 1; // ATR multiplier for filtering WM1 signals
 
 input group "------------- Auto Closing Position on Condition ------------"
 input bool ClosePosTenkansen = false; // CLOSE ON CLOSE OVER TENKANSEN
@@ -109,6 +110,7 @@ int handleIchimoku;
 int handleClosePosMA;
 int handleATR;
 int handleAlligator;
+int handleAwesomeOscillator;
 
 string textComment;
 
@@ -1520,10 +1522,6 @@ bool CControlsDialog::CreateManualBEBtn(void)
   }
 
 
-
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-
 //+------------------------------------------------------------------+
 //| Create the "WM1 Alert" button                                    |
 //+------------------------------------------------------------------+
@@ -1575,7 +1573,7 @@ bool CControlsDialog::CreateWm2AlertBtn(void)
 
 
 //+------------------------------------------------------------------+
-//| Create the "WM2 Alert" button                                    |
+//| Create the "WM3 Alert" button                                    |
 //+------------------------------------------------------------------+
 bool CControlsDialog::CreateWm3AlertBtn(void)
   {
@@ -2343,10 +2341,11 @@ int OnInit()
    if(ClosePosMa)
       handleClosePosMA = iMA(_Symbol, TimeFrame, ClosePosMaPeriod, ClosePosMaShift, ClosePosMaMethod, ClosePosMaAppPrice);
 
-   if(DivergentBarToggle)
+   if(wiseMenAlertsToggle)
      {
-      handleATR = iATR(_Symbol,TimeFrame,14);
-      handleAlligator = iAlligator(_Symbol,TimeFrame,13,8,8,5,5,3,MODE_SMMA,PRICE_MEDIAN);
+      handleATR = iATR(_Symbol,PERIOD_CURRENT,14);
+      handleAlligator = iAlligator(_Symbol,PERIOD_CURRENT,13,8,8,5,5,3,MODE_SMMA,PRICE_MEDIAN);
+      handleAwesomeOscillator = iAO(_Symbol,PERIOD_CURRENT);
      }
 
 
@@ -2393,14 +2392,14 @@ void OnTick()
 
 //+------------------------------------------------------------------+
 //|                                                                  |
-//|  ----- Handling Divergent Bar Alert ---------------------------- |
+//|  ----- Handling Divergent Bar Alert WM1 ------------------------ |
 //|                                                                  |
 //+------------------------------------------------------------------+
 
 
-   if(DivergentBarToggle && autoPosMgmtToggle)
+   if(wm1AlertToggle)
      {
-      int bars = iBars(_Symbol, TimeFrame);
+      int bars = iBars(_Symbol, PERIOD_CURRENT);
       if(barsTotal != bars) // New bar appeared on the chart
         {
          barsTotal = bars;
@@ -2416,16 +2415,14 @@ void OnTick()
          double bodyPrevBar = 0;
          double distanceToTeethPrevBar = 0;
 
-
          double atrPrevBarArr[];
          double alligatorTeethPrevBarArr[];
 
          CopyBuffer(handleATR,0,0,2,atrPrevBarArr);
          CopyBuffer(handleAlligator,1,0,2,alligatorTeethPrevBarArr);
 
-         double atrPrevBar = atrPrevBarArr[1];
+         double atrPrevBar = NormalizeDouble(atrPrevBarArr[1],_Digits);
          double alligatorTeethPrevBar = alligatorTeethPrevBarArr[1];
-
 
          if(closePrevBar > openPrevBar)  // Bullish bar
            {
@@ -2442,13 +2439,24 @@ void OnTick()
                distanceToTeethPrevBar = NormalizeDouble(alligatorTeethPrevBar - openPrevBar,_Digits);
               }
 
-
          if(closePrevBar > alligatorTeethPrevBar)
             distanceToTeethPrevBar = NormalizeDouble(closePrevBar - alligatorTeethPrevBar,_Digits);
          else
             if(closePrevBar < alligatorTeethPrevBar)
                distanceToTeethPrevBar = NormalizeDouble(alligatorTeethPrevBar - closePrevBar,_Digits);
 
+         if(distanceToTeethPrevBar > atrPrevBar * NormalizeDouble(atrMultiplier,2))
+           {
+            if(closePrevBar < alligatorTeethPrevBar && lowerWickPrevBar > upperWickPrevBar && lowerWickPrevBar > bodyPrevBar) // Bullish bar
+              {
+               Alert("=== DIVERGENT BAR ALERT WISE MAN 1 === BULLISH");
+              }
+            else
+               if(closePrevBar > alligatorTeethPrevBar && upperWickPrevBar > lowerWickPrevBar && upperWickPrevBar > bodyPrevBar) // Bearish bar
+                 {
+                  Alert("=== DIVERGENT BAR ALERT WISE MAN 2 === BEARISH");
+                 }
+           }
 
          // Debugging
          //         Print("Close = ",closePrevBar," Open = ", openPrevBar," High = ",highPrevBar," Low = ",lowPrevBar);
@@ -2465,28 +2473,8 @@ void OnTick()
          //         Print("Side = ",side, " AutoPosMgmtToggle = ", autoPosMgmtToggle);
          // End Debugging
 
-
-         if(closePrevBar < alligatorTeethPrevBar && lowerWickPrevBar > upperWickPrevBar && lowerWickPrevBar > bodyPrevBar) // Bullish bar
-           {
-            Alert("=== DIVERGENT BAR === BULLISH");
-           }
-         else
-            if(closePrevBar > alligatorTeethPrevBar && upperWickPrevBar > lowerWickPrevBar && upperWickPrevBar > bodyPrevBar) // Bearish bar
-              {
-               Alert("=== DIVERGENT BAR === BEARISH");
-              }
-
-         //+------------------------------------------------------------------+
-         //|                                                                  |
-         //+------------------------------------------------------------------+
-
-
-
-
         }
      }
-
-
 
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -2495,6 +2483,115 @@ void OnTick()
 //+------------------------------------------------------------------+
 
 
+//+------------------------------------------------------------------+
+//|                                                                  |
+//|  ----- Handling Awesome Oscillator Alert WM2 ------------------- |
+//|                                                                  |
+//+------------------------------------------------------------------+
+
+   if(wm2AlertToggle)
+     {
+      double awesomeOscillatorArr[];
+      CopyBuffer(handleAwesomeOscillator,0,0,3,awesomeOscillatorArr);
+
+      if(awesomeOscillatorArr[2] > awesomeOscillatorArr[1] && awesomeOscillatorArr[1] > awesomeOscillatorArr[0])
+        {
+         Alert("=== AWESOME OSCILLATOR ALERT WISE MAN 2 === BULLISH");
+         wm2AlertToggle = false;
+         ObjectSetString(0,ExtDialog.Name()+"wm2AlertBtn",OBJPROP_TEXT,"W2");
+        }
+
+      else
+         if((awesomeOscillatorArr[2] < awesomeOscillatorArr[1] && awesomeOscillatorArr[1] < awesomeOscillatorArr[0]))
+           {
+            Alert("=== AWESOME OSCILLATOR ALERT WISE MAN 2 === BEARISH");
+            wm2AlertToggle = false;
+            ObjectSetString(0,ExtDialog.Name()+"wm2AlertBtn",OBJPROP_TEXT,"W2");
+           }
+     }
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//|  ----- End of Handling Awesome Oscillator Alert WM2 ------------ |
+//|                                                                  |
+//+------------------------------------------------------------------+
+
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//|  ----- Handling Fractal Break Alert WM3 ------------------------ |
+//|                                                                  |
+//+------------------------------------------------------------------+
+
+   if(wm3AlertToggle)
+     {
+
+      int bars = iBars(_Symbol, PERIOD_CURRENT);
+      if(barsTotal != bars) // New bar appeared on the chart
+        {
+         barsTotal = bars;
+
+         double upperFractal = 0;
+         double lowerFractal = 0;
+
+         double high_1 = 0;
+         double high_2 = 0;
+         double high_3 = 0;
+         double high_4 = 0;
+         double high_5 = 0;
+
+         double low_1 = 0;
+         double low_2 = 0;
+         double low_3 = 0;
+         double low_4 = 0;
+         double low_5 = 0;
+
+         for(int i=3; i<200; i++)
+           {
+            high_1 = iHigh(_Symbol,PERIOD_CURRENT,i+2);
+            high_2 = iHigh(_Symbol,PERIOD_CURRENT,i+1);
+            high_3 = iHigh(_Symbol,PERIOD_CURRENT,i);
+            high_4 = iHigh(_Symbol,PERIOD_CURRENT,i-1);
+            high_5 = iHigh(_Symbol,PERIOD_CURRENT,i-2);
+            alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits);
+            if(high_3 > high_2 && high_3 > high_1 && high_3 > high_4 && high_3 > high_5)
+              {
+               upperFractal = high_3;
+               break;
+              }
+           }
+
+         for(int i=3; i<300; i++)
+           {
+            low_1 = iLow(_Symbol,PERIOD_CURRENT,i+2);
+            low_2 = iLow(_Symbol,PERIOD_CURRENT,i+1);
+            low_3 = iLow(_Symbol,PERIOD_CURRENT,i);
+            low_4 = iLow(_Symbol,PERIOD_CURRENT,i-1);
+            low_5 = iLow(_Symbol,PERIOD_CURRENT,i-2);
+
+            if(low_3 < low_2 && low_3 < low_1 && low_3 < low_4 && low_3 < low_5)
+              {
+               lowerFractal = low_3;
+               break;
+              }
+
+           }
+
+         if(upperFractal !=0 && lowerFractal !=0)
+            if(alertClosePrevBar1 > upperFractal)
+               Alert("=== FRACTAL BREAK ALERT WISE MAN 3 === BULLISH");
+            else
+               if(alertClosePrevBar1 < lowerFractal)
+                  Alert("=== FRACTAL BREAK ALERT WISE MAN 3 === BEARISH");
+
+        }
+     }
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//|  ----- End of Handling Fractal Break Alert WM3 ----------------- |
+//|                                                                  |
+//+------------------------------------------------------------------+
 
 
 //+------------------------------------------------------------------+
@@ -4023,9 +4120,9 @@ bool CControlsDialog::CalculatePosition()
 //|     Checking if position is greater than minimum lot size and if it is divisible by it     |
 //+--------------------------------------------------------------------------------------------+
 
-//+--------------------------------------------------------------------------------------------+
-//|     Checking if position is greater than minimum lot size and if it is divisible by it     |
-//+--------------------------------------------------------------------------------------------+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
 double CControlsDialog::CheckPositionVolume(double lotSize)
   {
 
