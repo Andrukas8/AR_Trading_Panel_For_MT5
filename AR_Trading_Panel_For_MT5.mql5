@@ -2546,6 +2546,9 @@ void OnTick()
          double low_4 = 0;
          double low_5 = 0;
 
+         alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits);
+         alertClosePrevBar2 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,2),_Digits);
+
          for(int i=3; i<200; i++)
            {
             high_1 = iHigh(_Symbol,PERIOD_CURRENT,i+2);
@@ -2553,8 +2556,6 @@ void OnTick()
             high_3 = iHigh(_Symbol,PERIOD_CURRENT,i);
             high_4 = iHigh(_Symbol,PERIOD_CURRENT,i-1);
             high_5 = iHigh(_Symbol,PERIOD_CURRENT,i-2);
-            alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits);
-            alertClosePrevBar2 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,2),_Digits);
 
             if(high_3 > high_2 && high_3 > high_1 && high_3 > high_4 && high_3 > high_5)
               {
