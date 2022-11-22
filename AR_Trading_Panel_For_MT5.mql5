@@ -2492,19 +2492,19 @@ void OnTick()
    if(wm2AlertToggle)
      {
       double awesomeOscillatorArr[];
-      CopyBuffer(handleAwesomeOscillator,0,0,3,awesomeOscillatorArr);
+      CopyBuffer(handleAwesomeOscillator,0,0,5,awesomeOscillatorArr);
 
-      if(awesomeOscillatorArr[2] > awesomeOscillatorArr[1] && awesomeOscillatorArr[1] > awesomeOscillatorArr[0])
+      if(awesomeOscillatorArr[3] < awesomeOscillatorArr[2] && awesomeOscillatorArr[2] < awesomeOscillatorArr[1] && awesomeOscillatorArr[1] > awesomeOscillatorArr[0])
         {
-         Alert("=== AWESOME OSCILLATOR ALERT WISE MAN 2 === BULLISH");
+         Alert("=== AWESOME OSCILLATOR ALERT WISE MAN 2 === BEARISH");
          wm2AlertToggle = false;
          ObjectSetString(0,ExtDialog.Name()+"wm2AlertBtn",OBJPROP_TEXT,"W2");
         }
 
       else
-         if((awesomeOscillatorArr[2] < awesomeOscillatorArr[1] && awesomeOscillatorArr[1] < awesomeOscillatorArr[0]))
+         if(awesomeOscillatorArr[3] > awesomeOscillatorArr[2] && awesomeOscillatorArr[2] > awesomeOscillatorArr[1] && awesomeOscillatorArr[1] < awesomeOscillatorArr[0])
            {
-            Alert("=== AWESOME OSCILLATOR ALERT WISE MAN 2 === BEARISH");
+            Alert("=== AWESOME OSCILLATOR ALERT WISE MAN 2 === BULLISH");
             wm2AlertToggle = false;
             ObjectSetString(0,ExtDialog.Name()+"wm2AlertBtn",OBJPROP_TEXT,"W2");
            }
@@ -2554,6 +2554,8 @@ void OnTick()
             high_4 = iHigh(_Symbol,PERIOD_CURRENT,i-1);
             high_5 = iHigh(_Symbol,PERIOD_CURRENT,i-2);
             alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits);
+            alertClosePrevBar2 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,2),_Digits);
+
             if(high_3 > high_2 && high_3 > high_1 && high_3 > high_4 && high_3 > high_5)
               {
                upperFractal = high_3;
@@ -2561,7 +2563,7 @@ void OnTick()
               }
            }
 
-         for(int i=3; i<300; i++)
+         for(int i=3; i<200; i++)
            {
             low_1 = iLow(_Symbol,PERIOD_CURRENT,i+2);
             low_2 = iLow(_Symbol,PERIOD_CURRENT,i+1);
@@ -2574,16 +2576,14 @@ void OnTick()
                lowerFractal = low_3;
                break;
               }
-
            }
 
          if(upperFractal !=0 && lowerFractal !=0)
-            if(alertClosePrevBar1 > upperFractal)
+            if(alertClosePrevBar1 > upperFractal && alertClosePrevBar2 < upperFractal)
                Alert("=== FRACTAL BREAK ALERT WISE MAN 3 === BULLISH");
             else
-               if(alertClosePrevBar1 < lowerFractal)
+               if(alertClosePrevBar1 < lowerFractal && alertClosePrevBar2 > upperFractal)
                   Alert("=== FRACTAL BREAK ALERT WISE MAN 3 === BEARISH");
-
         }
      }
 
@@ -2644,7 +2644,7 @@ void OnTick()
                              {
                               Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven BUY");
                               if(alertBreakEven)
-                                 Alert("Position #", posTicket, " was modified by Breakeven BUY");
+                                 Alert("=== Position #", posTicket, " was modified by Breakeven BUY ===");
                              }
                           }
                     }
@@ -2663,7 +2663,7 @@ void OnTick()
                              {
                               Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven SELL");
                               if(alertBreakEven)
-                                 Alert("Position #", posTicket, " was modified by Breakeven SELL");
+                                 Alert("=== Position #", posTicket, " was modified by Breakeven SELL ===");
                              }
                           }
                     }
@@ -2702,7 +2702,7 @@ void OnTick()
          (alertClosePrevBar1 > alertLinePrice2 && alertClosePrevBar2 < alertLinePrice2) || (alertClosePrevBar1 < alertLinePrice2 && alertClosePrevBar2 > alertLinePrice2)
       )
         {
-         Alert("ALERT: PRICE OVER THE LINE ON ",_Symbol);
+         Alert("=== ALERT: PRICE OVER THE LINE ON ",_Symbol," ===");
          setAlarmCloseLine = false;
          ObjectSetString(0,ExtDialog.Name()+"AlertCloseBtn",OBJPROP_TEXT,"\x23F0");
         }
@@ -2921,7 +2921,7 @@ void OnTick()
             if(BuySignal_GO)
               {
                Print("Tenkansen Break Strategy: Buy Signal = ",BuySignal_GO);
-               Alert("Tenkansen Break Strategy: Buy Signal = ",BuySignal_GO);
+               Alert("=== Tenkansen Break Strategy: Buy Signal = ",BuySignal_GO," ===");
 
                BuySignal_GO = false;
                BuySignal_1 = false;
@@ -2975,7 +2975,7 @@ void OnTick()
             if(SellSignal_GO)
               {
                Print("Tenkansen Break Strategy: Sell Signal = ",SellSignal_GO);
-               Alert("Tenkansen Break Strategy: Sell Signal = ",SellSignal_GO);
+               Alert("=== Tenkansen Break Strategy: Sell Signal = ",SellSignal_GO," ===");
 
                SellSignal_GO = false;
                SellSignal_1 = false;
@@ -3104,9 +3104,9 @@ void OnTick()
                         if(OpenBar > 1)
                            if(trade.PositionClose(posTicket))
                              {
-                              Print(__FUNCTION__," > Position #",posTicket," was closed with profit ",positionProfit," because price closed above Moving Average. ",ClosePrevBar," < ",ClosePosMaPrevBar);
+                              Print(__FUNCTION__," > Position #",posTicket," was closed with profit ",NormalizeDouble(positionProfit,2)," because price closed above Moving Average. ",ClosePrevBar," < ",ClosePosMaPrevBar);
                               if(AlertAutoClosePosition)
-                                 Alert(" > Position #",posTicket," was closed with profit ",positionProfit," because price closed above Moving Average. ",ClosePrevBar," < ",ClosePosMaPrevBar);
+                                 Alert(" > Position #",posTicket," was closed with profit ",NormalizeDouble(positionProfit,2)," because price closed above Moving Average. ",ClosePrevBar," < ",ClosePosMaPrevBar);
                              }
                        }
                  }
@@ -3128,7 +3128,7 @@ void OnTick()
                              {
                               Print(__FUNCTION__," > Position #",posTicket," was closed with profit ",positionProfit," because price closed above Moving Average. ",ClosePrevBar," > ",ClosePosMaPrevBar);
                               if(AlertAutoClosePosition)
-                                 Alert(" > Position #",posTicket," was closed with profit ",positionProfit," because price closed above Moving Average. ",ClosePrevBar," > ",ClosePosMaPrevBar);
+                                 Alert(" > Position #",posTicket," was closed with profit ",NormalizeDouble(positionProfit,2)," because price closed above Moving Average. ",ClosePrevBar," > ",ClosePosMaPrevBar);
                              }
                        }
                  }
@@ -3194,7 +3194,7 @@ void OnTick()
                                 {
                                  Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven BUY");
                                  if(alertBreakEven)
-                                    Alert("Position #", posTicket, " was modified by Breakeven BUY");
+                                    Alert("=== Position #", posTicket, " was modified by Breakeven BUY ===");
                                 }
 
                              }
@@ -3217,7 +3217,7 @@ void OnTick()
                                 {
                                  Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven SELL");
                                  if(alertBreakEven)
-                                    Alert("Position #", posTicket, " was modified by Breakeven SELL");
+                                    Alert("=== Position #", posTicket, " was modified by Breakeven SELL ===");
                                 }
                              }
                        }
@@ -3301,7 +3301,7 @@ void OnTick()
          barsTotal = bars;
 
          if(NewBarAlert && barsTotal > 0)
-            Alert("NEW BAR...");
+            Alert("=== NEW BAR... === ");
 
          double fracUpper[];
          double fracLower[];
