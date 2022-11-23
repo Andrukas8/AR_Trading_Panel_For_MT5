@@ -3045,9 +3045,9 @@ void OnTick()
                         if(OpenBar > 1)
                            if(trade.PositionClose(posTicket))
                              {
-                              //  Print(__FUNCTION__," > Position #",posTicket," was closed with profit ",positionProfit," because price closed below Tenkansen. ",ClosePrevBar," < ",TenkansenPrevBar);
-                              //  if(AlertAutoClosePosition)
-                              //   Alert(" > Position #",posTicket," was closed with profit ",positionProfit," because price closed below Tenkansen. ",ClosePrevBar," < ",TenkansenPrevBar);
+                              Print(__FUNCTION__," > Position #",posTicket," was closed with profit ",positionProfit," because price closed below Tenkansen. ",ClosePrevBar," < ",TenkansenPrevBar);
+                              if(AlertAutoClosePosition)
+                                 Alert(" > Position #",posTicket," was closed with profit ",positionProfit," because price closed below Tenkansen. ",ClosePrevBar," < ",TenkansenPrevBar);
                              }
                        }
                  }
@@ -3067,9 +3067,9 @@ void OnTick()
                         if(OpenBar > 1)
                            if(trade.PositionClose(posTicket))
                              {
-                              //  Print(__FUNCTION__," > Position #",posTicket," was closed with profit ",positionProfit," because price closed above Tenkansen. ",ClosePrevBar," > ",TenkansenPrevBar);
-                              //   if(AlertAutoClosePosition)
-                              //     Alert(" > Position #",posTicket," was closed with profit ",positionProfit," because price closed above Tenkansen. ",ClosePrevBar," > ",TenkansenPrevBar);
+                              Print(__FUNCTION__," > Position #",posTicket," was closed with profit ",positionProfit," because price closed above Tenkansen. ",ClosePrevBar," > ",TenkansenPrevBar);
+                              if(AlertAutoClosePosition)
+                                 Alert(" > Position #",posTicket," was closed with profit ",positionProfit," because price closed above Tenkansen. ",ClosePrevBar," > ",TenkansenPrevBar);
                              }
                        }
                  }
