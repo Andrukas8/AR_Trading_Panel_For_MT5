@@ -73,6 +73,8 @@ input bool kijunsenTSL = false; // TSL ICHIMOKU KIJUNSEN
 input bool NewBarAlert = false; // == NEW BAR ALERT ==
 input bool wiseMenAlertsToggle = true; // == ACTIVATE WISE MEN ALERTS ==
 input double atrMultiplier = 1; // ATR multiplier for filtering WM1 signals
+input int atrPeriod = 14; // ATR PERIOD
+input int alligatorMultiplier = 1; // Alligator multiplier for filtering WM signals
 
 input group "------------- Auto Closing Position on Condition ------------"
 input bool ClosePosTenkansen = false; // CLOSE ON CLOSE OVER TENKANSEN
@@ -87,7 +89,7 @@ input bool SignalTenkansenBreak = false; // ALERT ON TK BREAK
 
 input group "------------- Auto Position Management Settings -------------"
 input int TslOffsetPoints = 10; // TSL BUFFER POINTS FOR MA/TKS/KJS
-input ENUM_TIMEFRAMES TimeFrame = 1; // TSL TIMEFRAME
+input ENUM_TIMEFRAMES TimeFrame = 5; // TSL TIMEFRAME
 
 input group "------------- Box Settings ----------------------------------"
 input string timeFrom = "15:00"; // TIME FROM
@@ -2208,8 +2210,6 @@ void CControlsDialog::OnClickAlertCloseBtn(void)
             ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
            }
      }
-
-
   }
 
 
@@ -2343,9 +2343,9 @@ int OnInit()
 
    if(wiseMenAlertsToggle)
      {
-      handleATR = iATR(_Symbol,PERIOD_CURRENT,14);
-      handleAlligator = iAlligator(_Symbol,PERIOD_CURRENT,13,8,8,5,5,3,MODE_SMMA,PRICE_MEDIAN);
-      handleAwesomeOscillator = iAO(_Symbol,PERIOD_CURRENT);
+      handleATR = iATR(_Symbol,TimeFrame,atrPeriod);
+      handleAlligator = iAlligator(_Symbol,TimeFrame,13*alligatorMultiplier,8*alligatorMultiplier,8*alligatorMultiplier,5*alligatorMultiplier,5*alligatorMultiplier,3*alligatorMultiplier,MODE_SMMA,PRICE_MEDIAN);
+      handleAwesomeOscillator = iAO(_Symbol,TimeFrame);
      }
 
 
@@ -2399,16 +2399,16 @@ void OnTick()
 
    if(wm1AlertToggle)
      {
-      int bars = iBars(_Symbol, PERIOD_CURRENT);
+      int bars = iBars(_Symbol, TimeFrame);
       if(barsTotal != bars) // New bar appeared on the chart
         {
          barsTotal = bars;
 
          //getting previous bar Close Open Low High values
-         double closePrevBar = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits);
-         double openPrevBar = NormalizeDouble(iOpen(_Symbol,PERIOD_CURRENT,1),_Digits);
-         double lowPrevBar = NormalizeDouble(iLow(_Symbol,PERIOD_CURRENT,1),_Digits);
-         double highPrevBar = NormalizeDouble(iHigh(_Symbol,PERIOD_CURRENT,1),_Digits);
+         double closePrevBar = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits);
+         double openPrevBar = NormalizeDouble(iOpen(_Symbol,TimeFrame,1),_Digits);
+         double lowPrevBar = NormalizeDouble(iLow(_Symbol,TimeFrame,1),_Digits);
+         double highPrevBar = NormalizeDouble(iHigh(_Symbol,TimeFrame,1),_Digits);
 
          double upperWickPrevBar = 0;
          double lowerWickPrevBar = 0;
