@@ -75,6 +75,7 @@ input bool wiseMenAlertsToggle = true; // == ACTIVATE WISE MEN ALERTS ==
 input double atrMultiplier = 1; // ATR multiplier for filtering WM1 signals
 input int atrPeriod = 14; // ATR PERIOD
 input int alligatorMultiplier = 1; // Alligator multiplier for filtering WM signals
+input int ichimokuMultiplier = 1; // Ichimoku Multiplier
 
 input group "------------- Auto Closing Position on Condition ------------"
 input bool ClosePosTenkansen = false; // CLOSE ON CLOSE OVER TENKANSEN
@@ -2256,17 +2257,20 @@ void CControlsDialog::OnClickManualBEBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickWm1AlertBtn(void)
   {
-   if(wm1AlertToggle)
-      wm1AlertToggle = false;
-   else
-      if(!wm1AlertToggle)
-         wm1AlertToggle = true;
+   if(wiseMenAlertsToggle)
+     {
+      if(wm1AlertToggle)
+         wm1AlertToggle = false;
+      else
+         if(!wm1AlertToggle)
+            wm1AlertToggle = true;
 
-   if(wm1AlertToggle)
-      m_wm1AlertBtn.Text("[W1]");
-   else
-      if(!wm1AlertToggle)
-         m_wm1AlertBtn.Text("W1");
+      if(wm1AlertToggle)
+         m_wm1AlertBtn.Text("[W1]");
+      else
+         if(!wm1AlertToggle)
+            m_wm1AlertBtn.Text("W1");
+     }
   }
 
 //+------------------------------------------------------------------+
@@ -2274,17 +2278,22 @@ void CControlsDialog::OnClickWm1AlertBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickWm2AlertBtn(void)
   {
-   if(wm2AlertToggle)
-      wm2AlertToggle = false;
-   else
-      if(!wm2AlertToggle)
-         wm2AlertToggle = true;
 
-   if(wm2AlertToggle)
-      m_wm2AlertBtn.Text("[W2]");
-   else
-      if(!wm2AlertToggle)
-         m_wm2AlertBtn.Text("W2");
+   if(wiseMenAlertsToggle)
+     {
+
+      if(wm2AlertToggle)
+         wm2AlertToggle = false;
+      else
+         if(!wm2AlertToggle)
+            wm2AlertToggle = true;
+
+      if(wm2AlertToggle)
+         m_wm2AlertBtn.Text("[W2]");
+      else
+         if(!wm2AlertToggle)
+            m_wm2AlertBtn.Text("W2");
+     }
   }
 
 //+------------------------------------------------------------------+
@@ -2292,19 +2301,21 @@ void CControlsDialog::OnClickWm2AlertBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickWm3AlertBtn(void)
   {
-   if(wm3AlertToggle)
-      wm3AlertToggle = false;
-   else
-      if(!wm3AlertToggle)
-         wm3AlertToggle = true;
+   if(wiseMenAlertsToggle)
+     {
+      if(wm3AlertToggle)
+         wm3AlertToggle = false;
+      else
+         if(!wm3AlertToggle)
+            wm3AlertToggle = true;
 
-   if(wm3AlertToggle)
-      m_wm3AlertBtn.Text("[W3]");
-   else
-      if(!wm3AlertToggle)
-         m_wm3AlertBtn.Text("W3");
+      if(wm3AlertToggle)
+         m_wm3AlertBtn.Text("[W3]");
+      else
+         if(!wm3AlertToggle)
+            m_wm3AlertBtn.Text("W3");
+     }
   }
-
 
 
 //+------------------------------------------------------------------+
@@ -2336,7 +2347,7 @@ int OnInit()
       handleMA = iMA(_Symbol, TimeFrame, MaPeriod, MaShift, TslMaMethod, TslMaAppPrice);
 
    if(kijunsenTSL || tenkansenTSL || ClosePosTenkansen || SignalTenkansenBreak)
-      handleIchimoku = iIchimoku(_Symbol,TimeFrame,9,26,52);
+      handleIchimoku = iIchimoku(_Symbol,TimeFrame,9*ichimokuMultiplier,26*ichimokuMultiplier,52*ichimokuMultiplier);
 
    if(ClosePosMa)
       handleClosePosMA = iMA(_Symbol, TimeFrame, ClosePosMaPeriod, ClosePosMaShift, ClosePosMaMethod, ClosePosMaAppPrice);
@@ -2857,8 +2868,8 @@ void OnTick()
 
          double ChikouspanArr[];
 
-         double Bar26High = iHigh(_Symbol,TimeFrame,26);
-         double Bar26Low = iLow(_Symbol,TimeFrame,26);
+         double Bar26High = iHigh(_Symbol,TimeFrame,26*ichimokuMultiplier);
+         double Bar26Low = iLow(_Symbol,TimeFrame,26*ichimokuMultiplier);
          double CurrentHigh = iHigh(_Symbol,TimeFrame,0);
          double CurrentLow = iLow(_Symbol,TimeFrame,0);
 
@@ -2867,10 +2878,10 @@ void OnTick()
          CopyBuffer(handleIchimoku,2,0,3,SenkouspanAArr);
          CopyBuffer(handleIchimoku,3,0,3,SenkouspanBArr);
 
-         CopyBuffer(handleIchimoku,2,-26,3,ShiftedSenkouspanAArr);
-         CopyBuffer(handleIchimoku,3,-26,3,ShiftedSenkouspanBArr);
+         CopyBuffer(handleIchimoku,2,-26*ichimokuMultiplier,3,ShiftedSenkouspanAArr);
+         CopyBuffer(handleIchimoku,3,-26*ichimokuMultiplier,3,ShiftedSenkouspanBArr);
 
-         CopyBuffer(handleIchimoku,4,26,1,ChikouspanArr);
+         CopyBuffer(handleIchimoku,4,26*ichimokuMultiplier,1,ChikouspanArr);
 
          if(timeStamp != time)
            {
