@@ -83,7 +83,7 @@ input int ichimokuMultiplier = 1; // Ichimoku Multiplier
 
 input group "------------- 3 Lines Strike Alert ------------"
 input bool threeLinesStrikeActivate = true; // == ACTIVATE 3 LINES STRIKE ALERT ==
-input double ToleranceOpenPercent = 0; // Engulfing Range Tolerance Open %
+input double ToleranceOpenPercent = 50; // Engulfing Range Tolerance Open %
 input double ToleranceClosePercent = 50; // Engulfing Range Tolerance Close %
 input bool EngulfingModeStrict = false; // Strict mode
 input bool useMAFilter3LS = true; // USE MA FILTER FOR 3LS SIGNALS
@@ -2499,7 +2499,6 @@ void OnTick()
             double Ma3LSArr[];
             CopyBuffer(handle3LSMA,MAIN_LINE,1,1,Ma3LSArr);
             double ClosePrevBara3LS = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price
-            Print("ClosePrevBara3LS = ",ClosePrevBara3LS," Ma3LSArr = ",Ma3LSArr[0]);
 
             if(ClosePrevBara3LS > Ma3LSArr[0])
               {
