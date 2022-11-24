@@ -45,6 +45,10 @@ string StrategyStr[10] =
    "ORDERBLOCK"
   };
 
+input group "------------- Auto Position Management Settings -------------"
+input int TslOffsetPoints = 10; // TSL BUFFER POINTS FOR MA/TKS/KJS
+input ENUM_TIMEFRAMES TimeFrame = 5; // TSL TIMEFRAME
+
 input group "------------- Position Variables ----------------------------"
 input bool showProfitOnChart = false; // SHOW POSITION PROFIT ON CHART
 input bool showEAComment = false; // SHOW EA COMMENT
@@ -77,6 +81,17 @@ input int atrPeriod = 14; // ATR PERIOD
 input int alligatorMultiplier = 1; // Alligator multiplier for filtering WM signals
 input int ichimokuMultiplier = 1; // Ichimoku Multiplier
 
+input group "------------- 3 Lines Strike Alert ------------"
+input bool threeLinesStrikeActivate = true; // == ACTIVATE 3 LINES STRIKE ALERT ==
+input double ToleranceOpenPercent = 0; // Engulfing Range Tolerance Open %
+input double ToleranceClosePercent = 50; // Engulfing Range Tolerance Close %
+input bool EngulfingModeStrict = false; // Strict mode
+input bool useMAFilter3LS = true; // USE MA FILTER FOR 3LS SIGNALS
+input int MaPeriod3LS = 21; // _____ 3 LS MA PERIOD
+input int MaShift3LS = 0; // _____ 3 LS MA SHIFT
+input ENUM_MA_METHOD MaMethod3LS = MODE_SMMA; // _____ 3LS MA METHOD
+input ENUM_APPLIED_PRICE MaAppPrice3LS = PRICE_CLOSE; // _____ 3LS MA PRICE
+
 input group "------------- Auto Closing Position on Condition ------------"
 input bool ClosePosTenkansen = false; // CLOSE ON CLOSE OVER TENKANSEN
 input bool ClosePosMa = true; // CLOSE ON CLOSE OVER MA
@@ -87,10 +102,6 @@ input ENUM_APPLIED_PRICE ClosePosMaAppPrice = PRICE_MEDIAN; // _____ CLOSE MA PR
 
 input bool AlertAutoClosePosition = false; // ALERT ON POSITIONS CLOSE
 input bool SignalTenkansenBreak = false; // ALERT ON TK BREAK
-
-input group "------------- Auto Position Management Settings -------------"
-input int TslOffsetPoints = 10; // TSL BUFFER POINTS FOR MA/TKS/KJS
-input ENUM_TIMEFRAMES TimeFrame = 5; // TSL TIMEFRAME
 
 input group "------------- Box Settings ----------------------------------"
 input string timeFrom = "15:00"; // TIME FROM
@@ -114,6 +125,7 @@ int handleClosePosMA;
 int handleATR;
 int handleAlligator;
 int handleAwesomeOscillator;
+int handle3LSMA;
 
 string textComment;
 
@@ -2360,6 +2372,8 @@ int OnInit()
      }
 
 
+   if(threeLinesStrikeActivate)
+      handle3LSMA = iMA(_Symbol, TimeFrame, MaPeriod3LS, MaShift3LS, MaMethod3LS, MaAppPrice3LS);
 
 
 //--- succeed
@@ -2400,6 +2414,128 @@ void OnChartEvent(const int id,         // event ID
 void OnTick()
   {
 
+//+------------------------------------------------------------------+
+//|                                                                  |
+//|  ----- Handling 3 Lines Strike Alert --------------------------- |
+//|                                                                  |
+//+------------------------------------------------------------------+
+
+   if(threeLinesStrikeActivate)
+     {
+      int bars = iBars(_Symbol, TimeFrame);
+      if(barsTotal != bars) // New bar appeared on the chart
+        {
+         barsTotal = bars;
+         double ToleranceOpenCoef = ToleranceOpenPercent / 100;
+         double ToleranceCloseCoef = ToleranceClosePercent / 100;
+         bool strike_up=false;
+         bool strike_dn=false;
+         bool priceUnderMa = false;
+         bool priceAboveMA = false;
+
+         // Strike UP
+         double closeUP = iClose(_Symbol,TimeFrame,1) + (iClose(_Symbol,TimeFrame,1) - iOpen(_Symbol,TimeFrame,1)) * ToleranceCloseCoef;
+         double openUP = iOpen(_Symbol,TimeFrame,1) - (iClose(_Symbol,TimeFrame,1) - iOpen(_Symbol,TimeFrame,1)) * ToleranceCloseCoef;
+
+         if(
+            closeUP >= MathMax(iClose(_Symbol,TimeFrame,2), MathMax(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
+            closeUP >= MathMax(iOpen(_Symbol,TimeFrame,2), MathMax(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
+            closeUP >= MathMin(iOpen(_Symbol,TimeFrame,2), MathMin(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4)))&&
+            openUP <= MathMin(iClose(_Symbol,TimeFrame,2), MathMin(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
+            openUP <= MathMax(iClose(_Symbol,TimeFrame,2), MathMax(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
+            openUP <= MathMin(iOpen(_Symbol,TimeFrame,2), MathMin(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
+            openUP <= MathMax(iOpen(_Symbol,TimeFrame,2), MathMax(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
+            openUP <= closeUP
+         )
+           {
+            strike_up = true;
+
+            // checking if strict rule is on
+            if(EngulfingModeStrict && !(iOpen(_Symbol,TimeFrame,2) >= iClose(_Symbol,TimeFrame,2) && iOpen(_Symbol,TimeFrame,3) >= iClose(_Symbol,TimeFrame,3) && iOpen(_Symbol,TimeFrame,4) >= iClose(_Symbol,TimeFrame,4)))
+              {
+               strike_up = false;
+              }
+           }
+
+         // Strike DN
+         double closeDN = iClose(_Symbol,TimeFrame,2) - (iOpen(_Symbol,TimeFrame,2) - iClose(_Symbol,TimeFrame,2)) * ToleranceCloseCoef;
+         double openDN = iOpen(_Symbol,TimeFrame,2) + (iOpen(_Symbol,TimeFrame,2) - iClose(_Symbol,TimeFrame,2)) * ToleranceCloseCoef;
+
+         if(closeDN <= MathMax(iClose(_Symbol,TimeFrame,2), MathMax(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
+            closeDN <= MathMax(iOpen(_Symbol,TimeFrame,2), MathMax(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
+            closeDN <= MathMin(iOpen(_Symbol,TimeFrame,2), MathMin(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
+            openDN >= MathMin(iClose(_Symbol,TimeFrame,2), MathMin(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
+            openDN >= MathMax(iClose(_Symbol,TimeFrame,2), MathMax(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
+            openDN >= MathMin(iOpen(_Symbol,TimeFrame,2), MathMin(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
+            openDN >= MathMax(iOpen(_Symbol,TimeFrame,2), MathMax(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
+            openDN >= closeDN)
+           {
+            strike_dn = true;
+
+            // checking if strict rule is on
+            //if(EngulfingModeStrict && !(open[i+1] <= close[i+1] && open[i+2] <= close[i+2] && open[i+3] <= close[i+3]))
+            if(EngulfingModeStrict && !(iOpen(_Symbol,TimeFrame,2) <= iClose(_Symbol,TimeFrame,2) && iOpen(_Symbol,TimeFrame,3) <= iClose(_Symbol,TimeFrame,3) && iOpen(_Symbol,TimeFrame,4) <= iClose(_Symbol,TimeFrame,4)))
+              {
+               strike_dn = false;
+              }
+           }
+
+         // --- checking that the engulfed candles are shorter than the engulfing candle
+
+         double mainCandleBodyLength = MathAbs(iOpen(_Symbol,TimeFrame,1) - iClose(_Symbol,TimeFrame,1));
+         double firstCandleBodyLength = MathAbs(iOpen(_Symbol,TimeFrame,2) - iClose(_Symbol,TimeFrame,2));
+         double secondCandleBodyLength = MathAbs(iOpen(_Symbol,TimeFrame,3) - iClose(_Symbol,TimeFrame,3));
+         double thirdCandleBodyLength = MathAbs(iOpen(_Symbol,TimeFrame,4) - iClose(_Symbol,TimeFrame,4));
+
+         if(mainCandleBodyLength < firstCandleBodyLength || mainCandleBodyLength < secondCandleBodyLength || mainCandleBodyLength < thirdCandleBodyLength)
+           {
+            strike_up = false;
+            strike_dn = false;
+           }
+
+
+         if(useMAFilter3LS)
+           {
+            double Ma3LSArr[];
+            CopyBuffer(handle3LSMA,MAIN_LINE,1,1,Ma3LSArr);
+            double ClosePrevBara3LS = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price
+            Print("ClosePrevBara3LS = ",ClosePrevBara3LS," Ma3LSArr = ",Ma3LSArr[0]);
+
+            if(ClosePrevBara3LS > Ma3LSArr[0])
+              {
+               priceAboveMA = true;
+               priceUnderMa = false;
+              }
+            else
+               if(ClosePrevBara3LS < Ma3LSArr[0])
+                 {
+                  priceUnderMa = true;
+                  priceAboveMA = false;
+                 }
+           }
+         else
+            if(!useMAFilter3LS)
+              {
+               priceAboveMA = true;
+               priceUnderMa = true;
+              }
+
+
+         if(strike_up && priceAboveMA)
+            Alert("=== 3 LINES STRIKE ALERT === STRIKE UP");
+         else
+            if(strike_dn && priceUnderMa)
+               Alert("=== 3 LINES STRIKE ALERT === STRIKE DOWN");
+
+
+        }
+     }
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//|  ----- End of Handling 3 Lines Strike Alert -------------------- |
+//|                                                                  |
+//+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -3078,10 +3214,6 @@ void OnTick()
       //+------------------------------------------------------------------+
       //|      End Close Positions on Price Close Over Tenkansen           |
       //+------------------------------------------------------------------+
-
-
-      // =========================================================================
-
 
       //+------------------------------------------------------------------+
       //|        Close Positions on Price Close Over MA                    |
@@ -4208,6 +4340,7 @@ bool CControlsDialog::DisplayInfo()
 
    return(true);
   }
+
 
 //+------------------------------------------------------------------+
 //+------------------------------------------------------------------+
