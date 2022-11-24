@@ -98,10 +98,10 @@ input int MiddleMaShift3LS = 0; // _____ 3 LS MIDDLE MA SHIFT
 input ENUM_MA_METHOD MiddleMaMethod3LS = MODE_SMMA; // _____ 3LS MIDDLE MA METHOD
 input ENUM_APPLIED_PRICE MiddleMaAppPrice3LS = PRICE_CLOSE; // _____ 3LS MIDDLE MA PRICE
 
-input int SlowMaPeriod3LS = 200; // _____ 3 LS FAST MA PERIOD
-input int SlowMaShift3LS = 0; // _____ 3 LS FAST MA SHIFT
-input ENUM_MA_METHOD SlowMaMethod3LS = MODE_SMMA; // _____ 3LS FAST MA METHOD
-input ENUM_APPLIED_PRICE SlowMaAppPrice3LS = PRICE_CLOSE; // _____ 3LS FAST MA PRICE
+input int SlowMaPeriod3LS = 200; // _____ 3 LS SLOW MA PERIOD
+input int SlowMaShift3LS = 0; // _____ 3 LS SLOW MA SHIFT
+input ENUM_MA_METHOD SlowMaMethod3LS = MODE_SMMA; // _____ 3LS SLOW MA METHOD
+input ENUM_APPLIED_PRICE SlowMaAppPrice3LS = PRICE_CLOSE; // _____ 3LS SLOW MA PRICE
 
 input group "------------- Auto Closing Position on Condition ------------"
 input bool ClosePosTenkansen = false; // CLOSE ON CLOSE OVER TENKANSEN
