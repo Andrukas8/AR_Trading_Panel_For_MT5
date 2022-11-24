@@ -87,10 +87,22 @@ input double ToleranceOpenPercent = 50; // Engulfing Range Tolerance Open %
 input double ToleranceClosePercent = 50; // Engulfing Range Tolerance Close %
 input bool EngulfingModeStrict = false; // Strict mode
 input bool useMAFilter3LS = true; // USE MA FILTER FOR 3LS SIGNALS
-input int MaPeriod3LS = 21; // _____ 3 LS MA PERIOD
-input int MaShift3LS = 0; // _____ 3 LS MA SHIFT
-input ENUM_MA_METHOD MaMethod3LS = MODE_SMMA; // _____ 3LS MA METHOD
-input ENUM_APPLIED_PRICE MaAppPrice3LS = PRICE_CLOSE; // _____ 3LS MA PRICE
+
+input int FastMaPeriod3LS = 21; // _____ 3 LS FAST MA PERIOD
+input int FastMaShift3LS = 0; // _____ 3 LS FAST MA SHIFT
+input ENUM_MA_METHOD FastMaMethod3LS = MODE_SMMA; // _____ 3LS FAST MA METHOD
+input ENUM_APPLIED_PRICE FastMaAppPrice3LS = PRICE_CLOSE; // _____ 3LS FAST MA PRICE
+
+input int MiddleMaPeriod3LS = 21; // _____ 3 LS MIDDLE MA PERIOD
+input int MiddleMaShift3LS = 0; // _____ 3 LS MIDDLE MA SHIFT
+input ENUM_MA_METHOD MiddleMaMethod3LS = MODE_SMMA; // _____ 3LS MIDDLE MA METHOD
+input ENUM_APPLIED_PRICE MiddleMaAppPrice3LS = PRICE_CLOSE; // _____ 3LS MIDDLE MA PRICE
+
+input int SlowMaPeriod3LS = 21; // _____ 3 LS FAST MA PERIOD
+input int SlowMaShift3LS = 0; // _____ 3 LS FAST MA SHIFT
+input ENUM_MA_METHOD SlowMaMethod3LS = MODE_SMMA; // _____ 3LS FAST MA METHOD
+input ENUM_APPLIED_PRICE SlowMaAppPrice3LS = PRICE_CLOSE; // _____ 3LS FAST MA PRICE
+
 
 input group "------------- Auto Closing Position on Condition ------------"
 input bool ClosePosTenkansen = false; // CLOSE ON CLOSE OVER TENKANSEN
@@ -125,7 +137,9 @@ int handleClosePosMA;
 int handleATR;
 int handleAlligator;
 int handleAwesomeOscillator;
-int handle3LSMA;
+int handleFast3LSMA;
+int handleMiddle3LSMA;
+int handleSlow3LSMA;
 
 string textComment;
 
@@ -2373,7 +2387,12 @@ int OnInit()
 
 
    if(threeLinesStrikeActivate)
-      handle3LSMA = iMA(_Symbol, TimeFrame, MaPeriod3LS, MaShift3LS, MaMethod3LS, MaAppPrice3LS);
+     {
+      handleFast3LSMA = iMA(_Symbol,TimeFrame,FastMaPeriod3LS,FastMaShift3LS,FastMaMethod3LS,FastMaAppPrice3LS);
+      handleMiddle3LSMA = iMA(_Symbol,TimeFrame,MiddleMaPeriod3LS,MiddleMaShift3LS,MiddleMaMethod3LS,MiddleMaAppPrice3LS);
+      handleFast3LSMA = iMA(_Symbol,TimeFrame,SlowMaPeriod3LS,SlowMaShift3LS,SlowMaMethod3LS,SlowMaAppPrice3LS);
+     }
+
 
 
 //--- succeed
@@ -2456,7 +2475,7 @@ void OnTick()
                strike_up = false;
               }
            }
-         
+
          // Strike DN
          double closeDN = iClose(_Symbol,TimeFrame,1) - (iOpen(_Symbol,TimeFrame,1) - iClose(_Symbol,TimeFrame,1)) * ToleranceCloseCoef;
          double openDN = iOpen(_Symbol,TimeFrame,1) + (iOpen(_Symbol,TimeFrame,1) - iClose(_Symbol,TimeFrame,1)) * ToleranceCloseCoef;
@@ -2495,18 +2514,27 @@ void OnTick()
 
          if(useMAFilter3LS)
            {
-            double Ma3LSArr[];
-            CopyBuffer(handle3LSMA,MAIN_LINE,1,1,Ma3LSArr);
             double ClosePrevBara3LS = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price
-            double Ma3LSArrPrevBar = NormalizeDouble(Ma3LSArr[0],_Digits);           
 
-            if(ClosePrevBara3LS > Ma3LSArrPrevBar)
+            double FastMa3LSArr[];
+            CopyBuffer(handleFast3LSMA,MAIN_LINE,1,1,FastMa3LSArr);
+            double FastMa3LSArrPrevBar = NormalizeDouble(FastMa3LSArr[0],_Digits);
+
+            double MiddleMa3LSArr[];
+            CopyBuffer(handleMiddle3LSMA,MAIN_LINE,1,1,MiddleMa3LSArr);
+            double MiddleMa3LSArrPrevBar = NormalizeDouble(MiddleMa3LSArr[0],_Digits);
+
+            double SlowMa3LSArr[];
+            CopyBuffer(handleSlow3LSMA,MAIN_LINE,1,1,SlowMa3LSArr);
+            double SlowMa3LSArrPrevBar = NormalizeDouble(SlowMa3LSArr[0],_Digits);
+
+            if(ClosePrevBara3LS > FastMa3LSArrPrevBar && FastMa3LSArrPrevBar > MiddleMa3LSArrPrevBar && MiddleMa3LSArrPrevBar > SlowMa3LSArrPrevBar)
               {
                priceAboveMA = true;
                priceUnderMa = false;
               }
             else
-               if(ClosePrevBara3LS < Ma3LSArrPrevBar)
+               if(ClosePrevBara3LS < FastMa3LSArrPrevBar && FastMa3LSArrPrevBar < MiddleMa3LSArrPrevBar && MiddleMa3LSArrPrevBar < SlowMa3LSArrPrevBar)
                  {
                   priceUnderMa = true;
                   priceAboveMA = false;
