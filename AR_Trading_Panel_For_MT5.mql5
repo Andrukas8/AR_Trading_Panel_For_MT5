@@ -2456,10 +2456,10 @@ void OnTick()
                strike_up = false;
               }
            }
-
+         
          // Strike DN
-         double closeDN = iClose(_Symbol,TimeFrame,2) - (iOpen(_Symbol,TimeFrame,2) - iClose(_Symbol,TimeFrame,2)) * ToleranceCloseCoef;
-         double openDN = iOpen(_Symbol,TimeFrame,2) + (iOpen(_Symbol,TimeFrame,2) - iClose(_Symbol,TimeFrame,2)) * ToleranceCloseCoef;
+         double closeDN = iClose(_Symbol,TimeFrame,1) - (iOpen(_Symbol,TimeFrame,1) - iClose(_Symbol,TimeFrame,1)) * ToleranceCloseCoef;
+         double openDN = iOpen(_Symbol,TimeFrame,1) + (iOpen(_Symbol,TimeFrame,1) - iClose(_Symbol,TimeFrame,1)) * ToleranceCloseCoef;
 
          if(closeDN <= MathMax(iClose(_Symbol,TimeFrame,2), MathMax(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
             closeDN <= MathMax(iOpen(_Symbol,TimeFrame,2), MathMax(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
@@ -2473,7 +2473,7 @@ void OnTick()
             strike_dn = true;
 
             // checking if strict rule is on
-            //if(EngulfingModeStrict && !(open[i+1] <= close[i+1] && open[i+2] <= close[i+2] && open[i+3] <= close[i+3]))
+
             if(EngulfingModeStrict && !(iOpen(_Symbol,TimeFrame,2) <= iClose(_Symbol,TimeFrame,2) && iOpen(_Symbol,TimeFrame,3) <= iClose(_Symbol,TimeFrame,3) && iOpen(_Symbol,TimeFrame,4) <= iClose(_Symbol,TimeFrame,4)))
               {
                strike_dn = false;
@@ -2493,20 +2493,20 @@ void OnTick()
             strike_dn = false;
            }
 
-
          if(useMAFilter3LS)
            {
             double Ma3LSArr[];
             CopyBuffer(handle3LSMA,MAIN_LINE,1,1,Ma3LSArr);
             double ClosePrevBara3LS = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price
+            double Ma3LSArrPrevBar = NormalizeDouble(Ma3LSArr[0],_Digits);           
 
-            if(ClosePrevBara3LS > Ma3LSArr[0])
+            if(ClosePrevBara3LS > Ma3LSArrPrevBar)
               {
                priceAboveMA = true;
                priceUnderMa = false;
               }
             else
-               if(ClosePrevBara3LS < Ma3LSArr[0])
+               if(ClosePrevBara3LS < Ma3LSArrPrevBar)
                  {
                   priceUnderMa = true;
                   priceAboveMA = false;
@@ -2519,13 +2519,11 @@ void OnTick()
                priceUnderMa = true;
               }
 
-
          if(strike_up && priceAboveMA)
             Alert("=== 3 LINES STRIKE ALERT === STRIKE UP");
          else
             if(strike_dn && priceUnderMa)
                Alert("=== 3 LINES STRIKE ALERT === STRIKE DOWN");
-
 
         }
      }
