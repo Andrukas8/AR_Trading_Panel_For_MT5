@@ -2384,14 +2384,12 @@ int OnInit()
       handleAwesomeOscillator = iAO(_Symbol,TimeFrame);
      }
 
-
    if(threeLinesStrikeActivate)
      {
       handleFast3LSMA = iMA(_Symbol,TimeFrame,FastMaPeriod3LS,FastMaShift3LS,FastMaMethod3LS,FastMaAppPrice3LS);
       handleMiddle3LSMA = iMA(_Symbol,TimeFrame,MiddleMaPeriod3LS,MiddleMaShift3LS,MiddleMaMethod3LS,MiddleMaAppPrice3LS);
-      handleFast3LSMA = iMA(_Symbol,TimeFrame,SlowMaPeriod3LS,SlowMaShift3LS,SlowMaMethod3LS,SlowMaAppPrice3LS);
+      handleSlow3LSMA = iMA(_Symbol,TimeFrame,SlowMaPeriod3LS,SlowMaShift3LS,SlowMaMethod3LS,SlowMaAppPrice3LS);
      }
-
 
 
 //--- succeed
@@ -2547,10 +2545,10 @@ void OnTick()
               }
 
          if(strike_up && priceAboveMA)
-            Alert("=== 3 LINES STRIKE ALERT === STRIKE UP");
+            Alert("=== 3 LINES STRIKE ALERT === STRIKE UP === MA Filter is: ",IntegerToString(useMAFilter3LS));
          else
             if(strike_dn && priceUnderMa)
-               Alert("=== 3 LINES STRIKE ALERT === STRIKE DOWN");
+               Alert("=== 3 LINES STRIKE ALERT === STRIKE DOWN === MA Filter is: ",IntegerToString(useMAFilter3LS));
 
         }
      }
