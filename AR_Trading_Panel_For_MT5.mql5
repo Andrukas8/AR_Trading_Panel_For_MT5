@@ -60,7 +60,7 @@ input string RiskLevelDef = "2"; // RISK % OF DEPOSIT
 input double marginToBallancePercent = 90; // MARGIN TO DEPOSIT %
 
 input group "------------- Auto Position Management Controls ------------"
-bool updateProfitOnchart = false;
+bool updateProfitOnchart = false; // SHOW POSITION PROFIT ON CHART
 input bool autoBreakEven = false; // AUTO BREAKEVEN
 input double breakevenRatio = 1; //  _____ BE RATIO
 input bool alertBreakEven = true; // _____ ALERT ON BE
@@ -78,6 +78,7 @@ input bool NewBarAlert = false; // == NEW BAR ALERT ==
 input bool wiseMenAlertsToggle = true; // == ACTIVATE WISE MEN ALERTS ==
 input double atrMultiplier = 1; // ATR multiplier for filtering WM1 signals
 input int atrPeriod = 14; // ATR PERIOD
+input int fractalBufferWM3 = 20; // FRACTAL BUFFER for WM3 in points
 input int alligatorMultiplier = 1; // Alligator multiplier for filtering WM signals
 input int ichimokuMultiplier = 1; // Ichimoku Multiplier
 
@@ -2749,10 +2750,10 @@ void OnTick()
            }
 
          if(upperFractal !=0 && lowerFractal !=0)
-            if(alertClosePrevBar1 > upperFractal && alertClosePrevBar2 < upperFractal)
+            if(alertClosePrevBar1 > upperFractal + fractalBufferWM3 && alertClosePrevBar2 < upperFractal + fractalBufferWM3)
                Alert("=== FRACTAL BREAK ALERT WISE MAN 3 === BULLISH");
             else
-               if(alertClosePrevBar1 < lowerFractal && alertClosePrevBar2 > upperFractal)
+               if(alertClosePrevBar1 < lowerFractal - fractalBufferWM3 && alertClosePrevBar2 > upperFractal - fractalBufferWM3)
                   Alert("=== FRACTAL BREAK ALERT WISE MAN 3 === BEARISH");
         }
      }
@@ -2780,7 +2781,7 @@ void OnTick()
       bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
       ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
 
-      if((bid > alertLinePrice1) || (ask < alertLinePrice2))
+      if((bid > alertLinePrice1 && alertLinePrice1 > 0) || (ask < alertLinePrice2 && alertLinePrice2 > 0))
         {
          int totalPos = PositionsTotal();
 
@@ -2797,26 +2798,24 @@ void OnTick()
                   double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),_Digits);
                   double posTp = NormalizeDouble(PositionGetDouble(POSITION_TP),_Digits);
 
-                  bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
-                  ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
-
                   // --------------------
                   // --- BUY POSITION ---
                   // --------------------
 
                   if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position has type BUY
                     {
-                     if(posSl < posOpenPrice)
-                        if(bid > posOpenPrice)
-                          {
-                           Print("BUY Break Even Conditions Met...  Position Open Price = ",posOpenPrice);
-                           if(trade.PositionModify(posTicket, posOpenPrice, posTp))
+                     if(bid > alertLinePrice1  && alertLinePrice1 > 0)
+                        if(posSl < posOpenPrice)
+                           if(ask > posOpenPrice)
                              {
-                              Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven BUY");
-                              if(alertBreakEven)
-                                 Alert("=== Position #", posTicket, " was modified by Breakeven BUY ===");
+                              Print("BUY Break Even Conditions Met...  Position Open Price = ",posOpenPrice);
+                              if(trade.PositionModify(posTicket, posOpenPrice, posTp))
+                                {
+                                 Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven BUY");
+                                 if(alertBreakEven)
+                                    Alert("=== Position #", posTicket, " was modified by Breakeven BUY ===");
+                                }
                              }
-                          }
                     }
 
                   // --------------------
@@ -2825,17 +2824,18 @@ void OnTick()
 
                   if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL) // checking if the open position has type SELL
                     {
-                     if(posSl > posOpenPrice)
-                        if(ask < posOpenPrice)
-                          {
-                           Print("BUY Break Even Conditions Met...  Position Open Price = ",posOpenPrice);
-                           if(trade.PositionModify(posTicket, posOpenPrice, posTp))
+                     if(ask < alertLinePrice2  && alertLinePrice2 > 0)
+                        if(posSl > posOpenPrice)
+                           if(bid < posOpenPrice)
                              {
-                              Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven SELL");
-                              if(alertBreakEven)
-                                 Alert("=== Position #", posTicket, " was modified by Breakeven SELL ===");
+                              Print("BUY Break Even Conditions Met...  Position Open Price = ",posOpenPrice);
+                              if(trade.PositionModify(posTicket, posOpenPrice, posTp))
+                                {
+                                 Print(__FUNCTION__, " > Position #", posTicket, " was modified by Breakeven SELL");
+                                 if(alertBreakEven)
+                                    Alert("=== Position #", posTicket, " was modified by Breakeven SELL ===");
+                                }
                              }
-                          }
                     }
                  } // PositionGetString(POSITION_SYMBOL) == _Symbol
               } // PositionSelectByTicket(posTicket)
