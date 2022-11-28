@@ -2719,6 +2719,8 @@ void OnTick()
          alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits);
          alertClosePrevBar2 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,2),_Digits);
 
+         double fractalBufferWM3Double = NormalizeDouble(fractalBufferWM3*_Point,_Digits);
+
          for(int i=3; i<200; i++)
            {
             high_1 = iHigh(_Symbol,PERIOD_CURRENT,i+2);
@@ -2750,10 +2752,10 @@ void OnTick()
            }
 
          if(upperFractal !=0 && lowerFractal !=0)
-            if(alertClosePrevBar1 > upperFractal + fractalBufferWM3 && alertClosePrevBar2 < upperFractal + fractalBufferWM3)
+            if(alertClosePrevBar1 > upperFractal + fractalBufferWM3Double && alertClosePrevBar2 < upperFractal + fractalBufferWM3Double)
                Alert("=== FRACTAL BREAK ALERT WISE MAN 3 === BULLISH");
             else
-               if(alertClosePrevBar1 < lowerFractal - fractalBufferWM3 && alertClosePrevBar2 > upperFractal - fractalBufferWM3)
+               if(alertClosePrevBar1 < lowerFractal - fractalBufferWM3Double && alertClosePrevBar2 > lowerFractal - fractalBufferWM3Double)
                   Alert("=== FRACTAL BREAK ALERT WISE MAN 3 === BEARISH");
         }
      }
