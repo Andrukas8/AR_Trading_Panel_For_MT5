@@ -2780,7 +2780,7 @@ void OnTick()
       bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
       ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
 
-      if((ask > alertLinePrice1) || (bid < alertLinePrice2))
+      if((bid > alertLinePrice1) || (ask < alertLinePrice2))
         {
          int totalPos = PositionsTotal();
 
