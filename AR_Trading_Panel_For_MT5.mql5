@@ -2488,9 +2488,14 @@ void OnTick()
             ArraySetAsSeries(alligatorTeethEndArr,true);
             ArraySetAsSeries(alligatorJawEndArr,true);
 
-            CopyBuffer(handleAlligator,2,-4*alligatorMultiplier,8,alligatorLipsEndArr);
-            CopyBuffer(handleAlligator,1,-6*alligatorMultiplier,8,alligatorTeethEndArr);
-            CopyBuffer(handleAlligator,0,-9*alligatorMultiplier,8,alligatorJawEndArr);
+            CopyBuffer(handleAlligatorMABreak,2,-4*alligatorMultiplierMABreak,8,alligatorLipsEndArr);
+            CopyBuffer(handleAlligatorMABreak,1,-6*alligatorMultiplierMABreak,8,alligatorTeethEndArr);
+            CopyBuffer(handleAlligatorMABreak,0,-9*alligatorMultiplierMABreak,8,alligatorJawEndArr);
+
+            Print("--------------------------------");
+            Print("Lips = ",NormalizeDouble(alligatorLipsEndArr[0],_Digits));
+            Print("Teeth = ",NormalizeDouble(alligatorTeethEndArr[0],_Digits));
+            Print("Jaw = ",NormalizeDouble(alligatorJawEndArr[0],_Digits));
 
             if(alligatorLipsEndArr[0] > alligatorTeethEndArr[0] && alligatorTeethEndArr[0] > alligatorJawEndArr[0])
               {
