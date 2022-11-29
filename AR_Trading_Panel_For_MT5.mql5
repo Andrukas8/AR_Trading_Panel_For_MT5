@@ -119,6 +119,15 @@ input ENUM_APPLIED_PRICE ClosePosMaAppPrice = PRICE_MEDIAN; // _____ CLOSE MA PR
 input bool AlertAutoClosePosition = false; // ALERT ON POSITIONS CLOSE
 input bool SignalTenkansenBreak = false; // ALERT ON TK BREAK
 
+input group "------------- MOVING AVERAGE BREAK ALERT ------------"
+input bool MABreak = true; // ALERT ON MA BREAK
+input bool MABreakUseAlligatorFilter = true; // _____ USE ALLIGATOR FILTER ON MA BREAK ALERT
+input int alligatorMultiplierMABreak = 1; // _____ ALLIGATOR MULTIPLIER FILTER ON MA BREAK ALERT
+input int MABreakPeriod = 5; // _____ BREAK MA PERIOD
+input int MABreakShift = 3; // _____ BREAK MA SHIFT
+input ENUM_MA_METHOD MABreakMethod = MODE_SMMA; // _____ BREAL MA METHOD
+input ENUM_APPLIED_PRICE MABreakPrice = PRICE_MEDIAN; // _____ BREAK MA PRICE
+
 input group "------------- Box Settings ----------------------------------"
 input string timeFrom = "15:00"; // TIME FROM
 input string timeTill = "23:59"; // TIME TILL
@@ -144,6 +153,8 @@ int handleAwesomeOscillator;
 int handleFast3LSMA;
 int handleMiddle3LSMA;
 int handleSlow3LSMA;
+int handleMABreak;
+int handleAlligatorMABreak;
 
 string textComment;
 
@@ -2396,6 +2407,11 @@ int OnInit()
       handleSlow3LSMA = iMA(_Symbol,TimeFrame,SlowMaPeriod3LS,SlowMaShift3LS,SlowMaMethod3LS,SlowMaAppPrice3LS);
      }
 
+   if(MABreak)
+     {
+      handleMABreak = iMA(_Symbol,TimeFrame,MABreakPeriod,MABreakShift,MABreakMethod,MABreakPrice);
+      handleAlligatorMABreak = iAlligator(_Symbol,TimeFrame,13*alligatorMultiplier,8*alligatorMultiplier,8*alligatorMultiplier,5*alligatorMultiplier,5*alligatorMultiplier,3*alligatorMultiplier,MODE_SMMA,PRICE_MEDIAN);
+     }
 
 //--- succeed
    return(INIT_SUCCEEDED);
@@ -2434,6 +2450,88 @@ void OnChartEvent(const int id,         // event ID
 //+------------------------------------------------------------------+
 void OnTick()
   {
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//|  ----- Handling MA Break Alert --------------------------------- |
+//|                                                                  |
+//+------------------------------------------------------------------+
+   if(MABreak)
+     {
+      int bars = iBars(_Symbol, TimeFrame);
+
+      if(barsTotal != bars) // New bar appeared on the chart
+        {
+         barsTotal = bars;
+
+         double ClosePrevBarMABreak = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price
+         double ClosePrPrevBarMABreak = NormalizeDouble(iClose(_Symbol,TimeFrame,2),_Digits); // pre previous close price
+
+         double MABreakArr[];
+         CopyBuffer(handleMABreak,MAIN_LINE,1,2,MABreakArr);
+         double MABreakPrevBar = NormalizeDouble(MABreakArr[0],_Digits); // Moving Average of previous bar
+         double MABreakPrPrevBar = NormalizeDouble(MABreakArr[1],_Digits); // Moving Average of pre previous bar
+
+         bool MABreakAlligatorUp = true;
+         bool MABreakAlligatorDn = true;
+
+         if(MABreakUseAlligatorFilter)
+           {
+            MABreakAlligatorUp = false;
+            MABreakAlligatorDn = false;
+
+            double alligatorLipsEndArr[];
+            double alligatorTeethEndArr[];
+            double alligatorJawEndArr[];
+
+            ArraySetAsSeries(alligatorLipsEndArr,true);
+            ArraySetAsSeries(alligatorTeethEndArr,true);
+            ArraySetAsSeries(alligatorJawEndArr,true);
+
+            CopyBuffer(handleAlligator,2,-4*alligatorMultiplier,8,alligatorLipsEndArr);
+            CopyBuffer(handleAlligator,1,-6*alligatorMultiplier,8,alligatorTeethEndArr);
+            CopyBuffer(handleAlligator,0,-9*alligatorMultiplier,8,alligatorJawEndArr);
+
+            if(alligatorLipsEndArr[0] > alligatorTeethEndArr[0] && alligatorTeethEndArr[0] > alligatorJawEndArr[0])
+              {
+               MABreakAlligatorUp = true;
+               MABreakAlligatorDn = false;
+              }
+            else
+               if(alligatorLipsEndArr[0] < alligatorTeethEndArr[0] && alligatorTeethEndArr[0] < alligatorJawEndArr[0])
+                 {
+                  MABreakAlligatorUp = false;
+                  MABreakAlligatorDn = true;
+                 }
+
+           }
+
+         // --------------------
+         // --- BUY POSITION ---
+         // --------------------
+         if(ClosePrPrevBarMABreak < MABreakPrPrevBar && ClosePrevBarMABreak > MABreakPrevBar && MABreakAlligatorUp)
+           {
+            Alert("=== MOVING AVERAGE BREAK ALERT === BULLISH");
+           }
+
+         // --------------------
+         // --- SELL POSITION --
+         // --------------------
+         else
+            if(ClosePrPrevBarMABreak > MABreakPrPrevBar && ClosePrevBarMABreak < MABreakPrevBar && MABreakAlligatorDn)
+              {
+               Alert("=== MOVING AVERAGE BREAK ALERT === BEARISH");
+              }
+
+        }
+
+     }
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//|  ----- End of Handling MA Break Alert -------------------------- |
+//|                                                                  |
+//+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -2519,7 +2617,7 @@ void OnTick()
             priceAboveMA = false;
             priceUnderMa = false;
 
-            double ClosePrevBara3LS = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price
+            double ClosePrevBar3LS = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price
 
             double FastMa3LSArr[];
             CopyBuffer(handleFast3LSMA,MAIN_LINE,1,1,FastMa3LSArr);
@@ -2533,13 +2631,13 @@ void OnTick()
             CopyBuffer(handleSlow3LSMA,MAIN_LINE,1,1,SlowMa3LSArr);
             double SlowMa3LSArrPrevBar = NormalizeDouble(SlowMa3LSArr[0],_Digits);
 
-            if(ClosePrevBara3LS > FastMa3LSArrPrevBar && FastMa3LSArrPrevBar > MiddleMa3LSArrPrevBar && MiddleMa3LSArrPrevBar > SlowMa3LSArrPrevBar)
+            if(ClosePrevBar3LS > FastMa3LSArrPrevBar && FastMa3LSArrPrevBar > MiddleMa3LSArrPrevBar && MiddleMa3LSArrPrevBar > SlowMa3LSArrPrevBar)
               {
                priceAboveMA = true;
                priceUnderMa = false;
               }
             else
-               if(ClosePrevBara3LS < FastMa3LSArrPrevBar && FastMa3LSArrPrevBar < MiddleMa3LSArrPrevBar && MiddleMa3LSArrPrevBar < SlowMa3LSArrPrevBar)
+               if(ClosePrevBar3LS < FastMa3LSArrPrevBar && FastMa3LSArrPrevBar < MiddleMa3LSArrPrevBar && MiddleMa3LSArrPrevBar < SlowMa3LSArrPrevBar)
                  {
                   priceUnderMa = true;
                   priceAboveMA = false;
