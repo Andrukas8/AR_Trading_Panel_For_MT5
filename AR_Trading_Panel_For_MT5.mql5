@@ -75,7 +75,11 @@ input bool fractalsTSL = false; // TSL FRACTALS
 input bool tenkansenTSL = false; // TSL ICHIMOKU TENKANSEN
 input bool kijunsenTSL = false; // TSL ICHIMOKU KIJUNSEN
 input bool NewBarAlert = false; // == NEW BAR ALERT ==
-input bool wiseMenAlertsToggle = true; // == ACTIVATE WISE MEN ALERTS ==
+input bool wiseMenAlertsToggle = true; // == ACTIVATE WISE MEN ALERT BUTTONS ==
+input bool wiseMan1PermanentToggle = false; // _____ activeate WM1 permanently
+input bool wiseMan2PermanentToggle = false; // _____ activeate WM2 permanently
+input bool wiseMan3PermanentToggle = true; // _____ activeate WM3 permanently
+input bool wiseMan3AlligatorFilter = true; // ________ activate WM3 Alligator Filter
 input double atrMultiplier = 1; // ATR multiplier for filtering WM1 signals
 input int atrPeriod = 14; // ATR PERIOD
 input int fractalBufferWM3 = 20; // FRACTAL BUFFER for WM3 in points
@@ -83,7 +87,7 @@ input int alligatorMultiplier = 1; // Alligator multiplier for filtering WM sign
 input int ichimokuMultiplier = 1; // Ichimoku Multiplier
 
 input group "------------- 3 Lines Strike Alert ------------"
-input bool threeLinesStrikeActivate = true; // == ACTIVATE 3 LINES STRIKE ALERT ==
+input bool threeLinesStrikeActivate = false; // == ACTIVATE 3 LINES STRIKE ALERT ==
 input double ToleranceOpenPercent = 50; // Engulfing Range Tolerance Open %
 input double ToleranceClosePercent = 50; // Engulfing Range Tolerance Close %
 input bool EngulfingModeStrict = false; // Strict mode
@@ -2260,8 +2264,8 @@ void CControlsDialog::OnClickManualBEBtn(void)
          m_ManualBEBtn.Color(clrRed);
          m_AlertCloseBtn.Color(clrBlack);
          setAlarmCloseLine = false;
-         ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrTomato);
-         ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrTomato);
+         ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrDeepSkyBlue);
+         ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrDeepSkyBlue);
 
          ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTED, false);
          ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, false);
@@ -2378,7 +2382,7 @@ int OnInit()
    if(ClosePosMa)
       handleClosePosMA = iMA(_Symbol, TimeFrame, ClosePosMaPeriod, ClosePosMaShift, ClosePosMaMethod, ClosePosMaAppPrice);
 
-   if(wiseMenAlertsToggle)
+   if(wiseMenAlertsToggle || wiseMan1PermanentToggle || wiseMan2PermanentToggle || wiseMan3PermanentToggle)
      {
       handleATR = iATR(_Symbol,TimeFrame,atrPeriod);
       handleAlligator = iAlligator(_Symbol,TimeFrame,13*alligatorMultiplier,8*alligatorMultiplier,8*alligatorMultiplier,5*alligatorMultiplier,5*alligatorMultiplier,3*alligatorMultiplier,MODE_SMMA,PRICE_MEDIAN);
@@ -2567,7 +2571,7 @@ void OnTick()
 //+------------------------------------------------------------------+
 
 
-   if(wm1AlertToggle)
+   if(wm1AlertToggle || wiseMan1PermanentToggle)
      {
       int bars = iBars(_Symbol, TimeFrame);
       if(barsTotal != bars) // New bar appeared on the chart
@@ -2659,7 +2663,7 @@ void OnTick()
 //|                                                                  |
 //+------------------------------------------------------------------+
 
-   if(wm2AlertToggle)
+   if(wm2AlertToggle || wiseMan2PermanentToggle)
      {
       double awesomeOscillatorArr[];
       CopyBuffer(handleAwesomeOscillator,0,0,5,awesomeOscillatorArr);
@@ -2693,7 +2697,7 @@ void OnTick()
 //|                                                                  |
 //+------------------------------------------------------------------+
 
-   if(wm3AlertToggle)
+   if(wm3AlertToggle || wiseMan3PermanentToggle)
      {
 
       int bars = iBars(_Symbol, PERIOD_CURRENT);
@@ -2731,7 +2735,7 @@ void OnTick()
 
             if(high_3 > high_2 && high_3 > high_1 && high_3 > high_4 && high_3 > high_5)
               {
-               upperFractal = high_3;
+               upperFractal = high_3 + fractalBufferWM3Double;
                break;
               }
            }
@@ -2746,16 +2750,47 @@ void OnTick()
 
             if(low_3 < low_2 && low_3 < low_1 && low_3 < low_4 && low_3 < low_5)
               {
-               lowerFractal = low_3;
+               lowerFractal = low_3  - fractalBufferWM3Double;
                break;
               }
            }
 
+         bool alligatorWM3Up = true;
+         bool alligatorWM3Down = true;
+
+         if(wiseMan3AlligatorFilter)
+           {
+            double alligatorLipsEndArr[];
+            double alligatorTeethEndArr[];
+            double alligatorJawEndArr[];
+
+            ArraySetAsSeries(alligatorLipsEndArr,true);
+            ArraySetAsSeries(alligatorTeethEndArr,true);
+            ArraySetAsSeries(alligatorJawEndArr,true);
+
+            CopyBuffer(handleAlligator,2,-4*alligatorMultiplier,8,alligatorLipsEndArr);
+            CopyBuffer(handleAlligator,1,-6*alligatorMultiplier,8,alligatorTeethEndArr);
+            CopyBuffer(handleAlligator,0,-9*alligatorMultiplier,8,alligatorJawEndArr);
+
+            if(alligatorLipsEndArr[0] > alligatorTeethEndArr[0] && alligatorTeethEndArr[0] > alligatorJawEndArr[0])
+              {
+               alligatorWM3Up = true;
+               alligatorWM3Down = false;
+              }
+            else
+               if(alligatorLipsEndArr[0] < alligatorTeethEndArr[0] && alligatorTeethEndArr[0] < alligatorJawEndArr[0])
+                 {
+                  alligatorWM3Up = false;
+                  alligatorWM3Down = true;
+                 }
+
+           }
+
          if(upperFractal !=0 && lowerFractal !=0)
-            if(alertClosePrevBar1 > upperFractal + fractalBufferWM3Double && alertClosePrevBar2 < upperFractal + fractalBufferWM3Double)
+            if(alertClosePrevBar1 > upperFractal && alertClosePrevBar2 < upperFractal && alligatorWM3Up)
                Alert("=== FRACTAL BREAK ALERT WISE MAN 3 === BULLISH");
             else
-               if(alertClosePrevBar1 < lowerFractal - fractalBufferWM3Double && alertClosePrevBar2 > lowerFractal - fractalBufferWM3Double)
+               if(alertClosePrevBar1 < lowerFractal && alertClosePrevBar2 > lowerFractal && alligatorWM3Down)
                   Alert("=== FRACTAL BREAK ALERT WISE MAN 3 === BEARISH");
         }
      }
