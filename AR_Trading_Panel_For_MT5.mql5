@@ -2516,6 +2516,9 @@ void OnTick()
 
          if(useMAFilter3LS)
            {
+            priceAboveMA = false;
+            priceUnderMa = false;
+
             double ClosePrevBara3LS = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price
 
             double FastMa3LSArr[];
@@ -2760,6 +2763,8 @@ void OnTick()
 
          if(wiseMan3AlligatorFilter)
            {
+            alligatorWM3Up = false;
+            alligatorWM3Down = false;
             double alligatorLipsEndArr[];
             double alligatorTeethEndArr[];
             double alligatorJawEndArr[];
@@ -3623,7 +3628,6 @@ void OnTick()
                         if(ArraySize(ma) > 0)
                           {
                            double sl = NormalizeDouble(NormalizeDouble(ma[MaShift - 1],_Digits) - (TslOffsetPoints + spreadPos) * _Point,_Digits);
-
                            if(sl > posSl && sl < bid)
                              {
                               if(trade.PositionModify(posTicket,sl,posTp))
