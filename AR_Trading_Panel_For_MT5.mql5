@@ -2453,13 +2453,6 @@ void OnChartEvent(const int id,         // event ID
 void OnTick()
   {
 
-// TEST GROUND
-
-//   Print(OpenPositionFilter("UK100"));
-
-// END OF TEST GROUND
-
-
 //+------------------------------------------------------------------+
 //|                                                                  |
 //|  ----- Handling MA Break Alert --------------------------------- |
@@ -2478,6 +2471,7 @@ void OnTick()
 
          double MABreakArr[];
          CopyBuffer(handleMABreak,MAIN_LINE,1,2,MABreakArr);
+         ArraySetAsSeries(MABreakArr,true);
          double MABreakPrevBar = NormalizeDouble(MABreakArr[0],_Digits); // Moving Average of previous bar
          double MABreakPrPrevBar = NormalizeDouble(MABreakArr[1],_Digits); // Moving Average of pre previous bar
 
@@ -2538,6 +2532,8 @@ void OnTick()
          if(ClosePrPrevBarMABreak < MABreakPrPrevBar && ClosePrevBarMABreak > MABreakPrevBar && MABreakAlligatorUp)
            {
             Alert("=== MOVING AVERAGE BREAK ALERT === BULLISH");
+            Print("ClosePrPrevBarMABreak < MABreakPrPrevBar && ClosePrevBarMABreak > MABreakPrevBar");
+            Print(DoubleToString(ClosePrPrevBarMABreak,_Digits)," < ",DoubleToString(MABreakPrPrevBar,_Digits)," && ",DoubleToString(ClosePrevBarMABreak,_Digits)," > ",DoubleToString(MABreakPrevBar,_Digits));
            }
 
          // --------------------
@@ -2547,6 +2543,8 @@ void OnTick()
             if(ClosePrPrevBarMABreak > MABreakPrPrevBar && ClosePrevBarMABreak < MABreakPrevBar && MABreakAlligatorDn)
               {
                Alert("=== MOVING AVERAGE BREAK ALERT === BEARISH");
+               Print("ClosePrPrevBarMABreak > MABreakPrPrevBar && ClosePrevBarMABreak < MABreakPrevBar");
+               Print(DoubleToString(ClosePrPrevBarMABreak,_Digits)," > ",DoubleToString(MABreakPrPrevBar,_Digits)," && ",DoubleToString(ClosePrevBarMABreak,_Digits)," < ",DoubleToString(MABreakPrevBar,_Digits));
               }
 
         }
@@ -2567,7 +2565,8 @@ void OnTick()
 
    if(threeLinesStrikeActivate)
      {
-      int bars = iBars(_Symbol, TimeFrame);
+      int bars = iBars(_Symbol, TimeFrame);   
+
       if(barsTotal != bars) // New bar appeared on the chart
         {
          barsTotal = bars;
@@ -2647,14 +2646,17 @@ void OnTick()
 
             double FastMa3LSArr[];
             CopyBuffer(handleFast3LSMA,MAIN_LINE,1,1,FastMa3LSArr);
+            ArraySetAsSeries(FastMa3LSArr,true);
             double FastMa3LSArrPrevBar = NormalizeDouble(FastMa3LSArr[0],_Digits);
 
             double MiddleMa3LSArr[];
             CopyBuffer(handleMiddle3LSMA,MAIN_LINE,1,1,MiddleMa3LSArr);
+            ArraySetAsSeries(MiddleMa3LSArr,true);
             double MiddleMa3LSArrPrevBar = NormalizeDouble(MiddleMa3LSArr[0],_Digits);
 
             double SlowMa3LSArr[];
             CopyBuffer(handleSlow3LSMA,MAIN_LINE,1,1,SlowMa3LSArr);
+            ArraySetAsSeries(SlowMa3LSArr,true);
             double SlowMa3LSArrPrevBar = NormalizeDouble(SlowMa3LSArr[0],_Digits);
 
             if(ClosePrevBar3LS > FastMa3LSArrPrevBar && FastMa3LSArrPrevBar > MiddleMa3LSArrPrevBar && MiddleMa3LSArrPrevBar > SlowMa3LSArrPrevBar)
@@ -3458,9 +3460,9 @@ void OnTick()
                         if(OpenBar > 1)
                            if(trade.PositionClose(posTicket))
                              {
-                              Print(__FUNCTION__," > Position #",posTicket," was closed with profit ",positionProfit," because price closed above Moving Average. ",ClosePrevBar," > ",ClosePosMaPrevBar);
+                              Print(__FUNCTION__," > Position #",posTicket," was closed with profit ",positionProfit," because price closed below Moving Average. ",ClosePrevBar," > ",ClosePosMaPrevBar);
                               if(AlertAutoClosePosition)
-                                 Alert(" > Position #",posTicket," was closed with profit ",NormalizeDouble(positionProfit,2)," because price closed above Moving Average. ",ClosePrevBar," > ",ClosePosMaPrevBar);
+                                 Alert(" > Position #",posTicket," was closed with profit ",NormalizeDouble(positionProfit,2)," because price closed below Moving Average. ",ClosePrevBar," > ",ClosePosMaPrevBar);
                              }
                        }
                  }
@@ -4612,4 +4614,5 @@ bool OpenPositionFilter(string pairName)
    return(posExists);
   }
 
+//+------------------------------------------------------------------+
 //+------------------------------------------------------------------+
