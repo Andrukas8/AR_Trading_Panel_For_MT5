@@ -52,6 +52,8 @@ input ENUM_TIMEFRAMES TimeFrame = 5; // TSL TIMEFRAME
 input group "------------- Position Variables ----------------------------"
 input bool showProfitOnChart = false; // SHOW POSITION PROFIT ON CHART
 input bool showEAComment = false; // SHOW EA COMMENT
+input bool useSymmetricalPositionFilter = true; // DO NOT SHOW SIGNALS FOR SYMMETRICAL PAIRS
+input bool useOpenPositionFilter = true; // DO NOT SHOW SIGNALS FOR INSTRUMENTS WITH OPEN POSITIONS
 input ENUM_STRATEGY StrategySelect = NOSTRATEGY;
 input string posLotsDef = "0.1"; // LOT SIZE
 input string slPipsDef = "10"; // SL pips
@@ -2451,6 +2453,13 @@ void OnChartEvent(const int id,         // event ID
 void OnTick()
   {
 
+// TEST GROUND
+
+//   Print(OpenPositionFilter("UK100"));
+
+// END OF TEST GROUND
+
+
 //+------------------------------------------------------------------+
 //|                                                                  |
 //|  ----- Handling MA Break Alert --------------------------------- |
@@ -2505,6 +2514,23 @@ void OnTick()
                  }
 
            }
+
+         // Using filter to filter out signals for currency pairs which contain one of the parts of the pair for which we have an open position already
+         if(useSymmetricalPositionFilter && SymmetricalPositionFilter(_Symbol))
+           {
+            Print("Rejecting MA Breakout signal on ",_Symbol," because symmetrical position is open already...");
+            MABreakAlligatorUp = false;
+            MABreakAlligatorDn = false;
+           }
+
+         // Using filter to filter out signals for instrumentis which already have open positions
+         if(useOpenPositionFilter && OpenPositionFilter(_Symbol))
+           {
+            Print("Rejecting MA Breakout signal on ",_Symbol," because this instrument has an open position already");
+            MABreakAlligatorUp = false;
+            MABreakAlligatorDn = false;
+           }
+
 
          // --------------------
          // --- BUY POSITION ---
@@ -4504,4 +4530,86 @@ bool CControlsDialog::DisplayInfo()
 
 
 //+------------------------------------------------------------------+
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//|  Function that blocks signals for currency pairs which are symmetrical to the ones which already have open positions                                                                |
+//+------------------------------------------------------------------+
+bool SymmetricalPositionFilter(string pairName)
+  {
+   bool symmetry = false;
+   StringReplace(pairName," ",NULL);
+
+   if(!StringToUpper(pairName))
+      Print(__FUNCTION__,"Error...");
+
+   if(StringFind(pairName,"0") >= 0 ||
+      StringFind(pairName,"1") >= 0 ||
+      StringFind(pairName,"2") >= 0 ||
+      StringFind(pairName,"3") >= 0 ||
+      StringFind(pairName,"4") >= 0 ||
+      StringFind(pairName,"5") >= 0 ||
+      StringFind(pairName,"6") >= 0 ||
+      StringFind(pairName,"7") >= 0 ||
+      StringFind(pairName,"8") >= 0 ||
+      StringFind(pairName,"9") >= 0)
+     {
+      return(symmetry);
+     }
+   else
+     {
+      int totalPos = PositionsTotal();
+
+      string currency1 = StringSubstr(pairName,0,3);
+      string currency2 = StringSubstr(pairName,3,3);
+
+      for(int i = 0; i < totalPos; i++)
+        {
+         ulong posTicket = PositionGetTicket(i);
+
+         if(PositionSelectByTicket(posTicket))
+            if(
+               StringFind(PositionGetString(POSITION_SYMBOL),currency1) != -1 ||
+               StringFind(PositionGetString(POSITION_SYMBOL),currency2) != -1
+            )
+              {
+               symmetry = true;
+               return(symmetry);
+              }
+        }
+
+      return(symmetry);
+
+     }
+
+  }
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+
+
+//+------------------------------------------------------------------+
+//| Function that blocks signals for instruments with open positions |
+//+------------------------------------------------------------------+
+bool OpenPositionFilter(string pairName)
+  {
+   bool posExists = false;
+
+   int totalPos = PositionsTotal();
+
+   for(int i = 0; i < totalPos; i++)
+     {
+      ulong posTicket = PositionGetTicket(i);
+
+      if(PositionSelectByTicket(posTicket))
+         if(PositionGetString(POSITION_SYMBOL) == pairName)
+           {
+            posExists = true;
+            return(posExists);
+           }
+     }
+
+   return(posExists);
+  }
+
 //+------------------------------------------------------------------+
