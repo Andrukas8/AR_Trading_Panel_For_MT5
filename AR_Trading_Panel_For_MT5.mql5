@@ -87,7 +87,7 @@ input int atrPeriod = 14; // ATR PERIOD
 input int fractalBufferWM3 = 20; // FRACTAL BUFFER for WM3 in points
 input int alligatorMultiplier = 1; // Alligator multiplier for filtering WM signals
 input int ichimokuMultiplier = 1; // Ichimoku Multiplier
-
+input bool AlertAutoClosePosition = false; // ALERT ON POSITIONS CLOSE
 input group "------------- 3 Lines Strike Alert ------------"
 input bool threeLinesStrikeActivate = false; // == ACTIVATE 3 LINES STRIKE ALERT ==
 input double ToleranceOpenPercent = 50; // Engulfing Range Tolerance Open %
@@ -110,7 +110,7 @@ input int SlowMaShift3LS = 0; // _____ 3 LS SLOW MA SHIFT
 input ENUM_MA_METHOD SlowMaMethod3LS = MODE_SMMA; // _____ 3LS SLOW MA METHOD
 input ENUM_APPLIED_PRICE SlowMaAppPrice3LS = PRICE_CLOSE; // _____ 3LS SLOW MA PRICE
 
-input group "------------- Auto Closing Position on Condition ------------"
+input group "------------- Auto Closing Position on Condition -------------"
 input bool ClosePosTenkansen = false; // CLOSE ON CLOSE OVER TENKANSEN
 input bool ClosePosMa = true; // CLOSE ON CLOSE OVER MA
 input int ClosePosMaPeriod = 5; // _____ CLOSE MA PERIOD
@@ -118,10 +118,12 @@ input int ClosePosMaShift = 3; // _____ CLOSE MA SHIFT
 input ENUM_MA_METHOD ClosePosMaMethod = MODE_SMMA; // _____ CLOSE MA METHOD
 input ENUM_APPLIED_PRICE ClosePosMaAppPrice = PRICE_MEDIAN; // _____ CLOSE MA PRICE
 
-input bool AlertAutoClosePosition = false; // ALERT ON POSITIONS CLOSE
+input group "------------- TENKANSEN BREAK ALERT --------------------------"
 input bool SignalTenkansenBreak = false; // ALERT ON TK BREAK
+input bool KJSSAFilter = true; // _____ KJ & SSA FILTER
+input int KJSSAFilterRange = 2; // _____ KJ & SSA RILTER RANGE
 
-input group "------------- MOVING AVERAGE BREAK ALERT ------------"
+input group "------------- MOVING AVERAGE BREAK ALERT ---------------------"
 input bool MABreak = true; // ALERT ON MA BREAK
 input bool MABreakUseAlligatorFilter = true; // _____ USE ALLIGATOR FILTER ON MA BREAK ALERT
 input int alligatorMultiplierMABreak = 1; // _____ ALLIGATOR MULTIPLIER FILTER ON MA BREAK ALERT
@@ -2376,8 +2378,18 @@ int OnInit()
    ObjectDelete(0,"takeProfitLine");
 
 //--- create application dialog
-   if(!ExtDialog.Create(0,"Controls",0,10,20,475,220))
-      return(INIT_FAILED);
+   if(showEAComment)
+     {
+      if(!ExtDialog.Create(0,"Controls",0,210,0,670,200))
+         return(INIT_FAILED);
+     }
+   else
+     {
+      if(!ExtDialog.Create(0,"Controls",0,0,15,460,215))
+         return(INIT_FAILED);
+     }
+
+
 //--- run application
    ExtDialog.Run();
 
@@ -3117,7 +3129,7 @@ void OnTick()
 
 //+------------------------------------------------------------------+
 //|                                                                  |
-//|  ----- Signal If TK Break Strategy Conditions Met -------------- |
+//|  ----- Signal If TK Break Strategy Conditions Met -------------- |   qqq
 //|                                                                  |
 //+------------------------------------------------------------------+
 
@@ -3134,6 +3146,9 @@ void OnTick()
       bool SellSignal_3 = false;
       bool SellSignal_4 = false;
       bool SellSignal_GO = false;
+
+      bool KJSSAFilterUp = false;
+      bool KJSSAFilterDn = false;
 
       static datetime timeStamp;
       datetime time = iTime(_Symbol,TimeFrame,0);
@@ -3157,15 +3172,47 @@ void OnTick()
       double CurrentHigh = iHigh(_Symbol,TimeFrame,0);
       double CurrentLow = iLow(_Symbol,TimeFrame,0);
 
-      CopyBuffer(handleIchimoku,0,0,3,TenkansenArr);
-      CopyBuffer(handleIchimoku,1,0,3,KijunsenArr);
-      CopyBuffer(handleIchimoku,2,0,3,SenkouspanAArr);
-      CopyBuffer(handleIchimoku,3,0,3,SenkouspanBArr);
+      CopyBuffer(handleIchimoku,0,0,KJSSAFilterRange+1,TenkansenArr);
+      CopyBuffer(handleIchimoku,1,0,KJSSAFilterRange+1,KijunsenArr);
+      CopyBuffer(handleIchimoku,2,0,KJSSAFilterRange+1,SenkouspanAArr);
+      CopyBuffer(handleIchimoku,3,0,KJSSAFilterRange+1,SenkouspanBArr);
 
-      CopyBuffer(handleIchimoku,2,-26*ichimokuMultiplier,3,ShiftedSenkouspanAArr);
-      CopyBuffer(handleIchimoku,3,-26*ichimokuMultiplier,3,ShiftedSenkouspanBArr);
+      CopyBuffer(handleIchimoku,2,-26*ichimokuMultiplier,KJSSAFilterRange+1,ShiftedSenkouspanAArr);
+      CopyBuffer(handleIchimoku,3,-26*ichimokuMultiplier,KJSSAFilterRange+1,ShiftedSenkouspanBArr);
 
-      CopyBuffer(handleIchimoku,4,26*ichimokuMultiplier,1,ChikouspanArr);
+      CopyBuffer(handleIchimoku,4,26*ichimokuMultiplier,KJSSAFilterRange+1,ChikouspanArr);
+
+
+      if(KJSSAFilter) // qqq
+        {
+         if(KijunsenArr[KJSSAFilterRange] > KijunsenArr[0])
+           {
+            if(ShiftedSenkouspanAArr[KJSSAFilterRange] >  ShiftedSenkouspanAArr[0])
+              {
+               KJSSAFilterUp = true;
+               KJSSAFilterDn = false;
+              }
+           }
+         else
+            if(KijunsenArr[KJSSAFilterRange] < KijunsenArr[0])
+              {
+               if(ShiftedSenkouspanAArr[KJSSAFilterRange] <  ShiftedSenkouspanAArr[0])
+                 {
+                  KJSSAFilterUp = false;
+                  KJSSAFilterDn = true;
+                 }
+              }
+        }
+      else
+         if(!KJSSAFilter)
+           {
+            KJSSAFilterUp = true;
+            KJSSAFilterDn = true;
+           }
+
+
+      // Print(KJSSAFilterUp," ", KJSSAFilterDn);
+
 
       if(timeStamp != time)
         {
@@ -3173,6 +3220,10 @@ void OnTick()
 
          BuySignal_4 = false;
          SellSignal_4 = false;
+
+         //   KJSSAFilterUp = false;
+         //  KJSSAFilterDn = false;
+
 
          // Buy Signal
 
@@ -3214,7 +3265,7 @@ void OnTick()
          StrBuySignal_3 = IntegerToString(BuySignal_3);
          StrBuySignal_4 = IntegerToString(BuySignal_4);
 
-         if(BuySignal_GO)
+         if(BuySignal_GO && KJSSAFilterUp)
            {
             Alert(_Symbol," === Tenkansen Break Strategy: Buy Signal = ",BuySignal_GO," ===");
 
@@ -3267,7 +3318,7 @@ void OnTick()
          StrSellSignal_3 = IntegerToString(SellSignal_3);
          StrSellSignal_4 = IntegerToString(SellSignal_4);
 
-         if(SellSignal_GO)
+         if(SellSignal_GO  && KJSSAFilterDn)
            {
             Alert(_Symbol," === Tenkansen Break Strategy: Sell Signal = ",SellSignal_GO," ===");
 
@@ -3278,17 +3329,28 @@ void OnTick()
             SellSignal_4 = false;
            }
 
-         // for debugging:     Print("\nNew Bar:\nTK Break Buy_: ",BuySignal_1," ",BuySignal_2," ",BuySignal_3," ",BuySignal_4," ",BuySignal_GO,"\nTK Break Sell: ",SellSignal_1," ",SellSignal_2," ",SellSignal_3," ",SellSignal_4," ",SellSignal_GO);
-
-
         } // timeStamp != time
+
+      textComment += "----- TK BREAK STRATEGY SIGNALS -----\n";
+      textComment += "Kinjunsen SSA Filter Toggle = " + IntegerToString(KJSSAFilter) + " \n";
+
+      if(KJSSAFilter)
+        {
+         textComment += "KJSSAFilterRange = " + IntegerToString(KJSSAFilterRange) + " \n";
+         textComment += "KJSSAFilterUp = " + IntegerToString(KJSSAFilterUp) + " \n";
+         textComment += "KJSSAFilterDn = " + IntegerToString(KJSSAFilterDn) + " \n";
+         textComment += "----- KijunsenArr -----\n";
+         textComment += "KijunsenArr[0] previous = " + DoubleToString(KijunsenArr[0],_Digits) + " \n"; // current
+         textComment += "KijunsenArr["+IntegerToString(KJSSAFilterRange)+"] current  = " + DoubleToString(KijunsenArr[KJSSAFilterRange],_Digits) + " \n"; // current
+         textComment += "----- SenkouspanAArr -----\n";
+         textComment += "ShiftedSenkouspanAArr[0] previous = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + " \n"; // previous
+         textComment += "ShiftedSenkouspanAArr["+IntegerToString(KJSSAFilterRange)+"] current  = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n"; // current
+        }
 
       textComment += "Buy Signels  = " + StrBuySignal_1 + " " + StrBuySignal_2 + " " + StrBuySignal_3 + " " + StrBuySignal_4 + " = " + StrSellSignal_GO + "\n";
       textComment += "Sell Signals = " + StrSellSignal_1 + " " + StrSellSignal_2 + " " + StrSellSignal_3 + " " + StrSellSignal_4 + " = " + StrSellSignal_GO + "\n";
 
      }
-
-
 
 
    if(autoPosMgmtToggle)
@@ -3328,8 +3390,8 @@ void OnTick()
       textComment += "ALERT NEW BAR  = [ " + IntegerToString(NewBarAlert) + " ]\n";
       textComment += "ALERT TKB TRADE SIGNAL  = [ " + IntegerToString(SignalTenkansenBreak) + " ]\n";
       textComment += "-------------------------------------\n";
-      textComment += "LOWER FRACTAL = " + DoubleToString(mainLower, 4) + "\n";
-      textComment += "UPPER FRACTAL = " + DoubleToString(mainUpper, 4) + "\n";
+      textComment += "LOWER FRACTAL = " + DoubleToString(mainLower, _Digits) + "\n";
+      textComment += "UPPER FRACTAL = " + DoubleToString(mainUpper, _Digits) + "\n";
 
       textComment += "alertCloseLine      = [ " + IntegerToString(alertCloseLine) + " ]\n";
       textComment += "setAlarmCloseLine = [ " + IntegerToString(setAlarmCloseLine) + " ]\n";
@@ -3916,11 +3978,19 @@ void OnTick()
       //|                                                                  |
       //+------------------------------------------------------------------+
 
-      if(showEAComment)
-         Comment(textComment);
-
-      textComment="";
+      //      if(showEAComment)
+      //         Comment(textComment);
+      //
+      //      textComment="";
      } // autoPosMgmtToggle
+
+
+   if(showEAComment)
+      Comment(textComment);
+
+   textComment="";
+
+
   }// OnTick
 
 //+---------------------------------------------------------------------------------------+
