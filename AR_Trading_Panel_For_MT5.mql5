@@ -48,6 +48,7 @@ string StrategyStr[10] =
 input group "------------- Auto Position Management Settings -------------"
 input int TslOffsetPoints = 10; // TSL BUFFER POINTS FOR MA/TKS/KJS
 input ENUM_TIMEFRAMES TimeFrame = 5; // TSL TIMEFRAME
+input bool showTotalRiskCurrent = true; // Show Total Risk in Caption
 
 input group "------------- Position Variables ----------------------------"
 input bool showProfitOnChart = false; // SHOW POSITION PROFIT ON CHART
@@ -225,6 +226,8 @@ string StrSellSignal_1;
 string StrSellSignal_2;
 string StrSellSignal_3;
 string StrSellSignal_4;
+
+string captionString = "AR Trading Pannel";
 
 //+------------------------------------------------------------------+
 //| defines                                                          |
@@ -2380,12 +2383,12 @@ int OnInit()
 //--- create application dialog
    if(showEAComment)
      {
-      if(!ExtDialog.Create(0,"Controls",0,210,0,670,200))
+      if(!ExtDialog.Create(0,captionString,0,210,0,670,200))
          return(INIT_FAILED);
      }
    else
      {
-      if(!ExtDialog.Create(0,"Controls",0,0,15,460,215))
+      if(!ExtDialog.Create(0,captionString,0,0,15,460,215))
          return(INIT_FAILED);
      }
 
@@ -2467,6 +2470,78 @@ void OnTick()
 
 //+------------------------------------------------------------------+
 //|                                                                  |
+//|  ----- Show total risk value in Caption ------------------------ |
+//|                                                                  |
+//+------------------------------------------------------------------+
+
+   if(showTotalRiskCurrent)
+     {
+      int totalPos = PositionsTotal();
+      double totalRisk = 0;
+      double TotalRiskVolume = 0;
+      string accountCurrency = AccountInfoString(ACCOUNT_CURRENCY);
+      double accountBallance = AccountInfoDouble(ACCOUNT_BALANCE);
+      double TotalStopLoss = 0;
+      captionString = "";
+
+      if(totalPos > 0)
+        {
+         for(int i = 0; i < totalPos; i++)
+           {
+            ulong posTicket = PositionGetTicket(i);
+
+            if(PositionSelectByTicket(posTicket))
+              {
+               CTrade trade;
+               string posSymbol = PositionGetString(POSITION_SYMBOL);
+               int posDigits = (int)SymbolInfoInteger(posSymbol,SYMBOL_DIGITS);
+               double posOpenPrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),posDigits);
+               double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),posDigits);
+               double posVolume = NormalizeDouble(PositionGetDouble(POSITION_VOLUME),2);
+               double posPoint = SymbolInfoDouble(posSymbol,SYMBOL_POINT);
+               double tickValue = NormalizeDouble(SymbolInfoDouble(posSymbol,SYMBOL_TRADE_TICK_VALUE)/posPoint,posDigits);
+
+               if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position has type BUY
+
+                  if(posSl < posOpenPrice)
+                    {
+                     double riskVolume = NormalizeDouble((posOpenPrice - posSl)*posVolume*tickValue,2);
+                     TotalRiskVolume += riskVolume;
+                    }
+
+               if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)  // checking if the open position has type SELL
+
+                  if(posSl > posOpenPrice)
+                    {
+                     double riskVolume = NormalizeDouble((posSl - posOpenPrice)*posVolume*tickValue,2);
+                     TotalRiskVolume += riskVolume;
+                    }
+
+              }
+
+            double percentAtRisk = NormalizeDouble(TotalRiskVolume / accountBallance * 100,2);
+            captionString += "AR Trading Panel | Total SL: " + accountCurrency + " " + DoubleToString(TotalRiskVolume,2) + " | " + DoubleToString(percentAtRisk,2) + " %";
+            ObjectSetString(0,ExtDialog.Name()+"Caption",OBJPROP_TEXT,captionString);
+            captionString = "";
+           }
+        }
+      else
+         if(totalPos == 0)
+           {
+            captionString = "AR Trading Panel";
+            ObjectSetString(0,ExtDialog.Name()+"Caption",OBJPROP_TEXT,captionString);
+           }
+
+     }
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//|  ----- End of Show total risk value in Caption ----------------- |
+//|                                                                  |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//|                                                                  |
 //|  ----- Handling MA Break Alert --------------------------------- |
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -2537,7 +2612,6 @@ void OnTick()
             MABreakAlligatorDn = false;
            }
 
-
          // --------------------
          // --- BUY POSITION ---
          // --------------------
@@ -2574,7 +2648,6 @@ void OnTick()
 //|  ----- Handling 3 Lines Strike Alert --------------------------- |
 //|                                                                  |
 //+------------------------------------------------------------------+
-
    if(threeLinesStrikeActivate)
      {
       int bars = iBars(_Symbol, TimeFrame);
@@ -2711,7 +2784,6 @@ void OnTick()
 //|                                                                  |
 //+------------------------------------------------------------------+
 
-
    if(wm1AlertToggle || wiseMan1PermanentToggle)
      {
       int bars = iBars(_Symbol, TimeFrame);
@@ -2773,21 +2845,6 @@ void OnTick()
                  }
            }
 
-         // Debugging
-         //         Print("Close = ",closePrevBar," Open = ", openPrevBar," High = ",highPrevBar," Low = ",lowPrevBar);
-         //         Print("Upper Wick = ",upperWickPrevBar," Lower Wick = ", lowerWickPrevBar," Body = ",bodyPrevBar," Distance to Teeth = ",distanceToTeethPrevBar," ATR = ",atrPrevBar);
-         //
-         //         string side = "Undetermined";
-         //
-         //         if(closePrevBar > alligatorTeethPrevBar)
-         //            side = "BULLISH";
-         //         else
-         //            if(closePrevBar < alligatorTeethPrevBar)
-         //               side = "BEARISH";
-         //
-         //         Print("Side = ",side, " AutoPosMgmtToggle = ", autoPosMgmtToggle);
-         // End Debugging
-
         }
      }
 
@@ -2796,7 +2853,6 @@ void OnTick()
 //|  ----- End Handling Divergent Bar Alert ------------------------ |
 //|                                                                  |
 //+------------------------------------------------------------------+
-
 
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -3039,6 +3095,9 @@ void OnTick()
 //|                                                                  |
 //+------------------------------------------------------------------+
 
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
    if(setAlarmCloseLine)
      {
       alertLinePrice1 = NormalizeDouble(ObjectGetDouble(0,"alertCloseLine_1",OBJPROP_PRICE),_Digits);
@@ -3072,6 +3131,9 @@ void OnTick()
 //|                                                                  |
 //+------------------------------------------------------------------+
 
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
    if(showProfitOnChart && updateProfitOnchart)
      {
       int totalPos = PositionsTotal();
@@ -3115,6 +3177,9 @@ void OnTick()
 //|                                                                  |
 //+------------------------------------------------------------------+
 
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
    string spreadStr = IntegerToString(SymbolInfoInteger(_Symbol,SYMBOL_SPREAD));
    datetime CandleCountDown_bar_Opened = iTime(_Symbol,PERIOD_CURRENT,0);
    datetime CandleCountDown_bar_Closed = PeriodSeconds(PERIOD_CURRENT);
@@ -3122,6 +3187,9 @@ void OnTick()
    string timeTillCloseStr = TimeToString(CandleCountDown_counting, TIME_MINUTES|TIME_SECONDS);
    AccountFreeMargin = NormalizeDouble(AccountInfoDouble(ACCOUNT_MARGIN_FREE) * marginToBallancePercent / 100,2);
 
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
    ObjectSetString(0,ExtDialog.Name()+"MarginAvailableDisplLbl",OBJPROP_TEXT,DoubleToString(AccountFreeMargin,2));
    ObjectSetString(0,ExtDialog.Name()+"SpreadLbl",OBJPROP_TEXT,"Spread: "+spreadStr);
    ObjectSetString(0,ExtDialog.Name()+"TimeTillCandleCloseLbl",OBJPROP_TEXT,timeTillCloseStr);
@@ -3129,10 +3197,13 @@ void OnTick()
 
 //+------------------------------------------------------------------+
 //|                                                                  |
-//|  ----- Signal If TK Break Strategy Conditions Met -------------- |   qqq
+//|  ----- Signal If TK Break Strategy Conditions Met -------------- |
 //|                                                                  |
 //+------------------------------------------------------------------+
 
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
    if(SignalTenkansenBreak)
      {
       bool BuySignal_1 = false;
@@ -3183,7 +3254,7 @@ void OnTick()
       CopyBuffer(handleIchimoku,4,26*ichimokuMultiplier,KJSSAFilterRange+1,ChikouspanArr);
 
 
-      if(KJSSAFilter) // qqq
+      if(KJSSAFilter)
         {
          if(KijunsenArr[KJSSAFilterRange] > KijunsenArr[0])
            {
@@ -3353,6 +3424,9 @@ void OnTick()
      }
 
 
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
    if(autoPosMgmtToggle)
      {
       long spreadPos = SymbolInfoInteger(Symbol(),SYMBOL_SPREAD);
@@ -3985,6 +4059,9 @@ void OnTick()
      } // autoPosMgmtToggle
 
 
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
    if(showEAComment)
       Comment(textComment);
 
