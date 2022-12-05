@@ -49,6 +49,8 @@ input group "------------- Auto Position Management Settings -------------"
 input int TslOffsetPoints = 10; // TSL BUFFER POINTS FOR MA/TKS/KJS
 input ENUM_TIMEFRAMES TimeFrame = 5; // TSL TIMEFRAME
 input bool showTotalRiskCurrent = true; // Show Total Risk in Caption
+input bool maxVARFilter = true; // Max VaR filter
+input double maxVARFiltervalue = 1.5; // MaxVr filter value in %
 
 input group "------------- Position Variables ----------------------------"
 input bool showProfitOnChart = false; // SHOW POSITION PROFIT ON CHART
@@ -897,8 +899,6 @@ bool CControlsDialog::CreateTimeTillCandleCloseLbl(void)
 //--- succeed
    return(true);
   }
-
-
 
 
 // Creating Edit Fields =====================================================================================================
@@ -2476,62 +2476,16 @@ void OnTick()
 
    if(showTotalRiskCurrent)
      {
-      int totalPos = PositionsTotal();
-      double totalRisk = 0;
-      double TotalRiskVolume = 0;
       string accountCurrency = AccountInfoString(ACCOUNT_CURRENCY);
+      double TotalRiskVolume = calculateVaR();
       double accountBallance = AccountInfoDouble(ACCOUNT_BALANCE);
-      double TotalStopLoss = 0;
+      double percentAtRisk = 0;
+      if(accountBallance > 0)
+         percentAtRisk = NormalizeDouble(TotalRiskVolume / accountBallance * 100,2);
+
+      captionString += "AR Trading Panel | Total VaR: " + accountCurrency + " " + DoubleToString(TotalRiskVolume,2) + " | " + DoubleToString(percentAtRisk,2) + " % | " + IntegerToString(VaRfilterGo(maxVARFiltervalue));
+      ObjectSetString(0,ExtDialog.Name()+"Caption",OBJPROP_TEXT,captionString);
       captionString = "";
-
-      if(totalPos > 0)
-        {
-         for(int i = 0; i < totalPos; i++)
-           {
-            ulong posTicket = PositionGetTicket(i);
-
-            if(PositionSelectByTicket(posTicket))
-              {
-               CTrade trade;
-               string posSymbol = PositionGetString(POSITION_SYMBOL);
-               int posDigits = (int)SymbolInfoInteger(posSymbol,SYMBOL_DIGITS);
-               double posOpenPrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),posDigits);
-               double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),posDigits);
-               double posVolume = NormalizeDouble(PositionGetDouble(POSITION_VOLUME),2);
-               double posPoint = SymbolInfoDouble(posSymbol,SYMBOL_POINT);
-               double tickValue = NormalizeDouble(SymbolInfoDouble(posSymbol,SYMBOL_TRADE_TICK_VALUE)/posPoint,posDigits);
-
-               if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position has type BUY
-
-                  if(posSl < posOpenPrice)
-                    {
-                     double riskVolume = NormalizeDouble((posOpenPrice - posSl)*posVolume*tickValue,2);
-                     TotalRiskVolume += riskVolume;
-                    }
-
-               if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)  // checking if the open position has type SELL
-
-                  if(posSl > posOpenPrice)
-                    {
-                     double riskVolume = NormalizeDouble((posSl - posOpenPrice)*posVolume*tickValue,2);
-                     TotalRiskVolume += riskVolume;
-                    }
-
-              }
-
-            double percentAtRisk = NormalizeDouble(TotalRiskVolume / accountBallance * 100,2);
-            captionString += "AR Trading Panel | Total SL: " + accountCurrency + " " + DoubleToString(TotalRiskVolume,2) + " | " + DoubleToString(percentAtRisk,2) + " %";
-            ObjectSetString(0,ExtDialog.Name()+"Caption",OBJPROP_TEXT,captionString);
-            captionString = "";
-           }
-        }
-      else
-         if(totalPos == 0)
-           {
-            captionString = "AR Trading Panel";
-            ObjectSetString(0,ExtDialog.Name()+"Caption",OBJPROP_TEXT,captionString);
-           }
-
      }
 
 //+------------------------------------------------------------------+
@@ -2545,7 +2499,7 @@ void OnTick()
 //|  ----- Handling MA Break Alert --------------------------------- |
 //|                                                                  |
 //+------------------------------------------------------------------+
-   if(MABreak)
+   if(MABreak && VaRfilterGo(maxVARFiltervalue))
      {
       int bars = iBars(_Symbol, TimeFrame);
 
@@ -2648,7 +2602,7 @@ void OnTick()
 //|  ----- Handling 3 Lines Strike Alert --------------------------- |
 //|                                                                  |
 //+------------------------------------------------------------------+
-   if(threeLinesStrikeActivate)
+   if(threeLinesStrikeActivate && VaRfilterGo(maxVARFiltervalue))
      {
       int bars = iBars(_Symbol, TimeFrame);
 
@@ -2784,7 +2738,10 @@ void OnTick()
 //|                                                                  |
 //+------------------------------------------------------------------+
 
-   if(wm1AlertToggle || wiseMan1PermanentToggle)
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+   if((wm1AlertToggle || wiseMan1PermanentToggle) && VaRfilterGo(maxVARFiltervalue))
      {
       int bars = iBars(_Symbol, TimeFrame);
       if(barsTotal != bars) // New bar appeared on the chart
@@ -2860,7 +2817,10 @@ void OnTick()
 //|                                                                  |
 //+------------------------------------------------------------------+
 
-   if(wm2AlertToggle || wiseMan2PermanentToggle)
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+   if((wm2AlertToggle || wiseMan2PermanentToggle) && VaRfilterGo(maxVARFiltervalue))
      {
       double awesomeOscillatorArr[];
       CopyBuffer(handleAwesomeOscillator,0,0,5,awesomeOscillatorArr);
@@ -2894,9 +2854,11 @@ void OnTick()
 //|                                                                  |
 //+------------------------------------------------------------------+
 
-   if(wm3AlertToggle || wiseMan3PermanentToggle)
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+   if((wm3AlertToggle || wiseMan3PermanentToggle) && VaRfilterGo(maxVARFiltervalue))
      {
-
       int bars = iBars(_Symbol, PERIOD_CURRENT);
       if(barsTotal != bars) // New bar appeared on the chart
         {
@@ -3007,6 +2969,9 @@ void OnTick()
 //|                                                                  |
 //+------------------------------------------------------------------+
 
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
    if(manualBEToggle)
      {
       alertLinePrice1 = NormalizeDouble(ObjectGetDouble(0,"alertCloseLine_1",OBJPROP_PRICE),_Digits);
@@ -4766,4 +4731,85 @@ bool OpenPositionFilter(string pairName)
   }
 
 //+------------------------------------------------------------------+
+//+------------------------------------------------------------------+
+
+
+//+------------------------------------------------------------------+
+//|        Calcualte total volume at risk                            |
+//+------------------------------------------------------------------+
+double calculateVaR()
+  {
+   int totalPos = PositionsTotal();
+   double totalRisk = 0;
+   double TotalRiskVolume = 0;
+   string accountCurrency = AccountInfoString(ACCOUNT_CURRENCY);
+   double accountBallance = AccountInfoDouble(ACCOUNT_BALANCE);
+   double TotalStopLoss = 0;
+
+   if(totalPos > 0)
+     {
+      for(int i = 0; i < totalPos; i++)
+        {
+         ulong posTicket = PositionGetTicket(i);
+
+         if(PositionSelectByTicket(posTicket))
+           {
+            CTrade trade;
+            string posSymbol = PositionGetString(POSITION_SYMBOL);
+            int posDigits = (int)SymbolInfoInteger(posSymbol,SYMBOL_DIGITS);
+            double posOpenPrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),posDigits);
+            double posSl = NormalizeDouble(PositionGetDouble(POSITION_SL),posDigits);
+            double posVolume = NormalizeDouble(PositionGetDouble(POSITION_VOLUME),2);
+            double posPoint = SymbolInfoDouble(posSymbol,SYMBOL_POINT);
+            double tickValue = NormalizeDouble(SymbolInfoDouble(posSymbol,SYMBOL_TRADE_TICK_VALUE)/posPoint,posDigits);
+
+            if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position has type BUY
+               if(posSl < posOpenPrice)
+                 {
+                  double riskVolume = NormalizeDouble((posOpenPrice - posSl)*posVolume*tickValue,2);
+                  TotalRiskVolume += riskVolume;
+                 }
+
+            if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)  // checking if the open position has type SELL
+               if(posSl > posOpenPrice)
+                 {
+                  double riskVolume = NormalizeDouble((posSl - posOpenPrice)*posVolume*tickValue,2);
+                  TotalRiskVolume += riskVolume;
+                 }
+
+           }
+
+
+        }
+     }
+
+   return(TotalRiskVolume);
+
+  } // end of calculate VaR
+//+------------------------------------------------------------------+
+
+
+//+------------------------------------------------------------------+
+//|    Function that stops alerts if VaR is > than VaR limit         | qqq
+//+------------------------------------------------------------------+
+bool VaRfilterGo(double riskLimit)
+  {
+   if(maxVARFilter)
+     {
+      string accountCurrency = AccountInfoString(ACCOUNT_CURRENCY);
+      double TotalRiskVolume = calculateVaR();
+      double accountBallance = AccountInfoDouble(ACCOUNT_BALANCE);
+      double percentAtRisk = 0;
+      if(accountBallance > 0)
+         percentAtRisk = NormalizeDouble(TotalRiskVolume / accountBallance * 100,2);
+
+      if(percentAtRisk < riskLimit)
+         return(true);
+      else
+         return(false);
+     }
+   else
+      return(true);
+
+  }
 //+------------------------------------------------------------------+
