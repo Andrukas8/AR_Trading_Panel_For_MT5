@@ -122,16 +122,16 @@ input ENUM_APPLIED_PRICE ClosePosMaAppPrice = PRICE_MEDIAN; // _____ CLOSE MA PR
 input group "------------- TENKANSEN BREAK ALERT --------------------------"
 input bool SignalTenkansenBreak = false; // ALERT ON TK BREAK
 input bool KJSSAFilter = true; // _____ KJ & SSA FILTER
-input int KJSSAFilterRange = 2; // _____ KJ & SSA RILTER RANGE
+input int KJSSAFilterRange = 2; // __________ KJ & SSA FILTER RANGE
 
 input group "------------- MOVING AVERAGE BREAK ALERT ---------------------"
 input bool MABreak = true; // ALERT ON MA BREAK
 input bool MABreakUseAlligatorFilter = true; // _____ USE ALLIGATOR FILTER ON MA BREAK ALERT
-input int alligatorMultiplierMABreak = 1; // _____ ALLIGATOR MULTIPLIER FILTER ON MA BREAK ALERT
-input int MABreakPeriod = 5; // _____ BREAK MA PERIOD
-input int MABreakShift = 3; // _____ BREAK MA SHIFT
-input ENUM_MA_METHOD MABreakMethod = MODE_SMMA; // _____ BREAL MA METHOD
-input ENUM_APPLIED_PRICE MABreakPrice = PRICE_MEDIAN; // _____ BREAK MA PRICE
+input int alligatorMultiplierMABreak = 1; // __________ ALLIGATOR MULTIPLIER FILTER ON MA BREAK ALERT
+input int MABreakPeriod = 5; // __________ BREAK MA PERIOD
+input int MABreakShift = 3; // __________ BREAK MA SHIFT
+input ENUM_MA_METHOD MABreakMethod = MODE_SMMA; // __________ BREAK MA METHOD
+input ENUM_APPLIED_PRICE MABreakPrice = PRICE_MEDIAN; // __________ BREAK MA PRICE
 
 input group "------------- Box Settings ----------------------------------"
 input string timeFrom = "15:00"; // TIME FROM
