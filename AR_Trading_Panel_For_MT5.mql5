@@ -2124,6 +2124,7 @@ void CControlsDialog::OnClickDrawPositionsBtn(void)
                long time1 = PositionGetInteger(POSITION_TIME);
                long time2 = time1+(PeriodSeconds(_Period)*15);
                double price1 = PositionGetDouble(POSITION_PRICE_OPEN);
+
                double price2 = PositionGetDouble(POSITION_SL);
                double price3 = PositionGetDouble(POSITION_TP);
                string posProfit = AccountInfoString(ACCOUNT_CURRENCY) + " " + DoubleToString(PositionGetDouble(POSITION_PROFIT),2);
@@ -2148,10 +2149,39 @@ void CControlsDialog::OnClickDrawPositionsBtn(void)
 
                if(price3 > 0)
                  {
+
+                  alertCloseLine = true;
+
                   ObjectCreate(0, "AR_TP_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price3);
                   ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrDarkGreen);
                   ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
                   ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
+
+                  if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position has type BUY
+                    {
+                     ObjectCreate(0,"alertCloseLine_1",OBJ_HLINE,0,0,price3);
+                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrSilver);
+                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_STYLE, STYLE_DASH);
+                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_WIDTH, 2);
+                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_BACK, true);
+                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTABLE, true);
+                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTED, false);
+                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_HIDDEN, false);
+                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_ZORDER, 0);
+                    }
+                  else
+                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL) // checking if the open position has type BUY
+                       {
+                        ObjectCreate(0,"alertCloseLine_2",OBJ_HLINE,0,0,price3);
+                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
+                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_STYLE, STYLE_DASH);
+                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_WIDTH, 2);
+                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_BACK, true);
+                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTABLE, true);
+                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, false);
+                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_HIDDEN, false);
+                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_ZORDER, 0);
+                       }
                  }
               }
            }
@@ -2160,11 +2190,15 @@ void CControlsDialog::OnClickDrawPositionsBtn(void)
    else
       if(totalPosCurrentChart == 0)
         {
+         alertCloseLine = false;
+         m_ManualBEBtn.Color(clrBlack);
          string Name;
          for(int i = ObjectsTotal(0,0) -1 ; i >= 0; i--)
            {
             Name = ObjectName(0,i);
             if(StringSubstr(Name, 0, 3) == "AR_")
+               ObjectDelete(0,Name);
+            if(StringSubstr(Name, 0, 10) == "alertClose")
                ObjectDelete(0,Name);
            }
         }
@@ -2182,7 +2216,6 @@ void CControlsDialog::OnClickShowAlertLinesBtn(void)
    else
       if(!alertCloseLine)
          alertCloseLine = true;
-
 
    if(alertCloseLine)
      {
@@ -2228,7 +2261,6 @@ void CControlsDialog::OnClickShowAlertLinesBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickAlertCloseBtn(void)
   {
-
    if(alertCloseLine)
      {
       if(setAlarmCloseLine)
@@ -2267,7 +2299,6 @@ void CControlsDialog::OnClickAlertCloseBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickManualBEBtn(void)
   {
-
    if(alertCloseLine)
      {
 
@@ -4790,7 +4821,7 @@ double calculateVaR()
 
 
 //+------------------------------------------------------------------+
-//|    Function that stops alerts if VaR is > than VaR limit         | qqq
+//|    Function that stops alerts if VaR is > than VaR limit         |
 //+------------------------------------------------------------------+
 bool VaRfilterGo(double riskLimit)
   {
@@ -4812,4 +4843,5 @@ bool VaRfilterGo(double riskLimit)
       return(true);
 
   }
+//+------------------------------------------------------------------+
 //+------------------------------------------------------------------+
