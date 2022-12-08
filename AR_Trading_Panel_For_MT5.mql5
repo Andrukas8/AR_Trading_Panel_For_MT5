@@ -54,6 +54,7 @@ input double maxVARFiltervalue = 1.5; // Max VaR filter value in % (use 100% to 
 input group "------------- Position Variables ----------------------------"
 input bool showProfitOnChart = false; // SHOW POSITION PROFIT ON CHART
 input bool showEAComment = false; // SHOW EA COMMENT
+input bool debuggingComments = true; // SHOW DEBUGGING COMMENTS
 input bool useSymmetricalPositionFilter = false; // DO NOT SHOW SIGNALS FOR SYMMETRICAL PAIRS
 input bool useOpenPositionFilter = false; // DO NOT SHOW SIGNALS FOR INSTRUMENTS WITH OPEN POSITIONS
 input ENUM_STRATEGY StrategySelect = ICHI_TENKANBR;
@@ -3066,6 +3067,17 @@ void OnTick()
 
          if(KJSSAFilter)
            {
+            if(debuggingComments)
+              {
+               textComment += "=======================  DEBUGGING KJSSAFilter =====================\n";
+               textComment += "KJSSAFilterRange = " + IntegerToString(KJSSAFilterRange) + " \n";
+               textComment += "KijunsenArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(KijunsenArr[KJSSAFilterRange],_Digits) + " \n";
+               textComment += "KijunsenArr[ 0 ] = " + DoubleToString(KijunsenArr[0],_Digits) + " \n";
+               textComment += "====================================================================\n";
+               textComment += "ShiftedSenkouspanAArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n";
+               textComment += "ShiftedSenkouspanAArr[ 0 ] = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + " \n";
+              }
+
             if(KijunsenArr[KJSSAFilterRange] > KijunsenArr[0])
               {
                if(ShiftedSenkouspanAArr[KJSSAFilterRange] >  ShiftedSenkouspanAArr[0])
