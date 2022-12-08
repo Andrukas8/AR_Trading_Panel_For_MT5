@@ -229,7 +229,7 @@ string StrSellSignal_2;
 string StrSellSignal_3;
 string StrSellSignal_4;
 
-string captionString = "AR Trading Pannel";
+string captionString = "AR TPanel ";
 
 //+------------------------------------------------------------------+
 //| defines                                                          |
@@ -1783,6 +1783,11 @@ void CControlsDialog::OnClickDoubleOrderBtn(void)
                      PendingBuyStopDoubleOrder();
                     }
               }
+
+   ObjectDelete(0,"priceLine");
+   ObjectDelete(0,"stopLossLine");
+   ObjectDelete(0,"takeProfitLine");
+
   }
 
 
@@ -2514,7 +2519,7 @@ void OnTick()
       if(accountBallance > 0)
          percentAtRisk = NormalizeDouble(TotalRiskVolume / accountBallance * 100,2);
 
-      captionString += "AR Trading Panel | Total VaR: " + accountCurrency + " " + DoubleToString(TotalRiskVolume,2) + " | " + DoubleToString(percentAtRisk,2) + " % | " + IntegerToString(VaRfilterGo(maxVARFiltervalue));
+      captionString += "AR TPanel | " + _Symbol + " | TF " + IntegerToString(TimeFrame) + " | Total VaR: " + accountCurrency + " " + DoubleToString(TotalRiskVolume,2) + " | " + DoubleToString(percentAtRisk,2) + " % | " + IntegerToString(VaRfilterGo(maxVARFiltervalue));
       ObjectSetString(0,ExtDialog.Name()+"Caption",OBJPROP_TEXT,captionString);
       captionString = "";
 
