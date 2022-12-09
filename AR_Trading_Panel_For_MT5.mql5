@@ -123,7 +123,7 @@ input ENUM_APPLIED_PRICE ClosePosMaAppPrice = PRICE_MEDIAN; // _____ CLOSE MA PR
 
 input group "------------- TENKANSEN BREAK ALERT --------------------------"
 input bool SignalTenkansenBreak = true; // ALERT ON TK BREAK
-input bool KJSSAFilter = true; // _____ KJ & SSA FILTER
+input bool KJSSAFilter = true; // _____ KJ & SSA FILTER   qqq
 input int KJSSAFilterRange = 2; // __________ KJ & SSA FILTER RANGE
 
 input group "------------- MOVING AVERAGE BREAK ALERT ---------------------"
@@ -1637,8 +1637,15 @@ bool CControlsDialog::CreateWm3AlertBtn(void)
    if(!m_wm3AlertBtn.Create(m_chart_id,m_name+"wm3AlertBtn",m_subwin,x1,y1,x2,y2))
       return(false);
 
-   if(!m_wm3AlertBtn.Text("W3"))
-      return(false);
+   if(wiseMan3PermanentToggle)
+     {
+      if(!m_wm3AlertBtn.Text("[W3]"))
+         return(false);
+
+     }
+   else
+      if(!m_wm3AlertBtn.Text("W3"))
+         return(false);
 
    if(!Add(m_wm3AlertBtn))
       return(false);
@@ -2393,11 +2400,17 @@ void CControlsDialog::OnClickWm3AlertBtn(void)
          if(!wm3AlertToggle)
             wm3AlertToggle = true;
 
-      if(wm3AlertToggle)
+
+      if(wiseMan3PermanentToggle)
          m_wm3AlertBtn.Text("[W3]");
       else
-         if(!wm3AlertToggle)
-            m_wm3AlertBtn.Text("W3");
+         if(!wiseMan3PermanentToggle)
+            if(wm3AlertToggle)
+               m_wm3AlertBtn.Text("[W3]");
+            else
+               if(!wm3AlertToggle)
+                  m_wm3AlertBtn.Text("W3");
+
      }
   }
 
@@ -3036,6 +3049,7 @@ void OnTick()
 
          bool KJSSAFilterUp = false;
          bool KJSSAFilterDn = false;
+         bool KumoIsWider = false;
 
          static datetime timeStamp;
          datetime time = iTime(_Symbol,TimeFrame,0);
@@ -3069,6 +3083,14 @@ void OnTick()
 
          CopyBuffer(handleIchimoku,4,26*ichimokuMultiplier,KJSSAFilterRange+1,ChikouspanArr);
 
+         double KumoDeltaCurrent = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr[KJSSAFilterRange] - ShiftedSenkouspanBArr[KJSSAFilterRange]),_Digits);
+         double KumoDeltaPrevious = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr[0] - ShiftedSenkouspanBArr[0]),_Digits);
+
+         if(KumoDeltaCurrent > KumoDeltaPrevious)
+            KumoIsWider = true;
+         else
+            KumoIsWider = false;
+
 
          if(KJSSAFilter)
            {
@@ -3076,40 +3098,53 @@ void OnTick()
               {
                textComment += "=======================  DEBUGGING KJSSAFilter =====================\n";
                textComment += "KJSSAFilterRange = " + IntegerToString(KJSSAFilterRange) + " \n";
-               textComment += "KijunsenArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(KijunsenArr[KJSSAFilterRange],_Digits) + " \n";
-               textComment += "KijunsenArr[ 0 ] = " + DoubleToString(KijunsenArr[0],_Digits) + " \n";
+               textComment += "CURRENT  KijunsenArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(KijunsenArr[KJSSAFilterRange],_Digits) + " \n";
+               textComment += "PREVIOUS KijunsenArr[ 0 ] = " + DoubleToString(KijunsenArr[0],_Digits) + " \n";
+
                textComment += "====================================================================\n";
-               textComment += "ShiftedSenkouspanAArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n";
-               textComment += "ShiftedSenkouspanAArr[ 0 ] = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + " \n";
+               textComment += "CURRENT  ShiftedSenkouspanAArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n";
+               textComment += "CURRENT  ShiftedSenkouspanBArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(ShiftedSenkouspanBArr[KJSSAFilterRange],_Digits) + " \n";
+               textComment += "====================================================================\n";
+               textComment += "PREVIOUS ShiftedSenkouspanAArr[ 0 ] = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + " \n";
+               textComment += "PREVIOUS ShiftedSenkouspanBArr[ 0 ] = " + DoubleToString(ShiftedSenkouspanBArr[0],_Digits) + " \n";
+               textComment += "====================================================================\n";
+               textComment += "CURRENT Kumo Delta = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange] - ShiftedSenkouspanBArr[KJSSAFilterRange],_Digits) + " \n";
+               textComment += "PREVIOUS Kumo Delta = " + DoubleToString(ShiftedSenkouspanAArr[0] - ShiftedSenkouspanBArr[0],_Digits) + " \n";
+               textComment += "KumoIsWider = " + IntegerToString(KumoIsWider) + "\n";
+               textComment += "====================================================================\n";
               }
 
-            if(KijunsenArr[KJSSAFilterRange] > KijunsenArr[0])
+
+            if(KumoIsWider)
               {
-               if(ShiftedSenkouspanAArr[KJSSAFilterRange] >  ShiftedSenkouspanAArr[0])
+               if(KijunsenArr[KJSSAFilterRange] > KijunsenArr[0])
                  {
-                  KJSSAFilterUp = true;
-                  KJSSAFilterDn = false;
-                 }
-              }
-            else
-               if(KijunsenArr[KJSSAFilterRange] < KijunsenArr[0])
-                 {
-                  if(ShiftedSenkouspanAArr[KJSSAFilterRange] <  ShiftedSenkouspanAArr[0])
+                  if(ShiftedSenkouspanAArr[KJSSAFilterRange] >  ShiftedSenkouspanAArr[0])
                     {
-                     KJSSAFilterUp = false;
-                     KJSSAFilterDn = true;
+                     KJSSAFilterUp = true;
+                     KJSSAFilterDn = false;
                     }
                  }
-           }
-         else
-            if(!KJSSAFilter)
-              {
-               KJSSAFilterUp = true;
-               KJSSAFilterDn = true;
+               else
+                  if(KijunsenArr[KJSSAFilterRange] < KijunsenArr[0])
+                    {
+                     if(ShiftedSenkouspanAArr[KJSSAFilterRange] <  ShiftedSenkouspanAArr[0])
+                       {
+                        KJSSAFilterUp = false;
+                        KJSSAFilterDn = true;
+                       }
+                    }
               }
+            else
+               if(!KJSSAFilter)
+                 {
+                  KJSSAFilterUp = true;
+                  KJSSAFilterDn = true;
+                 }
+           }
 
 
-         // Print(KJSSAFilterUp," ", KJSSAFilterDn);
+
 
 
          if(timeStamp != time)
@@ -3118,9 +3153,6 @@ void OnTick()
 
             BuySignal_4 = false;
             SellSignal_4 = false;
-
-            //   KJSSAFilterUp = false;
-            //  KJSSAFilterDn = false;
 
 
             // Buy Signal
