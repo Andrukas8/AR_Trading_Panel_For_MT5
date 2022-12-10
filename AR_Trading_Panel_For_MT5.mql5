@@ -1,12 +1,8 @@
 //+------------------------------------------------------------------+
-//|                                               ControlsButton.mq5 |
-//|                        Copyright 2017, MetaQuotes Software Corp. |
-//|                                             https://www.mql5.com |
+//|      AR TPanel - a universal Expert Adviser for MT5              |
 //+------------------------------------------------------------------+
-#property copyright "Copyright 2017, MetaQuotes Software Corp."
-#property link      "https://www.mql5.com"
-#property version   "1.00"
-#property description "Control Panels and Dialogs. Demonstration class CButton"
+
+#property description "AR TPanel"
 
 #include <Trade/Trade.mqh>
 #include <Controls\Dialog.mqh>
@@ -47,14 +43,14 @@ string StrategyStr[10] =
 
 input group "------------- Auto Position Management Settings -------------"
 input int TslOffsetPoints = 10; // TSL BUFFER POINTS FOR MA/TKS/KJS
-input ENUM_TIMEFRAMES TimeFrame = 5; // TSL TIMEFRAME
+input ENUM_TIMEFRAMES TimeFrame = 5; // EA TIMEFRAME
 input bool showTotalRiskCurrent = true; // Show Total Risk in Caption
-input double maxVARFiltervalue = 1.5; // Max VaR filter value in % (use 100% to turn off)
+input double maxVARFiltervalue = 2; // Max VaR filter value in % (use 100% to turn off)
 
 input group "------------- Position Variables ----------------------------"
-input bool showProfitOnChart = false; // SHOW POSITION PROFIT ON CHART
 input bool showEAComment = false; // SHOW EA COMMENT
-input bool debuggingComments = true; // SHOW DEBUGGING COMMENTS
+input bool debuggingComments = false; // SHOW DEBUGGING COMMENTS
+input bool showProfitOnChart = false; // SHOW POSITION PROFIT ON CHART
 input bool useSymmetricalPositionFilter = false; // DO NOT SHOW SIGNALS FOR SYMMETRICAL PAIRS
 input bool useOpenPositionFilter = false; // DO NOT SHOW SIGNALS FOR INSTRUMENTS WITH OPEN POSITIONS
 input ENUM_STRATEGY StrategySelect = ICHI_TENKANBR;
@@ -65,7 +61,6 @@ input string RiskLevelDef = "2"; // RISK % OF DEPOSIT
 input double marginToBallancePercent = 90; // MARGIN TO DEPOSIT %
 
 input group "------------- Auto Position Management Controls ------------"
-bool updateProfitOnchart = false; // SHOW POSITION PROFIT ON CHART
 input bool autoBreakEven = false; // AUTO BREAKEVEN
 input double breakevenRatio = 1; //  _____ BE RATIO
 input bool alertBreakEven = false; // _____ ALERT ON BE
@@ -165,26 +160,15 @@ int handleSlow3LSMA;
 int handleMABreak;
 int handleAlligatorMABreak;
 int handleUpperTFIchimoku;
-
 string textComment;
-
-struct StopLoss
-  {
-   ulong             posTicketArr;
-   double            posSlArr;
-  };
-
-StopLoss originalPosSlArr[];
-
+string debugComment;
+bool updateProfitOnchart = false; // SHOW POSITION PROFIT ON CHART
 double ask;
 double bid;
-
 double tpBuy;
 double tpSell;
-
 double slSell;
 double slBuy;
-
 double posLots; // Lot size
 double slPips; // Stoploss in pips
 double RiskToReward; // Risk to Reward Ratio
@@ -2527,6 +2511,11 @@ void OnChartEvent(const int id,         // event ID
 void OnTick()
   {
 
+
+   textComment = "";
+   debugComment = "";
+
+
 //+------------------------------------------------------------------+
 //|                                                                  |
 //|  ----- Show total risk value in Caption ------------------------ |
@@ -3031,18 +3020,12 @@ void OnTick()
       //|                                                                  |
       //+------------------------------------------------------------------+
 
-
-
-
       //+------------------------------------------------------------------+
       //|                                                                  |
       //|  ----- Signal If TK Break Strategy Conditions Met -------------- |
       //|                                                                  |
       //+------------------------------------------------------------------+
 
-      //+------------------------------------------------------------------+
-      //|                                                                  |
-      //+------------------------------------------------------------------+
       if(SignalTenkansenBreak)
         {
          bool BuySignal_1 = false;
@@ -3061,7 +3044,7 @@ void OnTick()
          bool KJSSAFilterDn = false;
          bool KumoIsWider = false;
 
-         // Upper TF Ichimoku Variables
+         // Upper TF Ichimoku Variables qqq
 
          bool UpperTFKJSSAFilterUp = false;
          bool UpperTFKJSSAFilterDn = false;
@@ -3142,7 +3125,7 @@ void OnTick()
             CopyBuffer(handleUpperTFIchimoku,2,-26*ichimokuMultiplier,KJSSAFilterRange+1,UpperTFShiftedSenkouspanAArr);
             CopyBuffer(handleUpperTFIchimoku,3,-26*ichimokuMultiplier,KJSSAFilterRange+1,UpperTFShiftedSenkouspanBArr);
 
-            CopyBuffer(handleUpperTFIchimoku,4,26*ichimokuMultiplier,KJSSAFilterRange+1,UpperTFChikouspanArr);
+            CopyBuffer(handleUpperTFIchimoku,4,26*ichimokuMultiplier-KJSSAFilterRange,KJSSAFilterRange+1,UpperTFChikouspanArr);
 
             double UpperTFKumoDeltaCurrent = NormalizeDouble(MathAbs(UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] - UpperTFShiftedSenkouspanBArr[KJSSAFilterRange]),_Digits);
             double UpperTFKumoDeltaPrevious = NormalizeDouble(MathAbs(UpperTFShiftedSenkouspanAArr[0] - UpperTFShiftedSenkouspanBArr[0]),_Digits);
@@ -3178,203 +3161,204 @@ void OnTick()
                   UpperTFSellGo = true;
                  }
 
-
-            if(KJSSAFilter)
-               if(KumoIsWider)
-                  if(KijunsenArr[KJSSAFilterRange] > KijunsenArr[0] && UpperTFBuyGo)
-                     if(ShiftedSenkouspanAArr[KJSSAFilterRange] >  ShiftedSenkouspanAArr[0])
-                       {
-                        KJSSAFilterUp = true;
-                        KJSSAFilterDn = false;
-                       }
-                     else
-                        if(KijunsenArr[KJSSAFilterRange] < KijunsenArr[0] && UpperTFSellGo)
-                           if(ShiftedSenkouspanAArr[KJSSAFilterRange] <  ShiftedSenkouspanAArr[0])
-                             {
-                              KJSSAFilterUp = false;
-                              KJSSAFilterDn = true;
-                             }
-                           else
-                              if(!KJSSAFilter)
-                                {
-                                 KJSSAFilterUp = true;
-                                 KJSSAFilterDn = true;
-                                }
-
             if(debuggingComments)
               {
-               textComment += "=======================  DEBUGGING KJSSAFilter =====================\n";
-               textComment += "KJSSAFilterRange = " + IntegerToString(KJSSAFilterRange) + " \n";
-               textComment += "CURRENT  KijunsenArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(KijunsenArr[KJSSAFilterRange],_Digits) + " \n";
-               textComment += "PREVIOUS KijunsenArr[ 0 ] = " + DoubleToString(KijunsenArr[0],_Digits) + " \n";
-
-               textComment += "====================================================================\n";
-               textComment += "CURRENT  ShiftedSenkouspanAArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n";
-               textComment += "CURRENT  ShiftedSenkouspanBArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(ShiftedSenkouspanBArr[KJSSAFilterRange],_Digits) + " \n";
-               textComment += "====================================================================\n";
-               textComment += "PREVIOUS ShiftedSenkouspanAArr[ 0 ] = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + " \n";
-               textComment += "PREVIOUS ShiftedSenkouspanBArr[ 0 ] = " + DoubleToString(ShiftedSenkouspanBArr[0],_Digits) + " \n";
-               textComment += "====================================================================\n";
-               textComment += "CURRENT Kumo Delta = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange] - ShiftedSenkouspanBArr[KJSSAFilterRange],_Digits) + " \n";
-               textComment += "PREVIOUS Kumo Delta = " + DoubleToString(ShiftedSenkouspanAArr[0] - ShiftedSenkouspanBArr[0],_Digits) + " \n";
-               textComment += "KumoIsWider = " + IntegerToString(KumoIsWider) + "\n";
-               textComment += "====================================================================\n";
-
-               if(upperTFFilterIchimoku)
-                 {
-                  textComment += "=======================  DEBUGGING UPPER TF ICHIMOKU FILTER =====================\n";
-                  textComment += "CURRENT  UpperTFKijunsenArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFKijunsenArr[KJSSAFilterRange],_Digits) + " \n";
-                  textComment += "PREVIOUS KijunsenArr[ 0 ] = " + DoubleToString(KijunsenArr[0],_Digits) + " \n";
-
-                  textComment += "====================================================================\n";
-                  textComment += "CURRENT  ShiftedSenkouspanAArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n";
-                  textComment += "CURRENT  ShiftedSenkouspanBArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFShiftedSenkouspanBArr[KJSSAFilterRange],_Digits) + " \n";
-                  textComment += "====================================================================\n";
-                  textComment += "PREVIOUS ShiftedSenkouspanAArr[ 0 ] = " + DoubleToString(UpperTFShiftedSenkouspanAArr[0],_Digits) + " \n";
-                  textComment += "PREVIOUS ShiftedSenkouspanBArr[ 0 ] = " + DoubleToString(UpperTFShiftedSenkouspanBArr[0],_Digits) + " \n";
-                  textComment += "UpperTFChikouspanArr[ 0 ] = " + DoubleToString(UpperTFChikouspanArr[0],_Digits) + " \n";
-                  textComment += "UpperTFBar26Low = " + DoubleToString(UpperTFBar26Low,_Digits) + " \n";
-
-                 }
-
+               debugComment += "======== DEBUGGING UPPER TF ICHIMOKU FILTER ===\n";
+               debugComment += "|=> CURRENT  UpperTFKijunsenArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFKijunsenArr[KJSSAFilterRange],_Digits) + " \n";
+               debugComment += "|=> PREVIOUS UpperTFKijunsenArr[ 0 ] = " + DoubleToString(UpperTFKijunsenArr[0],_Digits) + " \n";
+               debugComment += "|=> CURRENT  UpperTFTenkansenArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFTenkansenArr[KJSSAFilterRange],_Digits) + " \n";
+               debugComment += "|=> PREVIOUS UpperTFTenkansenArr[ 0 ] = " + DoubleToString(UpperTFTenkansenArr[0],_Digits) + " \n";
+               debugComment += "|=> CURRENT  UpperTFShiftedSenkouspanAArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n";
+               debugComment += "|=> CURRENT  UpperTFShiftedSenkouspanBArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFShiftedSenkouspanBArr[KJSSAFilterRange],_Digits) + " \n";
+               debugComment += "|=> PREVIOUS UpperTFShiftedSenkouspanAArr[ 0 ] = " + DoubleToString(UpperTFShiftedSenkouspanAArr[0],_Digits) + " \n";
+               debugComment += "|=> PREVIOUS UpperTFShiftedSenkouspanBArr[ 0 ] = " + DoubleToString(UpperTFShiftedSenkouspanBArr[0],_Digits) + " \n";
+               debugComment += "|=> UpperTFChikouspanArr[ 0 ] = " + DoubleToString(UpperTFChikouspanArr[0],_Digits) + " \n";
+               debugComment += "|=> UpperTFBar26Hi = " + DoubleToString(UpperTFBar26High,_Digits) + " \n";
+               debugComment += "|=> UpperTFBar26Lo = " + DoubleToString(UpperTFBar26Low,_Digits) + " \n";
+               debugComment += "|=> UpperTFBuyGo  = " + IntegerToString(UpperTFBuyGo) + " \n";
+               debugComment += "|=> UpperTFSellGo = " + IntegerToString(UpperTFSellGo) + " \n";
               }
 
 
-            if(timeStamp != time)
-              {
-               timeStamp = time;
 
-               BuySignal_4 = false;
-               SellSignal_4 = false;
+           }  // End of upper TF Ichimoku
 
+         if(KJSSAFilter)
+            if(KumoIsWider)
+               if(KijunsenArr[KJSSAFilterRange] > KijunsenArr[0] && UpperTFBuyGo)
+                  if(ShiftedSenkouspanAArr[KJSSAFilterRange] >  ShiftedSenkouspanAArr[0])
+                    {
+                     KJSSAFilterUp = true;
+                     KJSSAFilterDn = false;
+                    }
+                  else
+                     if(KijunsenArr[KJSSAFilterRange] < KijunsenArr[0] && UpperTFSellGo)
+                        if(ShiftedSenkouspanAArr[KJSSAFilterRange] <  ShiftedSenkouspanAArr[0])
+                          {
+                           KJSSAFilterUp = false;
+                           KJSSAFilterDn = true;
+                          }
+                        else
+                           if(!KJSSAFilter)
+                             {
+                              KJSSAFilterUp = true;
+                              KJSSAFilterDn = true;
+                             }
 
-               // Buy Signal
-
-               if(TenkansenArr[2] > KijunsenArr[2])
-                 {
-                  BuySignal_1 = true; // TK Cross
-                  SellSignal_1 = false; // cancelling sell signal
-                 }
-
-               if(ChikouspanArr[0] > Bar26High) // Chikou span above prices
-                 {
-                  BuySignal_2 = true;
-                  SellSignal_2 = false;
-                 }
-               else
-                  BuySignal_2 = false;
-
-               if((ShiftedSenkouspanAArr[0] > ShiftedSenkouspanBArr[0])) // Kumo green
-                 {
-                  BuySignal_3 = true;
-                  SellSignal_3 = false;
-                 }
-
-               if(ClosePrice_2 < TenkansenArr[0] && ClosePrice_1 > TenkansenArr[1]) // <<<<<<<<<<<<<<<<<<<<<<<< Buy Signal
-                 {
-                  BuySignal_4 = true;
-                  SellSignal_4 = false;
-                 }
-
-               if(BuySignal_1 && BuySignal_2 && BuySignal_3 && BuySignal_4)
-                 {
-                  BuySignal_GO = true;
-                  SellSignal_GO = false;
-                 }
-
-               StrBuySignal_GO = IntegerToString(BuySignal_GO);
-               StrBuySignal_1 = IntegerToString(BuySignal_1);
-               StrBuySignal_2 = IntegerToString(BuySignal_2);
-               StrBuySignal_3 = IntegerToString(BuySignal_3);
-               StrBuySignal_4 = IntegerToString(BuySignal_4);
-
-               if(BuySignal_GO && KJSSAFilterUp)
-                 {
-                  Alert(_Symbol," === Tenkansen Break Strategy: Buy Signal = ",BuySignal_GO," ===");
-
-                  BuySignal_GO = false;
-                  BuySignal_1 = false;
-                  BuySignal_2 = false;
-                  BuySignal_3 = false;
-                  BuySignal_4 = false;
-                 }
-
-               // SELL trades
-
-               if(TenkansenArr[2] < KijunsenArr[2])
-                 {
-                  SellSignal_1 = true; // KT Cross
-                  BuySignal_1 = false; // cancelling buy signal
-                 }
-
-               if(ChikouspanArr[0] < Bar26Low) // Chikous span
-                 {
-                  SellSignal_2 = true;
-                  BuySignal_2 = false;
-                 }
-               else
-                 {
-                  SellSignal_2 = false;
-                 }
-
-               if((ShiftedSenkouspanAArr[0] < ShiftedSenkouspanBArr[0]))
-                 {
-                  SellSignal_3 = true; // Kumo red
-                  BuySignal_3 = false;
-                 }
-
-               if(ClosePrice_2 > TenkansenArr[0] && ClosePrice_1 < TenkansenArr[1]) // <<<<<<<<<<<<<<<<<<<<<<<< Sell Signal
-                 {
-                  BuySignal_4 = false;
-                  SellSignal_4 = true;
-                 }
-
-               if(SellSignal_1 && SellSignal_2 && SellSignal_3 && SellSignal_4)
-                 {
-                  SellSignal_GO = true;
-                  BuySignal_GO = false;
-                 }
-
-               StrSellSignal_GO = IntegerToString(SellSignal_GO);
-               StrSellSignal_1 = IntegerToString(SellSignal_1);
-               StrSellSignal_2 = IntegerToString(SellSignal_2);
-               StrSellSignal_3 = IntegerToString(SellSignal_3);
-               StrSellSignal_4 = IntegerToString(SellSignal_4);
-
-               if(SellSignal_GO  && KJSSAFilterDn)
-                 {
-                  Alert(_Symbol," === Tenkansen Break Strategy: Sell Signal = ",SellSignal_GO," ===");
-
-                  SellSignal_GO = false;
-                  SellSignal_1 = false;
-                  SellSignal_2 = false;
-                  SellSignal_3 = false;
-                  SellSignal_4 = false;
-                 }
-
-              } // timeStamp != time
-
-            textComment += "----- TK BREAK STRATEGY SIGNALS -----\n";
-            textComment += "Kinjunsen SSA Filter Toggle = " + IntegerToString(KJSSAFilter) + " \n";
-
-            if(KJSSAFilter)
-              {
-               textComment += "KJSSAFilterRange = " + IntegerToString(KJSSAFilterRange) + " \n";
-               textComment += "KJSSAFilterUp = " + IntegerToString(KJSSAFilterUp) + " \n";
-               textComment += "KJSSAFilterDn = " + IntegerToString(KJSSAFilterDn) + " \n";
-               textComment += "----- KijunsenArr -----\n";
-               textComment += "KijunsenArr[0] previous = " + DoubleToString(KijunsenArr[0],_Digits) + " \n"; // current
-               textComment += "KijunsenArr["+IntegerToString(KJSSAFilterRange)+"] current  = " + DoubleToString(KijunsenArr[KJSSAFilterRange],_Digits) + " \n"; // current
-               textComment += "----- SenkouspanAArr -----\n";
-               textComment += "ShiftedSenkouspanAArr[0] previous = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + " \n"; // previous
-               textComment += "ShiftedSenkouspanAArr["+IntegerToString(KJSSAFilterRange)+"] current  = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n"; // current
-              }
-
-            textComment += "Buy Signels  = " + StrBuySignal_1 + " " + StrBuySignal_2 + " " + StrBuySignal_3 + " " + StrBuySignal_4 + " = " + StrSellSignal_GO + "\n";
-            textComment += "Sell Signals = " + StrSellSignal_1 + " " + StrSellSignal_2 + " " + StrSellSignal_3 + " " + StrSellSignal_4 + " = " + StrSellSignal_GO + "\n";
-
+         if(debuggingComments)
+           {
+            debugComment += "======== DEBUGGING KJSSAFilter ===============\n";
+            debugComment += "|=> KJSSAFilterRange = " + IntegerToString(KJSSAFilterRange) + " \n";
+            debugComment += "|=> CURRENT  KijunsenArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(KijunsenArr[KJSSAFilterRange],_Digits) + " \n";
+            debugComment += "|=> PREVIOUS KijunsenArr[ 0 ] = " + DoubleToString(KijunsenArr[0],_Digits) + " \n";
+            debugComment += "|=> CURRENT  ShiftedSenkouspanAArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n";
+            debugComment += "|=> CURRENT  ShiftedSenkouspanBArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(ShiftedSenkouspanBArr[KJSSAFilterRange],_Digits) + " \n";
+            debugComment += "|=> PREVIOUS ShiftedSenkouspanAArr[ 0 ] = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + " \n";
+            debugComment += "|=> PREVIOUS ShiftedSenkouspanBArr[ 0 ] = " + DoubleToString(ShiftedSenkouspanBArr[0],_Digits) + " \n";
+            debugComment += "|=> CURRENT Kumo Delta = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange] - ShiftedSenkouspanBArr[KJSSAFilterRange],_Digits) + " \n";
+            debugComment += "|=> PREVIOUS Kumo Delta = " + DoubleToString(ShiftedSenkouspanAArr[0] - ShiftedSenkouspanBArr[0],_Digits) + " \n";
+            debugComment += "|=> KumoIsWider = " + IntegerToString(KumoIsWider) + "\n";
            }
-        }
+
+
+         if(timeStamp != time)
+           {
+            timeStamp = time;
+
+            BuySignal_4 = false;
+            SellSignal_4 = false;
+
+
+            // Buy Signal
+
+            if(TenkansenArr[2] > KijunsenArr[2])
+              {
+               BuySignal_1 = true; // TK Cross
+               SellSignal_1 = false; // cancelling sell signal
+              }
+
+            if(ChikouspanArr[0] > Bar26High) // Chikou span above prices
+              {
+               BuySignal_2 = true;
+               SellSignal_2 = false;
+              }
+            else
+               BuySignal_2 = false;
+
+            if((ShiftedSenkouspanAArr[0] > ShiftedSenkouspanBArr[0])) // Kumo green
+              {
+               BuySignal_3 = true;
+               SellSignal_3 = false;
+              }
+
+            if(ClosePrice_2 < TenkansenArr[0] && ClosePrice_1 > TenkansenArr[1]) // <<<<<<<<<<<<<<<<<<<<<<<< Buy Signal
+              {
+               BuySignal_4 = true;
+               SellSignal_4 = false;
+              }
+
+            if(BuySignal_1 && BuySignal_2 && BuySignal_3 && BuySignal_4)
+              {
+               BuySignal_GO = true;
+               SellSignal_GO = false;
+              }
+
+            StrBuySignal_GO = IntegerToString(BuySignal_GO);
+            StrBuySignal_1 = IntegerToString(BuySignal_1);
+            StrBuySignal_2 = IntegerToString(BuySignal_2);
+            StrBuySignal_3 = IntegerToString(BuySignal_3);
+            StrBuySignal_4 = IntegerToString(BuySignal_4);
+
+            if(BuySignal_GO && KJSSAFilterUp)
+              {
+               Alert(_Symbol," === Tenkansen Break Strategy: Buy Signal = ",BuySignal_GO," ===");
+
+               BuySignal_GO = false;
+               BuySignal_1 = false;
+               BuySignal_2 = false;
+               BuySignal_3 = false;
+               BuySignal_4 = false;
+              }
+
+            // SELL trades
+
+            if(TenkansenArr[2] < KijunsenArr[2])
+              {
+               SellSignal_1 = true; // KT Cross
+               BuySignal_1 = false; // cancelling buy signal
+              }
+
+            if(ChikouspanArr[0] < Bar26Low) // Chikous span
+              {
+               SellSignal_2 = true;
+               BuySignal_2 = false;
+              }
+            else
+              {
+               SellSignal_2 = false;
+              }
+
+            if((ShiftedSenkouspanAArr[0] < ShiftedSenkouspanBArr[0]))
+              {
+               SellSignal_3 = true; // Kumo red
+               BuySignal_3 = false;
+              }
+
+            if(ClosePrice_2 > TenkansenArr[0] && ClosePrice_1 < TenkansenArr[1]) // <<<<<<<<<<<<<<<<<<<<<<<< Sell Signal
+              {
+               BuySignal_4 = false;
+               SellSignal_4 = true;
+              }
+
+            if(SellSignal_1 && SellSignal_2 && SellSignal_3 && SellSignal_4)
+              {
+               SellSignal_GO = true;
+               BuySignal_GO = false;
+              }
+
+            StrSellSignal_GO = IntegerToString(SellSignal_GO);
+            StrSellSignal_1 = IntegerToString(SellSignal_1);
+            StrSellSignal_2 = IntegerToString(SellSignal_2);
+            StrSellSignal_3 = IntegerToString(SellSignal_3);
+            StrSellSignal_4 = IntegerToString(SellSignal_4);
+
+            if(SellSignal_GO  && KJSSAFilterDn)
+              {
+               Alert(_Symbol," === Tenkansen Break Strategy: Sell Signal = ",SellSignal_GO," ===");
+
+               SellSignal_GO = false;
+               SellSignal_1 = false;
+               SellSignal_2 = false;
+               SellSignal_3 = false;
+               SellSignal_4 = false;
+              }
+
+           } // timeStamp != time
+
+         textComment += "----- TK BREAK STRATEGY SIGNALS -----\n";
+         textComment += "Kinjunsen SSA Filter Toggle = " + IntegerToString(KJSSAFilter) + " \n";
+
+         if(KJSSAFilter)
+           {
+            textComment += "KJSSAFilterRange = " + IntegerToString(KJSSAFilterRange) + " \n";
+            textComment += "KJSSAFilterUp = " + IntegerToString(KJSSAFilterUp) + " \n";
+            textComment += "KJSSAFilterDn = " + IntegerToString(KJSSAFilterDn) + " \n";
+            textComment += "----- KijunsenArr -----\n";
+            textComment += "KijunsenArr[0] previous = " + DoubleToString(KijunsenArr[0],_Digits) + " \n"; // current
+            textComment += "KijunsenArr["+IntegerToString(KJSSAFilterRange)+"] current  = " + DoubleToString(KijunsenArr[KJSSAFilterRange],_Digits) + " \n"; // current
+            textComment += "----- SenkouspanAArr -----\n";
+            textComment += "ShiftedSenkouspanAArr[0] previous = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + " \n"; // previous
+            textComment += "ShiftedSenkouspanAArr["+IntegerToString(KJSSAFilterRange)+"] current  = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n"; // current
+           }
+
+
+
+
+         textComment += "Buy Signels  = " + StrBuySignal_1 + " " + StrBuySignal_2 + " " + StrBuySignal_3 + " " + StrBuySignal_4 + " = " + StrSellSignal_GO + "\n";
+         textComment += "Sell Signals = " + StrSellSignal_1 + " " + StrSellSignal_2 + " " + StrSellSignal_3 + " " + StrSellSignal_4 + " = " + StrSellSignal_GO + "\n";
+
+        } //SignalTenkansenBreak
+
       //+------------------------------------------------------------------+
       //|                                                                  |
       //|  ----- End of Signal If TK Break Strategy Conditions Met ------- |
@@ -4216,6 +4200,11 @@ void OnTick()
 //+------------------------------------------------------------------+
    if(showEAComment)
      {
+      if(debuggingComments)
+        {
+         textComment += debugComment;
+         debugComment="";
+        }
       Comment(textComment);
       textComment="";
      }
