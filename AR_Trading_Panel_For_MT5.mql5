@@ -300,6 +300,8 @@ private:
    CButton           m_wm2AlertBtn;                  // Bill Williams Wise Man 2 (AO 3 bars of same color) alert toggle button
    CButton           m_wm3AlertBtn;                  // Bill Williams Wise Man 3 (Fractal break) alert toggle button
 
+   CButton           m_ScanChartsBtn;                // Scanner button to scan if any of the aisigned instruments meets partibular conditions
+
    CComboBox         m_StrategySelectorCBox;         // Dropdown list to select the strategy for the trade comment
 
 public:
@@ -335,6 +337,7 @@ protected:
    bool              CreateWm1AlertBtn(void);
    bool              CreateWm2AlertBtn(void);
    bool              CreateWm3AlertBtn(void);
+   bool              CreateScanChartsBtn(void);
 
    bool              CreateLotsEdit(void);
    bool              CreateSlPipsEdit(void);
@@ -405,6 +408,7 @@ protected:
    void              OnClickWm1AlertBtn(void);
    void              OnClickWm2AlertBtn(void);
    void              OnClickWm3AlertBtn(void);
+   void              OnClickScanChartsBtn(void);
 
   };
 //+------------------------------------------------------------------+
@@ -434,6 +438,7 @@ ON_EVENT(ON_CLICK,m_ManualBEBtn,OnClickManualBEBtn)
 ON_EVENT(ON_CLICK,m_wm1AlertBtn,OnClickWm1AlertBtn)
 ON_EVENT(ON_CLICK,m_wm2AlertBtn,OnClickWm2AlertBtn)
 ON_EVENT(ON_CLICK,m_wm3AlertBtn,OnClickWm3AlertBtn)
+ON_EVENT(ON_CLICK,m_ScanChartsBtn,OnClickScanChartsBtn)
 
 
 //+------------------------------------------------------------------+
@@ -555,6 +560,8 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
    if(!CreateWm2AlertBtn())
       return(false);
    if(!CreateWm3AlertBtn())
+      return(false);
+   if(!CreateScanChartsBtn())
       return(false);
 
    if(!CreateStrategySelectorCBox())
@@ -1281,7 +1288,7 @@ bool CControlsDialog::CreateShowLinesBtn(void)
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH;
+   int x2=x1+BUTTON_WIDTH/2;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_ShowLinesBtn.Create(m_chart_id,m_name+"ShowLinesBtn",m_subwin,x1,y1,x2,y2))
@@ -1438,7 +1445,7 @@ bool CControlsDialog::CreateDrawPositionsBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/2;
-   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/2;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1641,6 +1648,29 @@ bool CControlsDialog::CreateWm3AlertBtn(void)
    return(true);
   }
 
+//+------------------------------------------------------------------+
+//| Create the "Scan Charts" button                                  |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateScanChartsBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/2;
+   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/2;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_ScanChartsBtn.Create(m_chart_id,m_name+"ScanChartsBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+
+   if(!m_ScanChartsBtn.Text("SCAN"))
+      return(false);
+
+   if(!Add(m_ScanChartsBtn))
+      return(false);
+
+//--- succeed
+   return(true);
+  }
 
 
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -2403,6 +2433,281 @@ void CControlsDialog::OnClickWm3AlertBtn(void)
 
 
 //+------------------------------------------------------------------+
+//| Event handler for "Scan Charts" Button                           | qqq
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickScanChartsBtn(void)
+  {
+   Print("Scanning Started...");
+
+   string symbolList[] =
+     {
+      "EURUSD", // USD
+      "GBPUSD",
+      "AUDUSD",
+      "USDJPY",
+      "USDCAD",
+      "USDCHF",
+      "EURAUD", // EUR
+      "EURCAD",
+      "EURCHF",
+      "EURJPY",
+      "GBPAUD", // GBP
+      "GBPCAD",
+      "GBPJPY",
+      "CADJPY", // CAD
+      "UK100",
+      "GER40",  // Indices
+      "NAS100",
+      "US30",
+      "XAUUSD",
+      "XAUAUD",
+      "JPN225"
+     };
+
+   int symbolListSize = (int)ArrayRange(symbolList,0);
+   for(int i=0; i<=symbolListSize-1; i++)
+     {
+      // Print(symbolList[i]);
+      // D1 && H1
+      // D1
+
+      //  if((long)TimeCurrent() - SymbolInfoInteger(symbolList[i],SYMBOL_TIME) < 500) -- if there will be issues with Ichimoku placing on charts
+      // {
+      int symbolDigits = (int)SymbolInfoInteger(symbolList[i],SYMBOL_DIGITS);
+      int handleIchimoku_D1 = iIchimoku(symbolList[i],PERIOD_D1,9,26,52);
+      double ClosePrice_D1 = iClose(symbolList[i],PERIOD_D1,1);
+      double Bar26High_D1 = iHigh(symbolList[i],PERIOD_D1,26);
+      double Bar26Low_D1 = iLow(symbolList[i],PERIOD_D1,26);
+      double TenkansenArr_D1[];
+      double KijunsenArr_D1[];
+      double SenkouspanAArr_D1[];
+      double SenkouspanBArr_D1[];
+      double ShiftedSenkouspanAArr_D1[];
+      double ShiftedSenkouspanBArr_D1[];
+      double ChikouspanArr_D1[];
+
+      CopyBuffer(handleIchimoku_D1,0,0,3,TenkansenArr_D1);
+      CopyBuffer(handleIchimoku_D1,1,0,3,KijunsenArr_D1);
+      CopyBuffer(handleIchimoku_D1,2,0,3,SenkouspanAArr_D1);
+      CopyBuffer(handleIchimoku_D1,3,0,2,SenkouspanBArr_D1);
+
+      CopyBuffer(handleIchimoku_D1,2,-26,3,ShiftedSenkouspanAArr_D1);
+      CopyBuffer(handleIchimoku_D1,3,-26,3,ShiftedSenkouspanBArr_D1);
+
+      CopyBuffer(handleIchimoku_D1,4,26,3,ChikouspanArr_D1);
+
+      double KumoDeltaCurrent_D1 = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr_D1[2] - ShiftedSenkouspanBArr_D1[2]),symbolDigits);
+      double KumoDeltaPrevious_D1 = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr_D1[0] - ShiftedSenkouspanBArr_D1[0]),symbolDigits);
+
+      // H1
+      int handleIchimoku_H1 = iIchimoku(symbolList[i],PERIOD_H1,9,26,52);
+      double ClosePrice_H1 = iClose(symbolList[i],PERIOD_H1,1);
+      double Bar26High_H1 = iHigh(symbolList[i],PERIOD_H1,26);
+      double Bar26Low_H1 = iLow(symbolList[i],PERIOD_H1,26);
+      double TenkansenArr_H1[];
+      double KijunsenArr_H1[];
+      double SenkouspanAArr_H1[];
+      double SenkouspanBArr_H1[];
+      double ShiftedSenkouspanAArr_H1[];
+      double ShiftedSenkouspanBArr_H1[];
+      double ChikouspanArr_H1[];
+
+      CopyBuffer(handleIchimoku_H1,0,0,3,TenkansenArr_H1);
+      CopyBuffer(handleIchimoku_H1,1,0,3,KijunsenArr_H1);
+      CopyBuffer(handleIchimoku_H1,2,0,3,SenkouspanAArr_H1);
+      CopyBuffer(handleIchimoku_H1,3,0,2,SenkouspanBArr_H1);
+
+      CopyBuffer(handleIchimoku_H1,2,-26,3,ShiftedSenkouspanAArr_H1);
+      CopyBuffer(handleIchimoku_H1,3,-26,3,ShiftedSenkouspanBArr_H1);
+
+      CopyBuffer(handleIchimoku_H1,4,26,3,ChikouspanArr_H1);
+
+      double KumoDeltaCurrent_H1 = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr_H1[2] - ShiftedSenkouspanBArr_H1[2]),symbolDigits);
+      double KumoDeltaPrevious_H1 = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr_H1[0] - ShiftedSenkouspanBArr_H1[0]),symbolDigits);
+
+
+      if(
+         (
+            ClosePrice_D1 > SenkouspanAArr_D1[0] &&
+            ClosePrice_D1 > SenkouspanBArr_D1[0] &&
+            ClosePrice_D1 > KijunsenArr_D1[2] &&
+            TenkansenArr_D1[2] > KijunsenArr_D1[2] &&
+            TenkansenArr_D1[0] > KijunsenArr_D1[0] &&
+            KijunsenArr_D1[2] > KijunsenArr_D1[0] &&
+            ShiftedSenkouspanAArr_D1[2] > ShiftedSenkouspanBArr_D1[2] &&
+            ShiftedSenkouspanAArr_D1[2] > ShiftedSenkouspanAArr_D1[0] &&
+            ChikouspanArr_D1[0] > Bar26High_D1 &&
+            KumoDeltaCurrent_D1 > KumoDeltaPrevious_D1
+         ) &&
+         (
+            ClosePrice_H1 > SenkouspanAArr_H1[0] &&
+            ClosePrice_H1 > SenkouspanBArr_H1[0] &&
+            ClosePrice_H1 > KijunsenArr_H1[2] &&
+            TenkansenArr_H1[2] > KijunsenArr_H1[2] &&
+            TenkansenArr_H1[0] > KijunsenArr_H1[0] &&
+            KijunsenArr_H1[2] > KijunsenArr_H1[0] &&
+            ShiftedSenkouspanAArr_H1[2] > ShiftedSenkouspanBArr_H1[2] &&
+            ShiftedSenkouspanAArr_H1[2] > ShiftedSenkouspanAArr_H1[0] &&
+            ChikouspanArr_H1[0] > Bar26High_H1 &&
+            KumoDeltaCurrent_H1 > KumoDeltaPrevious_H1
+         )
+      )
+        {
+         Print(symbolList[i]," is Bullish on D1 and H1");
+        }
+      else
+         if(
+            (
+               ClosePrice_D1 < SenkouspanAArr_D1[0] &&
+               ClosePrice_D1 < SenkouspanBArr_D1[0] &&
+               ClosePrice_D1 < KijunsenArr_D1[2] &&
+               TenkansenArr_D1[2] < KijunsenArr_D1[2] &&
+               TenkansenArr_D1[0] < KijunsenArr_D1[0] &&
+               KijunsenArr_D1[2] < KijunsenArr_D1[0] &&
+               ShiftedSenkouspanAArr_D1[2] < ShiftedSenkouspanBArr_D1[2] &&
+               ShiftedSenkouspanAArr_D1[2] < ShiftedSenkouspanAArr_D1[0] &&
+               ChikouspanArr_D1[0] < Bar26High_D1 &&
+               KumoDeltaCurrent_D1 > KumoDeltaPrevious_D1
+            ) &&
+            (
+               ClosePrice_H1 < SenkouspanAArr_H1[0] &&
+               ClosePrice_H1 < SenkouspanBArr_H1[0] &&
+               ClosePrice_H1 < KijunsenArr_H1[2] &&
+               TenkansenArr_H1[2] < KijunsenArr_H1[2] &&
+               TenkansenArr_H1[0] < KijunsenArr_H1[0] &&
+               KijunsenArr_H1[2] < KijunsenArr_H1[0] &&
+               ShiftedSenkouspanAArr_H1[2] < ShiftedSenkouspanBArr_H1[2] &&
+               ShiftedSenkouspanAArr_H1[2] < ShiftedSenkouspanAArr_H1[0] &&
+               ChikouspanArr_H1[0] < Bar26High_H1 &&
+               KumoDeltaCurrent_H1 > KumoDeltaPrevious_H1
+            )
+         )
+           {
+            Print(symbolList[i]," is Bearish on D1 and H1");
+           }
+
+
+
+      // H4 && M30
+      // H4
+      int handleIchimoku_H4 = iIchimoku(symbolList[i],PERIOD_H4,9,26,52);
+      double ClosePrice_H4 = iClose(symbolList[i],PERIOD_H4,1);
+      double Bar26High_H4 = iHigh(symbolList[i],PERIOD_H4,26);
+      double Bar26Low_H4 = iLow(symbolList[i],PERIOD_H4,26);
+      double TenkansenArr_H4[];
+      double KijunsenArr_H4[];
+      double SenkouspanAArr_H4[];
+      double SenkouspanBArr_H4[];
+      double ShiftedSenkouspanAArr_H4[];
+      double ShiftedSenkouspanBArr_H4[];
+      double ChikouspanArr_H4[];
+
+      CopyBuffer(handleIchimoku_H4,0,0,3,TenkansenArr_H4);
+      CopyBuffer(handleIchimoku_H4,1,0,3,KijunsenArr_H4);
+      CopyBuffer(handleIchimoku_H4,2,0,3,SenkouspanAArr_H4);
+      CopyBuffer(handleIchimoku_H4,3,0,2,SenkouspanBArr_H4);
+
+      CopyBuffer(handleIchimoku_H4,2,-26,3,ShiftedSenkouspanAArr_H4);
+      CopyBuffer(handleIchimoku_H4,3,-26,3,ShiftedSenkouspanBArr_H4);
+
+      CopyBuffer(handleIchimoku_H4,4,26,3,ChikouspanArr_H4);
+
+      double KumoDeltaCurrent_H4 = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr_H4[2] - ShiftedSenkouspanBArr_H4[2]),symbolDigits);
+      double KumoDeltaPrevious_H4 = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr_H4[0] - ShiftedSenkouspanBArr_H4[0]),symbolDigits);
+
+      // M30
+      int handleIchimoku_M30 = iIchimoku(symbolList[i],PERIOD_M30,9,26,52);
+      double ClosePrice_M30 = iClose(symbolList[i],PERIOD_M30,1);
+      double Bar26High_M30 = iHigh(symbolList[i],PERIOD_M30,26);
+      double Bar26Low_M30 = iLow(symbolList[i],PERIOD_M30,26);
+      double TenkansenArr_M30[];
+      double KijunsenArr_M30[];
+      double SenkouspanAArr_M30[];
+      double SenkouspanBArr_M30[];
+      double ShiftedSenkouspanAArr_M30[];
+      double ShiftedSenkouspanBArr_M30[];
+      double ChikouspanArr_M30[];
+
+      CopyBuffer(handleIchimoku_M30,0,0,3,TenkansenArr_M30);
+      CopyBuffer(handleIchimoku_M30,1,0,3,KijunsenArr_M30);
+      CopyBuffer(handleIchimoku_M30,2,0,3,SenkouspanAArr_M30);
+      CopyBuffer(handleIchimoku_M30,3,0,2,SenkouspanBArr_M30);
+
+      CopyBuffer(handleIchimoku_M30,2,-26,3,ShiftedSenkouspanAArr_M30);
+      CopyBuffer(handleIchimoku_M30,3,-26,3,ShiftedSenkouspanBArr_M30);
+
+      CopyBuffer(handleIchimoku_M30,4,26,3,ChikouspanArr_M30);
+
+      double KumoDeltaCurrent_M30 = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr_M30[2] - ShiftedSenkouspanBArr_M30[2]),symbolDigits);
+      double KumoDeltaPrevious_M30 = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr_M30[0] - ShiftedSenkouspanBArr_M30[0]),symbolDigits);
+
+      if(
+         (
+            ClosePrice_H4 > SenkouspanAArr_H4[0] &&
+            ClosePrice_H4 > SenkouspanBArr_H4[0] &&
+            ClosePrice_H4 > KijunsenArr_H4[2] &&
+            TenkansenArr_H4[2] > KijunsenArr_H4[2] &&
+            TenkansenArr_H4[0] > KijunsenArr_H4[0] &&
+            KijunsenArr_H4[2] > KijunsenArr_H4[0] &&
+            ShiftedSenkouspanAArr_H4[2] > ShiftedSenkouspanBArr_H4[2] &&
+            ShiftedSenkouspanAArr_H4[2] > ShiftedSenkouspanAArr_H4[0] &&
+            ChikouspanArr_H4[0] > Bar26High_H4 &&
+            KumoDeltaCurrent_H4 > KumoDeltaPrevious_H4
+         ) &&
+         (
+            ClosePrice_M30 > SenkouspanAArr_M30[0] &&
+            ClosePrice_M30 > SenkouspanBArr_M30[0] &&
+            ClosePrice_M30 > KijunsenArr_M30[2] &&
+            TenkansenArr_M30[2] > KijunsenArr_M30[2] &&
+            TenkansenArr_M30[0] > KijunsenArr_M30[0] &&
+            KijunsenArr_M30[2] > KijunsenArr_M30[0] &&
+            ShiftedSenkouspanAArr_M30[2] > ShiftedSenkouspanBArr_M30[2] &&
+            ShiftedSenkouspanAArr_M30[2] > ShiftedSenkouspanAArr_M30[0] &&
+            ChikouspanArr_M30[0] > Bar26High_M30 &&
+            KumoDeltaCurrent_M30 > KumoDeltaPrevious_M30
+         )
+      )
+        {
+         Print(symbolList[i]," is Bullish on H4 and M30");
+        }
+      else
+         if(
+            (
+               ClosePrice_H4 < SenkouspanAArr_H4[0] &&
+               ClosePrice_H4 < SenkouspanBArr_H4[0] &&
+               ClosePrice_H4 < KijunsenArr_H4[2] &&
+               TenkansenArr_H4[2] < KijunsenArr_H4[2] &&
+               TenkansenArr_H4[0] < KijunsenArr_H4[0] &&
+               KijunsenArr_H4[2] < KijunsenArr_H4[0] &&
+               ShiftedSenkouspanAArr_H4[2] < ShiftedSenkouspanBArr_H4[2] &&
+               ShiftedSenkouspanAArr_H4[2] < ShiftedSenkouspanAArr_H4[0] &&
+               ChikouspanArr_H4[0] < Bar26High_H4 &&
+               KumoDeltaCurrent_H4 > KumoDeltaPrevious_H4
+            ) &&
+            (
+               ClosePrice_M30 < SenkouspanAArr_M30[0] &&
+               ClosePrice_M30 < SenkouspanBArr_M30[0] &&
+               ClosePrice_M30 < KijunsenArr_M30[2] &&
+               TenkansenArr_M30[2] < KijunsenArr_M30[2] &&
+               TenkansenArr_M30[0] < KijunsenArr_M30[0] &&
+               KijunsenArr_M30[2] < KijunsenArr_M30[0] &&
+               ShiftedSenkouspanAArr_M30[2] < ShiftedSenkouspanBArr_M30[2] &&
+               ShiftedSenkouspanAArr_M30[2] < ShiftedSenkouspanAArr_M30[0] &&
+               ChikouspanArr_M30[0] < Bar26High_M30 &&
+               KumoDeltaCurrent_M30 > KumoDeltaPrevious_M30
+            )
+         )
+           {
+            Print(symbolList[i]," is Bearish on H4 and M30");
+           }
+     } // for loop
+
+   Print("Scanning Finished...");
+
+  }
+
+
+//+------------------------------------------------------------------+
 //| Global Variables                                                 |
 //+------------------------------------------------------------------+
 CControlsDialog ExtDialog;
@@ -3044,7 +3349,7 @@ void OnTick()
          bool KJSSAFilterDn = false;
          bool KumoIsWider = false;
 
-         // Upper TF Ichimoku Variables qqq
+         // Upper TF Ichimoku Variables
 
          bool UpperTFKJSSAFilterUp = false;
          bool UpperTFKJSSAFilterDn = false;
@@ -3085,7 +3390,7 @@ void OnTick()
          double KumoDeltaCurrent = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr[KJSSAFilterRange] - ShiftedSenkouspanBArr[KJSSAFilterRange]),_Digits);
          double KumoDeltaPrevious = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr[0] - ShiftedSenkouspanBArr[0]),_Digits);
 
-         if(KumoDeltaCurrent > KumoDeltaPrevious)
+         if(KumoDeltaCurrent > KumoDeltaPrevious) // qqq
             KumoIsWider = true;
          else
             KumoIsWider = false;
