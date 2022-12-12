@@ -84,7 +84,6 @@ input double atrMultiplier = 1; // ATR multiplier for filtering WM1 signals
 input int atrPeriod = 14; // ATR PERIOD
 input int fractalBufferWM3 = 20; // FRACTAL BUFFER for WM3 in points
 input int alligatorMultiplier = 1; // Alligator multiplier for filtering WM signals
-input int ichimokuMultiplier = 1; // Ichimoku Multiplier
 input bool AlertAutoClosePosition = false; // ALERT ON POSITIONS CLOSE
 input group "------------- 3 Lines Strike Alert ------------"
 input bool threeLinesStrikeActivate = false; // == ACTIVATE 3 LINES STRIKE ALERT ==
@@ -2838,7 +2837,7 @@ int OnInit()
       handleMA = iMA(_Symbol, TimeFrame, MaPeriod, MaShift, TslMaMethod, TslMaAppPrice);
 
    if(kijunsenTSL || tenkansenTSL || ClosePosTenkansen || SignalTenkansenBreak)
-      handleIchimoku = iIchimoku(_Symbol,TimeFrame,9*ichimokuMultiplier,26*ichimokuMultiplier,52*ichimokuMultiplier);
+      handleIchimoku = iIchimoku(_Symbol,TimeFrame,9,26,52);
 
    if(ClosePosMa)
       handleClosePosMA = iMA(_Symbol, TimeFrame, ClosePosMaPeriod, ClosePosMaShift, ClosePosMaMethod, ClosePosMaAppPrice);
@@ -2866,7 +2865,7 @@ int OnInit()
 
    if(upperTFFilterIchimoku)
      {
-      handleUpperTFIchimoku = iIchimoku(_Symbol,UpperTimeFrame,9*ichimokuMultiplier,26*ichimokuMultiplier,52*ichimokuMultiplier);
+      handleUpperTFIchimoku = iIchimoku(_Symbol,UpperTimeFrame,9,26,52);
      }
 
 
@@ -3462,8 +3461,8 @@ void OnTick()
 
          double ChikouspanArr[];
 
-         double Bar26High = iHigh(_Symbol,TimeFrame,26*ichimokuMultiplier);
-         double Bar26Low = iLow(_Symbol,TimeFrame,26*ichimokuMultiplier);
+         double Bar26High = iHigh(_Symbol,TimeFrame,26);
+         double Bar26Low = iLow(_Symbol,TimeFrame,26);
          double CurrentHigh = iHigh(_Symbol,TimeFrame,0);
          double CurrentLow = iLow(_Symbol,TimeFrame,0);
 
@@ -3472,10 +3471,10 @@ void OnTick()
          CopyBuffer(handleIchimoku,2,0,KJSSAFilterRange+1,SenkouspanAArr);
          CopyBuffer(handleIchimoku,3,0,KJSSAFilterRange+1,SenkouspanBArr);
 
-         CopyBuffer(handleIchimoku,2,-26*ichimokuMultiplier,KJSSAFilterRange+1,ShiftedSenkouspanAArr);
-         CopyBuffer(handleIchimoku,3,-26*ichimokuMultiplier,KJSSAFilterRange+1,ShiftedSenkouspanBArr);
+         CopyBuffer(handleIchimoku,2,-26,KJSSAFilterRange+1,ShiftedSenkouspanAArr);
+         CopyBuffer(handleIchimoku,3,-26,KJSSAFilterRange+1,ShiftedSenkouspanBArr);
 
-         CopyBuffer(handleIchimoku,4,26*ichimokuMultiplier,KJSSAFilterRange+1,ChikouspanArr);
+         CopyBuffer(handleIchimoku,4,26,KJSSAFilterRange+1,ChikouspanArr);
 
          double KumoDeltaCurrent = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr[KJSSAFilterRange] - ShiftedSenkouspanBArr[KJSSAFilterRange]),_Digits);
          double KumoDeltaPrevious = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr[0] - ShiftedSenkouspanBArr[0]),_Digits);
@@ -3505,22 +3504,22 @@ void OnTick()
 
             double UpperTFChikouspanArr[];
 
-            double UpperTFBar26High = iHigh(_Symbol,UpperTimeFrame,26*ichimokuMultiplier);
-            double UpperTFBar26Low = iLow(_Symbol,UpperTimeFrame,26*ichimokuMultiplier);
+            double UpperTFBar26High = iHigh(_Symbol,UpperTimeFrame,27);
+            double UpperTFBar26Low = iLow(_Symbol,UpperTimeFrame,27);
             double UpperTFCurrentHigh = iHigh(_Symbol,UpperTimeFrame,0);
             double UpperTFCurrentLow = iLow(_Symbol,UpperTimeFrame,0);
 
             double UpperTFPreviousClose = iClose(_Symbol,UpperTimeFrame,0);
 
-            CopyBuffer(handleUpperTFIchimoku,0,0,KJSSAFilterRange+1,UpperTFTenkansenArr);
-            CopyBuffer(handleUpperTFIchimoku,1,0,KJSSAFilterRange+1,UpperTFKijunsenArr);
-            CopyBuffer(handleUpperTFIchimoku,2,0,KJSSAFilterRange+1,UpperTFSenkouspanAArr);
-            CopyBuffer(handleUpperTFIchimoku,3,0,KJSSAFilterRange+1,UpperTFSenkouspanBArr);
+            CopyBuffer(handleUpperTFIchimoku,0,1,KJSSAFilterRange+1,UpperTFTenkansenArr);
+            CopyBuffer(handleUpperTFIchimoku,1,1,KJSSAFilterRange+1,UpperTFKijunsenArr);
+            CopyBuffer(handleUpperTFIchimoku,2,1,KJSSAFilterRange+1,UpperTFSenkouspanAArr);
+            CopyBuffer(handleUpperTFIchimoku,3,1,KJSSAFilterRange+1,UpperTFSenkouspanBArr);
 
-            CopyBuffer(handleUpperTFIchimoku,2,-26*ichimokuMultiplier,KJSSAFilterRange+1,UpperTFShiftedSenkouspanAArr);
-            CopyBuffer(handleUpperTFIchimoku,3,-26*ichimokuMultiplier,KJSSAFilterRange+1,UpperTFShiftedSenkouspanBArr);
+            CopyBuffer(handleUpperTFIchimoku,2,-26,KJSSAFilterRange+1,UpperTFShiftedSenkouspanAArr);
+            CopyBuffer(handleUpperTFIchimoku,3,-26,KJSSAFilterRange+1,UpperTFShiftedSenkouspanBArr);
 
-            CopyBuffer(handleUpperTFIchimoku,4,26*ichimokuMultiplier-KJSSAFilterRange,KJSSAFilterRange+1,UpperTFChikouspanArr);
+            CopyBuffer(handleUpperTFIchimoku,4,26,KJSSAFilterRange+1,UpperTFChikouspanArr);
 
             double UpperTFKumoDeltaCurrent = NormalizeDouble(MathAbs(UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] - UpperTFShiftedSenkouspanBArr[KJSSAFilterRange]),_Digits);
             double UpperTFKumoDeltaPrevious = NormalizeDouble(MathAbs(UpperTFShiftedSenkouspanAArr[0] - UpperTFShiftedSenkouspanBArr[0]),_Digits);
@@ -3626,7 +3625,7 @@ void OnTick()
 
             // Buy Signal
 
-            if(TenkansenArr[2] > KijunsenArr[2])
+            if(TenkansenArr[1] > KijunsenArr[1])
               {
                BuySignal_1 = true; // TK Cross
                SellSignal_1 = false; // cancelling sell signal
@@ -3677,7 +3676,7 @@ void OnTick()
 
             // SELL trades
 
-            if(TenkansenArr[2] < KijunsenArr[2])
+            if(TenkansenArr[1] < KijunsenArr[1])
               {
                SellSignal_1 = true; // KT Cross
                BuySignal_1 = false; // cancelling buy signal
