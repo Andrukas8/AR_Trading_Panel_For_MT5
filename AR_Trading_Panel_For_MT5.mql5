@@ -140,13 +140,9 @@ int barsTotal;
 double mainUpper = 0;
 double mainLower = 0;
 
-double mainUpperFractal = 0;
-double mainLowerFractal = 0;
-
 int maShift;
 
 // Handles
-int handleFractal;
 int handleMA;
 int handleIchimoku;
 int handleClosePosMA;
@@ -159,6 +155,7 @@ int handleSlow3LSMA;
 int handleMABreak;
 int handleAlligatorMABreak;
 int handleUpperTFIchimoku;
+int barCountFractals;
 string textComment;
 string debugComment;
 bool updateProfitOnchart = false; // SHOW POSITION PROFIT ON CHART
@@ -2043,7 +2040,7 @@ void CControlsDialog::OnClickLimitToggleBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickAutoPosMgmtToggleBtn(void)
   {
-
+   barCountFractals = 0;
    if(autoPosMgmtToggle)
      {
       autoPosMgmtToggle = false;
@@ -2831,7 +2828,7 @@ int OnInit()
 // Auto Position Management EA initialization
 
    if(fractalsTSL)
-      handleFractal = iFractals(_Symbol, TimeFrame);
+      barCountFractals = 0;
 
    if(movingAverageTSL)
       handleMA = iMA(_Symbol, TimeFrame, MaPeriod, MaShift, TslMaMethod, TslMaAppPrice);
@@ -3479,7 +3476,7 @@ void OnTick()
          double KumoDeltaCurrent = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr[KJSSAFilterRange] - ShiftedSenkouspanBArr[KJSSAFilterRange]),_Digits);
          double KumoDeltaPrevious = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr[0] - ShiftedSenkouspanBArr[0]),_Digits);
 
-         if(KumoDeltaCurrent > KumoDeltaPrevious) // qqq
+         if(KumoDeltaCurrent > KumoDeltaPrevious)
             KumoIsWider = true;
          else
             KumoIsWider = false;
@@ -3528,12 +3525,12 @@ void OnTick()
             // Check if Upper TF Ichimoku is Bullish
             if(
                UpperTFTenkansenArr[KJSSAFilterRange] > UpperTFKijunsenArr[KJSSAFilterRange]  &&
-               UpperTFTenkansenArr[0] > UpperTFKijunsenArr[0] &&
-               UpperTFKijunsenArr[KJSSAFilterRange] > UpperTFKijunsenArr[0] &&
                UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] > UpperTFShiftedSenkouspanBArr[KJSSAFilterRange] &&
-               UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] > UpperTFShiftedSenkouspanAArr[0] &&
-               UpperTFChikouspanArr[0] > UpperTFBar26High &&
-               UpperTFKumoDeltaCurrent > UpperTFKumoDeltaPrevious
+               // UpperTFTenkansenArr[0] > UpperTFKijunsenArr[0] &&
+               // UpperTFKijunsenArr[KJSSAFilterRange] > UpperTFKijunsenArr[0] &&
+               // UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] > UpperTFShiftedSenkouspanAArr[0] &&
+               // UpperTFKumoDeltaCurrent > UpperTFKumoDeltaPrevious &&
+               UpperTFChikouspanArr[0] > UpperTFBar26High
             )
               {
                UpperTFBuyGo = true;
@@ -3543,12 +3540,12 @@ void OnTick()
             else
                if(
                   UpperTFTenkansenArr[KJSSAFilterRange] < UpperTFKijunsenArr[KJSSAFilterRange]  &&
-                  UpperTFTenkansenArr[0] < UpperTFKijunsenArr[0] &&
-                  UpperTFKijunsenArr[KJSSAFilterRange] < UpperTFKijunsenArr[0] &&
                   UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] < UpperTFShiftedSenkouspanBArr[KJSSAFilterRange] &&
-                  UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] < UpperTFShiftedSenkouspanAArr[0] &&
-                  UpperTFChikouspanArr[0] < UpperTFBar26Low &&
-                  UpperTFKumoDeltaCurrent > UpperTFKumoDeltaPrevious
+                  // UpperTFTenkansenArr[0] > UpperTFKijunsenArr[0] &&
+                  // UpperTFKijunsenArr[KJSSAFilterRange] < UpperTFKijunsenArr[0] &&
+                  // UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] < UpperTFShiftedSenkouspanAArr[0] &&
+                  // UpperTFKumoDeltaCurrent > UpperTFKumoDeltaPrevious &&
+                  UpperTFChikouspanArr[0] < UpperTFBar26High
                )
                  {
                   UpperTFBuyGo = false;
@@ -3972,45 +3969,6 @@ void OnTick()
       int bars = iBars(_Symbol, TimeFrame);
       int totalPos = PositionsTotal();
 
-      textComment += "-----------------------------\nPosition Management EA\n" + _Symbol + " " +IntegerToString(_Period) + "\n";
-      textComment += "------EA SETTINGS------------------------\n";
-      textComment += "NUMBER OF OPEN POSITIONS = " + IntegerToString(totalPos) + "\n";
-      textComment += "SPREAD = " + IntegerToString(spreadPos) + "\n";
-      textComment += "BE RATIO = " + DoubleToString(breakevenRatio,2) + "\n";
-      textComment += "MA PERIOD = " + IntegerToString(MaPeriod) +  " | SHIFT = " + IntegerToString(MaShift) + " | TF = "  + (string)TimeFrame + "\n";
-      textComment += "TSL BUFFER POINTS  = [ " + IntegerToString(TslOffsetPoints) + " ]\n";
-      textComment += "TSL TIME FRAME  = [ " + IntegerToString(TimeFrame) + " ]\n";
-      textComment += "POINTS TSL = [ " + IntegerToString(pointsTSL) + " ]\n";
-      textComment += "---------EA SWITCHES----------------\n";
-      textComment += "Auto BE  = [ " + IntegerToString(autoBreakEven) + " ]\n";
-      textComment += "TSL Fra   = [ " + IntegerToString(fractalsTSL) + " ]\n";
-      textComment += "TSL MA  = [ " + IntegerToString(movingAverageTSL) + " ]\n";
-      textComment += "TSL TK  = [ " + IntegerToString(tenkansenTSL) + " ]\n";
-      textComment += "TSL KJ  = [ " + IntegerToString(kijunsenTSL) + " ]\n";
-      textComment += "CLOSE ON TK CLOSE  = [ " + IntegerToString(ClosePosTenkansen) + " ]\n";
-
-      if(ClosePosMa)
-        {
-         textComment += "---------CLOSE ON CLOSE OVER MA SETTINGS----------------\n";
-         textComment += "CLOSE ON CLOSE OVER MA  = [ " + IntegerToString(ClosePosMa) + " ]\n";
-         textComment += "CLOSE MA PERIOD  = [ " + IntegerToString(ClosePosMaPeriod) + " ]\n";
-         textComment += "CLOSE MA SHIFT  = [ " + IntegerToString(ClosePosMaShift) + " ]\n";
-         textComment += "CLOSE MA METHOD  = [ " + IntegerToString(ClosePosMaMethod) + " ]\n";
-         textComment += "CLOSE MA PRICE  = [ " + IntegerToString(ClosePosMaAppPrice) + " ]\n";
-        }
-
-      textComment += "ALERT AUTO CLOSE ON TK CLOSE  = [ " + IntegerToString(AlertAutoClosePosition) + " ]\n";
-      textComment += "ALERT NEW BAR  = [ " + IntegerToString(NewBarAlert) + " ]\n";
-      textComment += "ALERT TKB TRADE SIGNAL  = [ " + IntegerToString(SignalTenkansenBreak) + " ]\n";
-      textComment += "-------------------------------------\n";
-      textComment += "LOWER FRACTAL = " + DoubleToString(mainLower, _Digits) + "\n";
-      textComment += "UPPER FRACTAL = " + DoubleToString(mainUpper, _Digits) + "\n";
-
-      textComment += "alertCloseLine      = [ " + IntegerToString(alertCloseLine) + " ]\n";
-      textComment += "setAlarmCloseLine = [ " + IntegerToString(setAlarmCloseLine) + " ]\n";
-      textComment += "manualBEToggle = [ " + IntegerToString(manualBEToggle) + " ]\n";
-
-
       //+------------------------------------------------------------------+
       //|                                                                  |
       //|  ----- Close All Positions On Condition --------------           |
@@ -4316,32 +4274,60 @@ void OnTick()
          if(NewBarAlert && barsTotal > 0)
             Alert("=== NEW BAR... === ");
 
-         double fracUpper[];
-         double fracLower[];
+         barsTotal = bars;
 
-         ArraySetAsSeries(fracUpper,true);
-         ArraySetAsSeries(fracLower,true);
+         if(fractalsTSL)
+            barCountFractals += 1;
 
-         CopyBuffer(handleFractal, UPPER_LINE, 1, 3, fracUpper);
-         CopyBuffer(handleFractal, LOWER_LINE, 1, 3, fracLower);
+         double upperFractal = 0;
+         double lowerFractal = 0;
 
-         double fracUpperValue = fracUpper[1];
-         double fracLowerValue = fracLower[1];
+         double high_1 = 0;
+         double high_2 = 0;
+         double high_3 = 0;
+         double high_4 = 0;
+         double high_5 = 0;
 
-         if(fracUpperValue == EMPTY_VALUE)
-            fracUpperValue = 0;
+         double low_1 = 0;
+         double low_2 = 0;
+         double low_3 = 0;
+         double low_4 = 0;
+         double low_5 = 0;
 
-         if(fracLowerValue == EMPTY_VALUE)
-            fracLowerValue = 0;
+         double fractalBufferWM3Double = NormalizeDouble(fractalBufferWM3*_Point,_Digits);
 
-         if(fracUpperValue != 0)
+         if(barCountFractals > 5)
            {
-            mainUpper = NormalizeDouble(fracUpperValue + (TslOffsetPoints + spreadPos) * _Point, _Digits);
-           }
+            for(int i=3; i<barCountFractals; i++)
+              {
+               high_1 = iHigh(_Symbol,PERIOD_CURRENT,i+2);
+               high_2 = iHigh(_Symbol,PERIOD_CURRENT,i+1);
+               high_3 = iHigh(_Symbol,PERIOD_CURRENT,i);
+               high_4 = iHigh(_Symbol,PERIOD_CURRENT,i-1);
+               high_5 = iHigh(_Symbol,PERIOD_CURRENT,i-2);
 
-         if(fracLowerValue != 0)
-           {
-            mainLower = NormalizeDouble(fracLowerValue - (TslOffsetPoints + spreadPos) * _Point, _Digits);
+               if(high_3 > high_2 && high_3 > high_1 && high_3 > high_4 && high_3 > high_5)
+                 {
+                  mainUpper = high_3 + fractalBufferWM3Double;
+                  break;
+                 }
+              }
+
+            for(int i=3; i<barCountFractals; i++)
+              {
+               low_1 = iLow(_Symbol,PERIOD_CURRENT,i+2);
+               low_2 = iLow(_Symbol,PERIOD_CURRENT,i+1);
+               low_3 = iLow(_Symbol,PERIOD_CURRENT,i);
+               low_4 = iLow(_Symbol,PERIOD_CURRENT,i-1);
+               low_5 = iLow(_Symbol,PERIOD_CURRENT,i-2);
+
+               if(low_3 < low_2 && low_3 < low_1 && low_3 < low_4 && low_3 < low_5)
+                 {
+                  mainLower = low_3  - fractalBufferWM3Double;
+                  break;
+                 }
+              }
+
            }
 
          for(int i = 0; i < totalPos; i++)
@@ -4586,6 +4572,57 @@ void OnTick()
               } // if pos ticket
            } // for loop
         } // barsTotal != bars
+
+
+
+      textComment += "-----------------------------\nPosition Management EA\n" + _Symbol + " " +IntegerToString(_Period) + "\n";
+      textComment += "------EA SETTINGS------------------------\n";
+      textComment += "NUMBER OF OPEN POSITIONS = " + IntegerToString(totalPos) + "\n";
+      textComment += "SPREAD = " + IntegerToString(spreadPos) + "\n";
+      textComment += "BE RATIO = " + DoubleToString(breakevenRatio,2) + "\n";
+      textComment += "MA PERIOD = " + IntegerToString(MaPeriod) +  " | SHIFT = " + IntegerToString(MaShift) + " | TF = "  + (string)TimeFrame + "\n";
+      textComment += "TSL BUFFER POINTS  = [ " + IntegerToString(TslOffsetPoints) + " ]\n";
+      textComment += "TSL TIME FRAME  = [ " + IntegerToString(TimeFrame) + " ]\n";
+      textComment += "POINTS TSL = [ " + IntegerToString(pointsTSL) + " ]\n";
+      textComment += "---------EA SWITCHES----------------\n";
+      textComment += "Auto BE  = [ " + IntegerToString(autoBreakEven) + " ]\n";
+      textComment += "TSL Fra   = [ " + IntegerToString(fractalsTSL) + " ]\n";
+      textComment += "TSL MA  = [ " + IntegerToString(movingAverageTSL) + " ]\n";
+      textComment += "TSL TK  = [ " + IntegerToString(tenkansenTSL) + " ]\n";
+      textComment += "TSL KJ  = [ " + IntegerToString(kijunsenTSL) + " ]\n";
+      textComment += "CLOSE ON TK CLOSE  = [ " + IntegerToString(ClosePosTenkansen) + " ]\n";
+
+      if(ClosePosMa)
+        {
+         textComment += "---------CLOSE ON CLOSE OVER MA SETTINGS----------------\n";
+         textComment += "CLOSE ON CLOSE OVER MA  = [ " + IntegerToString(ClosePosMa) + " ]\n";
+         textComment += "CLOSE MA PERIOD  = [ " + IntegerToString(ClosePosMaPeriod) + " ]\n";
+         textComment += "CLOSE MA SHIFT  = [ " + IntegerToString(ClosePosMaShift) + " ]\n";
+         textComment += "CLOSE MA METHOD  = [ " + IntegerToString(ClosePosMaMethod) + " ]\n";
+         textComment += "CLOSE MA PRICE  = [ " + IntegerToString(ClosePosMaAppPrice) + " ]\n";
+        }
+
+      if(fractalsTSL)
+        {
+         textComment += "---------FRACTALS TSL -----------------------------------\n";
+         textComment += "BAR COUNT FRACTAL = " + IntegerToString(barCountFractals) + "\n";
+         textComment += "LOWER FRACTAL     = " + DoubleToString(mainLower, _Digits) + "\n";
+         textComment += "UPPER FRACTAL     = " + DoubleToString(mainUpper, _Digits) + "\n";
+        }
+      textComment += "ALERT AUTO CLOSE ON TK CLOSE  = [ " + IntegerToString(AlertAutoClosePosition) + " ]\n";
+      textComment += "ALERT NEW BAR  = [ " + IntegerToString(NewBarAlert) + " ]\n";
+      textComment += "ALERT TKB TRADE SIGNAL  = [ " + IntegerToString(SignalTenkansenBreak) + " ]\n";
+
+
+      textComment += "alertCloseLine      = [ " + IntegerToString(alertCloseLine) + " ]\n";
+      textComment += "setAlarmCloseLine = [ " + IntegerToString(setAlarmCloseLine) + " ]\n";
+      textComment += "manualBEToggle = [ " + IntegerToString(manualBEToggle) + " ]\n";
+
+
+
+
+
+
      } // autoPosMgmtToggle
 
 
