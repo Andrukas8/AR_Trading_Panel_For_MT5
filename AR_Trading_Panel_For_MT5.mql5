@@ -2433,7 +2433,7 @@ void CControlsDialog::OnClickWm3AlertBtn(void)
 
 
 //+------------------------------------------------------------------+
-//| Event handler for "Scan Charts" Button                           | qqq
+//| Event handler for "Scan Charts" Button                           |
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickScanChartsBtn(void)
   {
@@ -2467,7 +2467,7 @@ void CControlsDialog::OnClickScanChartsBtn(void)
    int symbolListSize = (int)ArrayRange(symbolList,0);
    for(int i=0; i<=symbolListSize-1; i++)
      {
-      // Print(symbolList[i]);
+      //Print(symbolList[i]);
       // D1 && H1
       // D1
 
@@ -2489,7 +2489,7 @@ void CControlsDialog::OnClickScanChartsBtn(void)
       CopyBuffer(handleIchimoku_D1,0,0,3,TenkansenArr_D1);
       CopyBuffer(handleIchimoku_D1,1,0,3,KijunsenArr_D1);
       CopyBuffer(handleIchimoku_D1,2,0,3,SenkouspanAArr_D1);
-      CopyBuffer(handleIchimoku_D1,3,0,2,SenkouspanBArr_D1);
+      CopyBuffer(handleIchimoku_D1,3,0,3,SenkouspanBArr_D1);
 
       CopyBuffer(handleIchimoku_D1,2,-26,3,ShiftedSenkouspanAArr_D1);
       CopyBuffer(handleIchimoku_D1,3,-26,3,ShiftedSenkouspanBArr_D1);
@@ -2501,7 +2501,7 @@ void CControlsDialog::OnClickScanChartsBtn(void)
 
       // H1
       int handleIchimoku_H1 = iIchimoku(symbolList[i],PERIOD_H1,9,26,52);
-      double ClosePrice_H1 = iClose(symbolList[i],PERIOD_H1,1);
+      double ClosePrice_H1 = iClose(symbolList[i],PERIOD_H1,1); // previous close
       double Bar26High_H1 = iHigh(symbolList[i],PERIOD_H1,26);
       double Bar26Low_H1 = iLow(symbolList[i],PERIOD_H1,26);
       double TenkansenArr_H1[];
@@ -2515,7 +2515,7 @@ void CControlsDialog::OnClickScanChartsBtn(void)
       CopyBuffer(handleIchimoku_H1,0,0,3,TenkansenArr_H1);
       CopyBuffer(handleIchimoku_H1,1,0,3,KijunsenArr_H1);
       CopyBuffer(handleIchimoku_H1,2,0,3,SenkouspanAArr_H1);
-      CopyBuffer(handleIchimoku_H1,3,0,2,SenkouspanBArr_H1);
+      CopyBuffer(handleIchimoku_H1,3,0,3,SenkouspanBArr_H1);
 
       CopyBuffer(handleIchimoku_H1,2,-26,3,ShiftedSenkouspanAArr_H1);
       CopyBuffer(handleIchimoku_H1,3,-26,3,ShiftedSenkouspanBArr_H1);
@@ -2525,29 +2525,28 @@ void CControlsDialog::OnClickScanChartsBtn(void)
       double KumoDeltaCurrent_H1 = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr_H1[2] - ShiftedSenkouspanBArr_H1[2]),symbolDigits);
       double KumoDeltaPrevious_H1 = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr_H1[0] - ShiftedSenkouspanBArr_H1[0]),symbolDigits);
 
-
       if(
          (
-            ClosePrice_D1 > SenkouspanAArr_D1[0] &&
-            ClosePrice_D1 > SenkouspanBArr_D1[0] &&
+            ClosePrice_D1 > SenkouspanAArr_D1[2] &&
+            ClosePrice_D1 > SenkouspanBArr_D1[2] &&
             ClosePrice_D1 > KijunsenArr_D1[2] &&
-            TenkansenArr_D1[2] > KijunsenArr_D1[2] &&
+            TenkansenArr_D1[1] > KijunsenArr_D1[1] &&
             TenkansenArr_D1[0] > KijunsenArr_D1[0] &&
-            KijunsenArr_D1[2] > KijunsenArr_D1[0] &&
-            ShiftedSenkouspanAArr_D1[2] > ShiftedSenkouspanBArr_D1[2] &&
-            ShiftedSenkouspanAArr_D1[2] > ShiftedSenkouspanAArr_D1[0] &&
+            KijunsenArr_D1[1] > KijunsenArr_D1[0] &&
+            ShiftedSenkouspanAArr_D1[1] > ShiftedSenkouspanBArr_D1[1] &&
+            ShiftedSenkouspanAArr_D1[1] > ShiftedSenkouspanAArr_D1[0] &&
             ChikouspanArr_D1[0] > Bar26High_D1 &&
             KumoDeltaCurrent_D1 > KumoDeltaPrevious_D1
          ) &&
          (
-            ClosePrice_H1 > SenkouspanAArr_H1[0] &&
-            ClosePrice_H1 > SenkouspanBArr_H1[0] &&
+            ClosePrice_H1 > SenkouspanAArr_H1[2] &&
+            ClosePrice_H1 > SenkouspanBArr_H1[2] &&
             ClosePrice_H1 > KijunsenArr_H1[2] &&
-            TenkansenArr_H1[2] > KijunsenArr_H1[2] &&
+            TenkansenArr_H1[1] > KijunsenArr_H1[1] &&
             TenkansenArr_H1[0] > KijunsenArr_H1[0] &&
-            KijunsenArr_H1[2] > KijunsenArr_H1[0] &&
-            ShiftedSenkouspanAArr_H1[2] > ShiftedSenkouspanBArr_H1[2] &&
-            ShiftedSenkouspanAArr_H1[2] > ShiftedSenkouspanAArr_H1[0] &&
+            KijunsenArr_H1[1] > KijunsenArr_H1[0] &&
+            ShiftedSenkouspanAArr_H1[1] > ShiftedSenkouspanBArr_H1[1] &&
+            ShiftedSenkouspanAArr_H1[1] > ShiftedSenkouspanAArr_H1[0] &&
             ChikouspanArr_H1[0] > Bar26High_H1 &&
             KumoDeltaCurrent_H1 > KumoDeltaPrevious_H1
          )
@@ -2558,26 +2557,26 @@ void CControlsDialog::OnClickScanChartsBtn(void)
       else
          if(
             (
-               ClosePrice_D1 < SenkouspanAArr_D1[0] &&
-               ClosePrice_D1 < SenkouspanBArr_D1[0] &&
+               ClosePrice_D1 < SenkouspanAArr_D1[2] &&
+               ClosePrice_D1 < SenkouspanBArr_D1[2] &&
                ClosePrice_D1 < KijunsenArr_D1[2] &&
-               TenkansenArr_D1[2] < KijunsenArr_D1[2] &&
+               TenkansenArr_D1[1] < KijunsenArr_D1[1] &&
                TenkansenArr_D1[0] < KijunsenArr_D1[0] &&
-               KijunsenArr_D1[2] < KijunsenArr_D1[0] &&
-               ShiftedSenkouspanAArr_D1[2] < ShiftedSenkouspanBArr_D1[2] &&
-               ShiftedSenkouspanAArr_D1[2] < ShiftedSenkouspanAArr_D1[0] &&
+               KijunsenArr_D1[1] < KijunsenArr_D1[0] &&
+               ShiftedSenkouspanAArr_D1[1] < ShiftedSenkouspanBArr_D1[1] &&
+               ShiftedSenkouspanAArr_D1[1] < ShiftedSenkouspanAArr_D1[0] &&
                ChikouspanArr_D1[0] < Bar26High_D1 &&
                KumoDeltaCurrent_D1 > KumoDeltaPrevious_D1
             ) &&
             (
-               ClosePrice_H1 < SenkouspanAArr_H1[0] &&
-               ClosePrice_H1 < SenkouspanBArr_H1[0] &&
+               ClosePrice_H1 < SenkouspanAArr_H1[2] &&
+               ClosePrice_H1 < SenkouspanBArr_H1[2] &&
                ClosePrice_H1 < KijunsenArr_H1[2] &&
-               TenkansenArr_H1[2] < KijunsenArr_H1[2] &&
+               TenkansenArr_H1[1] < KijunsenArr_H1[1] &&
                TenkansenArr_H1[0] < KijunsenArr_H1[0] &&
-               KijunsenArr_H1[2] < KijunsenArr_H1[0] &&
-               ShiftedSenkouspanAArr_H1[2] < ShiftedSenkouspanBArr_H1[2] &&
-               ShiftedSenkouspanAArr_H1[2] < ShiftedSenkouspanAArr_H1[0] &&
+               KijunsenArr_H1[1] < KijunsenArr_H1[0] &&
+               ShiftedSenkouspanAArr_H1[1] < ShiftedSenkouspanBArr_H1[1] &&
+               ShiftedSenkouspanAArr_H1[1] < ShiftedSenkouspanAArr_H1[0] &&
                ChikouspanArr_H1[0] < Bar26High_H1 &&
                KumoDeltaCurrent_H1 > KumoDeltaPrevious_H1
             )
@@ -2605,7 +2604,7 @@ void CControlsDialog::OnClickScanChartsBtn(void)
       CopyBuffer(handleIchimoku_H4,0,0,3,TenkansenArr_H4);
       CopyBuffer(handleIchimoku_H4,1,0,3,KijunsenArr_H4);
       CopyBuffer(handleIchimoku_H4,2,0,3,SenkouspanAArr_H4);
-      CopyBuffer(handleIchimoku_H4,3,0,2,SenkouspanBArr_H4);
+      CopyBuffer(handleIchimoku_H4,3,0,3,SenkouspanBArr_H4);
 
       CopyBuffer(handleIchimoku_H4,2,-26,3,ShiftedSenkouspanAArr_H4);
       CopyBuffer(handleIchimoku_H4,3,-26,3,ShiftedSenkouspanBArr_H4);
@@ -2631,7 +2630,7 @@ void CControlsDialog::OnClickScanChartsBtn(void)
       CopyBuffer(handleIchimoku_M30,0,0,3,TenkansenArr_M30);
       CopyBuffer(handleIchimoku_M30,1,0,3,KijunsenArr_M30);
       CopyBuffer(handleIchimoku_M30,2,0,3,SenkouspanAArr_M30);
-      CopyBuffer(handleIchimoku_M30,3,0,2,SenkouspanBArr_M30);
+      CopyBuffer(handleIchimoku_M30,3,0,3,SenkouspanBArr_M30);
 
       CopyBuffer(handleIchimoku_M30,2,-26,3,ShiftedSenkouspanAArr_M30);
       CopyBuffer(handleIchimoku_M30,3,-26,3,ShiftedSenkouspanBArr_M30);
@@ -2643,26 +2642,26 @@ void CControlsDialog::OnClickScanChartsBtn(void)
 
       if(
          (
-            ClosePrice_H4 > SenkouspanAArr_H4[0] &&
-            ClosePrice_H4 > SenkouspanBArr_H4[0] &&
+            ClosePrice_H4 > SenkouspanAArr_H4[2] &&
+            ClosePrice_H4 > SenkouspanBArr_H4[2] &&
             ClosePrice_H4 > KijunsenArr_H4[2] &&
-            TenkansenArr_H4[2] > KijunsenArr_H4[2] &&
+            TenkansenArr_H4[1] > KijunsenArr_H4[1] &&
             TenkansenArr_H4[0] > KijunsenArr_H4[0] &&
-            KijunsenArr_H4[2] > KijunsenArr_H4[0] &&
-            ShiftedSenkouspanAArr_H4[2] > ShiftedSenkouspanBArr_H4[2] &&
-            ShiftedSenkouspanAArr_H4[2] > ShiftedSenkouspanAArr_H4[0] &&
+            KijunsenArr_H4[1] > KijunsenArr_H4[0] &&
+            ShiftedSenkouspanAArr_H4[1] > ShiftedSenkouspanBArr_H4[1] &&
+            ShiftedSenkouspanAArr_H4[1] > ShiftedSenkouspanAArr_H4[0] &&
             ChikouspanArr_H4[0] > Bar26High_H4 &&
             KumoDeltaCurrent_H4 > KumoDeltaPrevious_H4
          ) &&
          (
-            ClosePrice_M30 > SenkouspanAArr_M30[0] &&
-            ClosePrice_M30 > SenkouspanBArr_M30[0] &&
+            ClosePrice_M30 > SenkouspanAArr_M30[2] &&
+            ClosePrice_M30 > SenkouspanBArr_M30[2] &&
             ClosePrice_M30 > KijunsenArr_M30[2] &&
-            TenkansenArr_M30[2] > KijunsenArr_M30[2] &&
+            TenkansenArr_M30[1] > KijunsenArr_M30[1] &&
             TenkansenArr_M30[0] > KijunsenArr_M30[0] &&
-            KijunsenArr_M30[2] > KijunsenArr_M30[0] &&
-            ShiftedSenkouspanAArr_M30[2] > ShiftedSenkouspanBArr_M30[2] &&
-            ShiftedSenkouspanAArr_M30[2] > ShiftedSenkouspanAArr_M30[0] &&
+            KijunsenArr_M30[1] > KijunsenArr_M30[0] &&
+            ShiftedSenkouspanAArr_M30[1] > ShiftedSenkouspanBArr_M30[1] &&
+            ShiftedSenkouspanAArr_M30[1] > ShiftedSenkouspanAArr_M30[0] &&
             ChikouspanArr_M30[0] > Bar26High_M30 &&
             KumoDeltaCurrent_M30 > KumoDeltaPrevious_M30
          )
@@ -2673,26 +2672,26 @@ void CControlsDialog::OnClickScanChartsBtn(void)
       else
          if(
             (
-               ClosePrice_H4 < SenkouspanAArr_H4[0] &&
-               ClosePrice_H4 < SenkouspanBArr_H4[0] &&
+               ClosePrice_H4 < SenkouspanAArr_H4[2] &&
+               ClosePrice_H4 < SenkouspanBArr_H4[2] &&
                ClosePrice_H4 < KijunsenArr_H4[2] &&
-               TenkansenArr_H4[2] < KijunsenArr_H4[2] &&
+               TenkansenArr_H4[1] < KijunsenArr_H4[1] &&
                TenkansenArr_H4[0] < KijunsenArr_H4[0] &&
-               KijunsenArr_H4[2] < KijunsenArr_H4[0] &&
-               ShiftedSenkouspanAArr_H4[2] < ShiftedSenkouspanBArr_H4[2] &&
-               ShiftedSenkouspanAArr_H4[2] < ShiftedSenkouspanAArr_H4[0] &&
+               KijunsenArr_H4[1] < KijunsenArr_H4[0] &&
+               ShiftedSenkouspanAArr_H4[1] < ShiftedSenkouspanBArr_H4[1] &&
+               ShiftedSenkouspanAArr_H4[1] < ShiftedSenkouspanAArr_H4[0] &&
                ChikouspanArr_H4[0] < Bar26High_H4 &&
                KumoDeltaCurrent_H4 > KumoDeltaPrevious_H4
             ) &&
             (
-               ClosePrice_M30 < SenkouspanAArr_M30[0] &&
-               ClosePrice_M30 < SenkouspanBArr_M30[0] &&
+               ClosePrice_M30 < SenkouspanAArr_M30[2] &&
+               ClosePrice_M30 < SenkouspanBArr_M30[2] &&
                ClosePrice_M30 < KijunsenArr_M30[2] &&
-               TenkansenArr_M30[2] < KijunsenArr_M30[2] &&
+               TenkansenArr_M30[1] < KijunsenArr_M30[1] &&
                TenkansenArr_M30[0] < KijunsenArr_M30[0] &&
-               KijunsenArr_M30[2] < KijunsenArr_M30[0] &&
-               ShiftedSenkouspanAArr_M30[2] < ShiftedSenkouspanBArr_M30[2] &&
-               ShiftedSenkouspanAArr_M30[2] < ShiftedSenkouspanAArr_M30[0] &&
+               KijunsenArr_M30[1] < KijunsenArr_M30[0] &&
+               ShiftedSenkouspanAArr_M30[1] < ShiftedSenkouspanBArr_M30[1] &&
+               ShiftedSenkouspanAArr_M30[1] < ShiftedSenkouspanAArr_M30[0] &&
                ChikouspanArr_M30[0] < Bar26High_M30 &&
                KumoDeltaCurrent_M30 > KumoDeltaPrevious_M30
             )
@@ -2700,6 +2699,99 @@ void CControlsDialog::OnClickScanChartsBtn(void)
            {
             Print(symbolList[i]," is Bearish on H4 and M30");
            }
+
+
+
+      // H1 && M15
+      // H1 : All parameters for H1 have already been defined for D1 - H1 conditions
+
+      // M30
+      int handleIchimoku_M15 = iIchimoku(symbolList[i],PERIOD_M15,9,26,52);
+      double ClosePrice_M15 = iClose(symbolList[i],PERIOD_M15,1);
+      double Bar26High_M15 = iHigh(symbolList[i],PERIOD_M15,26);
+      double Bar26Low_M15 = iLow(symbolList[i],PERIOD_M15,26);
+      double TenkansenArr_M15[];
+      double KijunsenArr_M15[];
+      double SenkouspanAArr_M15[];
+      double SenkouspanBArr_M15[];
+      double ShiftedSenkouspanAArr_M15[];
+      double ShiftedSenkouspanBArr_M15[];
+      double ChikouspanArr_M15[];
+
+      CopyBuffer(handleIchimoku_M15,0,0,3,TenkansenArr_M15);
+      CopyBuffer(handleIchimoku_M15,1,0,3,KijunsenArr_M15);
+      CopyBuffer(handleIchimoku_M15,2,0,3,SenkouspanAArr_M15);
+      CopyBuffer(handleIchimoku_M15,3,0,3,SenkouspanBArr_M15);
+
+      CopyBuffer(handleIchimoku_M15,2,-26,3,ShiftedSenkouspanAArr_M15);
+      CopyBuffer(handleIchimoku_M15,3,-26,3,ShiftedSenkouspanBArr_M15);
+
+      CopyBuffer(handleIchimoku_M15,4,26,3,ChikouspanArr_M15);
+
+      double KumoDeltaCurrent_M15 = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr_M15[2] - ShiftedSenkouspanBArr_M15[2]),symbolDigits);
+      double KumoDeltaPrevious_M15 = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr_M15[0] - ShiftedSenkouspanBArr_M15[0]),symbolDigits);
+
+      if(
+         (
+            ClosePrice_H1 > SenkouspanAArr_H1[2] &&
+            ClosePrice_H1 > SenkouspanBArr_H1[2] &&
+            ClosePrice_H1 > KijunsenArr_H1[2] &&
+            TenkansenArr_H1[1] > KijunsenArr_H1[1] &&
+            TenkansenArr_H1[0] > KijunsenArr_H1[0] &&
+            KijunsenArr_H1[1] > KijunsenArr_H1[0] &&
+            ShiftedSenkouspanAArr_H1[1] > ShiftedSenkouspanBArr_H1[1] &&
+            ShiftedSenkouspanAArr_H1[1] > ShiftedSenkouspanAArr_H1[0] &&
+            ChikouspanArr_H1[0] > Bar26High_H1 &&
+            KumoDeltaCurrent_H1 > KumoDeltaPrevious_H1
+         ) &&
+         (
+            ClosePrice_M15 > SenkouspanAArr_M15[2] &&
+            ClosePrice_M15 > SenkouspanBArr_M15[2] &&
+            ClosePrice_M15 > KijunsenArr_M15[2] &&
+            TenkansenArr_M15[1] > KijunsenArr_M15[1] &&
+            TenkansenArr_M15[0] > KijunsenArr_M15[0] &&
+            KijunsenArr_M15[1] > KijunsenArr_M15[0] &&
+            ShiftedSenkouspanAArr_M15[1] > ShiftedSenkouspanBArr_M15[1] &&
+            ShiftedSenkouspanAArr_M15[1] > ShiftedSenkouspanAArr_M15[0] &&
+            ChikouspanArr_M15[0] > Bar26High_M15 &&
+            KumoDeltaCurrent_M15 > KumoDeltaPrevious_M15
+         )
+      )
+        {
+         Print(symbolList[i]," is Bullish on H1 and M15");
+        }
+      else
+         if(
+            (
+               ClosePrice_H1 < SenkouspanAArr_H1[2] &&
+               ClosePrice_H1 < SenkouspanBArr_H1[2] &&
+               ClosePrice_H1 < KijunsenArr_H1[2] &&
+               TenkansenArr_H1[1] < KijunsenArr_H1[1] &&
+               TenkansenArr_H1[0] < KijunsenArr_H1[0] &&
+               KijunsenArr_H1[1] < KijunsenArr_H1[0] &&
+               ShiftedSenkouspanAArr_H1[1] < ShiftedSenkouspanBArr_H1[1] &&
+               ShiftedSenkouspanAArr_H1[1] < ShiftedSenkouspanAArr_H1[0] &&
+               ChikouspanArr_H1[0] < Bar26High_H1 &&
+               KumoDeltaCurrent_H1 > KumoDeltaPrevious_H1
+            ) &&
+            (
+               ClosePrice_M15 < SenkouspanAArr_M15[2] &&
+               ClosePrice_M15 < SenkouspanBArr_M15[2] &&
+               ClosePrice_M15 < KijunsenArr_M15[2] &&
+               TenkansenArr_M15[1] < KijunsenArr_M15[1] &&
+               TenkansenArr_M15[0] < KijunsenArr_M15[0] &&
+               KijunsenArr_M15[1] < KijunsenArr_M15[0] &&
+               ShiftedSenkouspanAArr_M15[1] < ShiftedSenkouspanBArr_M15[1] &&
+               ShiftedSenkouspanAArr_M15[1] < ShiftedSenkouspanAArr_M15[0] &&
+               ChikouspanArr_M15[0] < Bar26High_M15 &&
+               KumoDeltaCurrent_M15 > KumoDeltaPrevious_M15
+            )
+         )
+           {
+            Print(symbolList[i]," is Bearish on H1 and M15");
+           }
+
+
      } // for loop
 
    Print("Scanning Finished...");
@@ -2816,10 +2908,8 @@ void OnChartEvent(const int id,         // event ID
 void OnTick()
   {
 
-
    textComment = "";
    debugComment = "";
-
 
 //+------------------------------------------------------------------+
 //|                                                                  |
