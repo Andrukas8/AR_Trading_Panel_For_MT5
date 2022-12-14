@@ -379,6 +379,8 @@ protected:
    bool              CalculatePosition(void);
    double            CheckPositionVolume(double lotSize);
    bool              DisplayInfo(void);
+   bool              DrawPositionRectangles(void);
+   bool              SetManualBE(void);
 
    //--- handlers of the dependent controls events
    void              OnClickSellBtn(void);
@@ -1808,6 +1810,12 @@ void CControlsDialog::OnClickDoubleOrderBtn(void)
    ObjectDelete(0,"stopLossLine");
    ObjectDelete(0,"takeProfitLine");
 
+   if(!DrawPositionRectangles())
+      Print(__FUNCTION__," Failed...");
+
+   if(!SetManualBE())
+      Print(__FUNCTION__," Failed...");
+
   }
 
 
@@ -2117,116 +2125,8 @@ void CControlsDialog::OnClickSendOrderBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickDrawPositionsBtn(void)
   {
-   int totalPos = PositionsTotal();
-
-
-// Find number of open positions on current chart
-   int totalPosCurrentChart = 0;
-   for(int i=0; i<totalPos; i++)
-     {
-      ulong posTicket = PositionGetTicket(i);
-      if(PositionSelectByTicket(posTicket))
-        {
-         if(PositionGetString(POSITION_SYMBOL) == _Symbol)
-           {
-            totalPosCurrentChart += 1;
-           }
-        }
-     }
-// End Find number of open positions on current chart
-
-
-   if(totalPosCurrentChart>0)
-     {
-      for(int i = 0; i < totalPos; i++)
-        {
-         ulong posTicket = PositionGetTicket(i);
-
-         if(PositionSelectByTicket(posTicket))
-           {
-            if(PositionGetString(POSITION_SYMBOL) == _Symbol)
-              {
-               long time1 = PositionGetInteger(POSITION_TIME);
-               long time2 = time1+(PeriodSeconds(_Period)*15);
-               double price1 = PositionGetDouble(POSITION_PRICE_OPEN);
-
-               double price2 = PositionGetDouble(POSITION_SL);
-               double price3 = PositionGetDouble(POSITION_TP);
-               string posProfit = AccountInfoString(ACCOUNT_CURRENCY) + " " + DoubleToString(PositionGetDouble(POSITION_PROFIT),2);
-
-               if(showProfitOnChart)
-                 {
-                  updateProfitOnchart = true;
-                  ObjectCreate(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJ_TEXT,0,time1,price1);
-                  ObjectSetString(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_TEXT,posProfit);
-                  ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_COLOR,clrAqua);
-                  ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_SELECTABLE,true);
-                  ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
-                 }
-
-               if(price2 > 0)
-                 {
-                  ObjectCreate(0, "AR_SL_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price2);
-                  ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrDarkRed);
-                  ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
-                  ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
-                 }
-
-               if(price3 > 0)
-                 {
-
-                  alertCloseLine = true;
-
-                  ObjectCreate(0, "AR_TP_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price3);
-                  ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrDarkGreen);
-                  ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
-                  ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
-
-                  if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position has type BUY
-                    {
-                     ObjectCreate(0,"alertCloseLine_1",OBJ_HLINE,0,0,price3);
-                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrSilver);
-                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_STYLE, STYLE_DASH);
-                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_WIDTH, 2);
-                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_BACK, true);
-                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTABLE, true);
-                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTED, false);
-                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_HIDDEN, false);
-                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_ZORDER, 0);
-                    }
-                  else
-                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL) // checking if the open position has type BUY
-                       {
-                        ObjectCreate(0,"alertCloseLine_2",OBJ_HLINE,0,0,price3);
-                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
-                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_STYLE, STYLE_DASH);
-                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_WIDTH, 2);
-                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_BACK, true);
-                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTABLE, true);
-                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, false);
-                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_HIDDEN, false);
-                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_ZORDER, 0);
-                       }
-                 }
-              }
-           }
-        }
-     }
-   else
-      if(totalPosCurrentChart == 0)
-        {
-         alertCloseLine = false;
-         m_ManualBEBtn.Color(clrBlack);
-         string Name;
-         for(int i = ObjectsTotal(0,0) -1 ; i >= 0; i--)
-           {
-            Name = ObjectName(0,i);
-            if(StringSubstr(Name, 0, 3) == "AR_")
-               ObjectDelete(0,Name);
-            if(StringSubstr(Name, 0, 10) == "alertClose")
-               ObjectDelete(0,Name);
-           }
-        }
+   if(!DrawPositionRectangles())
+      Print(__FUNCTION__," Failed...");
   }
 
 
@@ -2324,35 +2224,8 @@ void CControlsDialog::OnClickAlertCloseBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickManualBEBtn(void)
   {
-   if(alertCloseLine)
-     {
-
-      if(manualBEToggle)
-         manualBEToggle = false;
-      else
-         if(!manualBEToggle)
-            manualBEToggle = true;
-
-      if(manualBEToggle)
-        {
-         m_ManualBEBtn.Color(clrRed);
-         m_AlertCloseBtn.Color(clrBlack);
-         setAlarmCloseLine = false;
-         ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrDeepSkyBlue);
-         ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrDeepSkyBlue);
-
-         ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTED, false);
-         ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, false);
-        }
-      else
-         if(!manualBEToggle)
-           {
-            m_ManualBEBtn.Color(clrBlack);
-            ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrSilver);
-            ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
-           }
-     }
-
+   if(!SetManualBE())
+      Print(__FUNCTION__," Failed...");
   }
 
 
@@ -5421,5 +5294,166 @@ bool VaRfilterGo(double riskLimit)
       return(false);
 
   }
+
+
 //+------------------------------------------------------------------+
+//|              Function to draw position rectangles                |
+//+------------------------------------------------------------------+
+bool CControlsDialog::DrawPositionRectangles()
+  {
+
+   int totalPos = PositionsTotal();
+
+
+// Find number of open positions on current chart
+   int totalPosCurrentChart = 0;
+   for(int i=0; i<totalPos; i++)
+     {
+      ulong posTicket = PositionGetTicket(i);
+      if(PositionSelectByTicket(posTicket))
+        {
+         if(PositionGetString(POSITION_SYMBOL) == _Symbol)
+           {
+            totalPosCurrentChart += 1;
+           }
+        }
+     }
+// End Find number of open positions on current chart
+
+   if(totalPosCurrentChart>0)
+     {
+      for(int i = 0; i < totalPos; i++)
+        {
+         ulong posTicket = PositionGetTicket(i);
+
+         if(PositionSelectByTicket(posTicket))
+           {
+            if(PositionGetString(POSITION_SYMBOL) == _Symbol)
+              {
+               long time1 = PositionGetInteger(POSITION_TIME);
+               long time2 = time1+(PeriodSeconds(_Period)*15);
+               double price1 = PositionGetDouble(POSITION_PRICE_OPEN);
+
+               double price2 = PositionGetDouble(POSITION_SL);
+               double price3 = PositionGetDouble(POSITION_TP);
+               string posProfit = AccountInfoString(ACCOUNT_CURRENCY) + " " + DoubleToString(PositionGetDouble(POSITION_PROFIT),2);
+
+               if(showProfitOnChart)
+                 {
+                  updateProfitOnchart = true;
+                  ObjectCreate(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJ_TEXT,0,time1,price1);
+                  ObjectSetString(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_TEXT,posProfit);
+                  ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_COLOR,clrAqua);
+                  ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_SELECTABLE,true);
+                  ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
+                 }
+
+               if(price2 > 0)
+                 {
+                  ObjectCreate(0, "AR_SL_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price2);
+                  ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrDarkRed);
+                  ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
+                  ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
+                 }
+
+               if(price3 > 0)
+                 {
+
+                  alertCloseLine = true;
+
+                  ObjectCreate(0, "AR_TP_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price3);
+                  ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrDarkGreen);
+                  ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
+                  ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
+
+                  if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position has type BUY
+                    {
+                     ObjectCreate(0,"alertCloseLine_1",OBJ_HLINE,0,0,price3);
+                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrSilver);
+                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_STYLE, STYLE_DASH);
+                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_WIDTH, 2);
+                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_BACK, true);
+                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTABLE, true);
+                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTED, false);
+                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_HIDDEN, false);
+                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_ZORDER, 0);
+                    }
+                  else
+                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL) // checking if the open position has type BUY
+                       {
+                        ObjectCreate(0,"alertCloseLine_2",OBJ_HLINE,0,0,price3);
+                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
+                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_STYLE, STYLE_DASH);
+                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_WIDTH, 2);
+                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_BACK, true);
+                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTABLE, true);
+                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, false);
+                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_HIDDEN, false);
+                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_ZORDER, 0);
+                       }
+                 }
+              }
+           }
+        }
+     }
+   else
+      if(totalPosCurrentChart == 0)
+        {
+         alertCloseLine = false;
+         m_ManualBEBtn.Color(clrBlack);
+         string Name;
+         for(int i = ObjectsTotal(0,0) -1 ; i >= 0; i--)
+           {
+            Name = ObjectName(0,i);
+            if(StringSubstr(Name, 0, 3) == "AR_")
+               ObjectDelete(0,Name);
+            if(StringSubstr(Name, 0, 10) == "alertClose")
+               ObjectDelete(0,Name);
+           }
+        }
+   return(true);
+  }
+
+
+//+------------------------------------------------------------------+
+//|          Function to set Manual BE lines                         |
+//+------------------------------------------------------------------+
+bool CControlsDialog::SetManualBE()
+  {
+
+   if(alertCloseLine)
+     {
+
+      if(manualBEToggle)
+         manualBEToggle = false;
+      else
+         if(!manualBEToggle)
+            manualBEToggle = true;
+
+      if(manualBEToggle)
+        {
+         m_ManualBEBtn.Color(clrRed);
+         m_AlertCloseBtn.Color(clrBlack);
+         setAlarmCloseLine = false;
+         ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrDeepSkyBlue);
+         ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrDeepSkyBlue);
+
+         ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTED, false);
+         ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, false);
+        }
+      else
+         if(!manualBEToggle)
+           {
+            m_ManualBEBtn.Color(clrBlack);
+            ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrSilver);
+            ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
+           }
+
+     }
+   return(true);
+  }
+
+
+
+
 //+------------------------------------------------------------------+
