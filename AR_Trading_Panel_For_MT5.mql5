@@ -2820,819 +2820,823 @@ void OnTick()
 
 //Print("VaRfilterGo = ",VaRfilterGo(maxVARFiltervalue));
 
-   if(VaRfilterGo(maxVARFiltervalue))
+   if(Period() == TimeFrame)
      {
-      if(MABreak)
+
+
+
+
+      if(VaRfilterGo(maxVARFiltervalue))
         {
-         int bars = iBars(_Symbol, TimeFrame);
-
-         if(barsTotal != bars) // New bar appeared on the chart
+         if(MABreak)
            {
-            barsTotal = bars;
+            int bars = iBars(_Symbol, TimeFrame);
 
-            double ClosePrevBarMABreak = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price
-            double ClosePrPrevBarMABreak = NormalizeDouble(iClose(_Symbol,TimeFrame,2),_Digits); // pre previous close price
-
-            double MABreakArr[];
-            CopyBuffer(handleMABreak,MAIN_LINE,1,2,MABreakArr);
-            ArraySetAsSeries(MABreakArr,true);
-            double MABreakPrevBar = NormalizeDouble(MABreakArr[0],_Digits); // Moving Average of previous bar
-            double MABreakPrPrevBar = NormalizeDouble(MABreakArr[1],_Digits); // Moving Average of pre previous bar
-
-            bool MABreakAlligatorUp = true;
-            bool MABreakAlligatorDn = true;
-
-            if(MABreakUseAlligatorFilter)
+            if(barsTotal != bars) // New bar appeared on the chart
               {
-               MABreakAlligatorUp = false;
-               MABreakAlligatorDn = false;
+               barsTotal = bars;
 
-               double alligatorLipsEndArr[];
-               double alligatorTeethEndArr[];
-               double alligatorJawEndArr[];
+               double ClosePrevBarMABreak = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price
+               double ClosePrPrevBarMABreak = NormalizeDouble(iClose(_Symbol,TimeFrame,2),_Digits); // pre previous close price
 
-               ArraySetAsSeries(alligatorLipsEndArr,true);
-               ArraySetAsSeries(alligatorTeethEndArr,true);
-               ArraySetAsSeries(alligatorJawEndArr,true);
+               double MABreakArr[];
+               CopyBuffer(handleMABreak,MAIN_LINE,1,2,MABreakArr);
+               ArraySetAsSeries(MABreakArr,true);
+               double MABreakPrevBar = NormalizeDouble(MABreakArr[0],_Digits); // Moving Average of previous bar
+               double MABreakPrPrevBar = NormalizeDouble(MABreakArr[1],_Digits); // Moving Average of pre previous bar
 
-               CopyBuffer(handleAlligatorMABreak,2,-4*alligatorMultiplierMABreak,8,alligatorLipsEndArr);
-               CopyBuffer(handleAlligatorMABreak,1,-6*alligatorMultiplierMABreak,8,alligatorTeethEndArr);
-               CopyBuffer(handleAlligatorMABreak,0,-9*alligatorMultiplierMABreak,8,alligatorJawEndArr);
+               bool MABreakAlligatorUp = true;
+               bool MABreakAlligatorDn = true;
 
-               if(alligatorLipsEndArr[0] > alligatorTeethEndArr[0] && alligatorTeethEndArr[0] > alligatorJawEndArr[0])
+               if(MABreakUseAlligatorFilter)
                  {
-                  MABreakAlligatorUp = true;
+                  MABreakAlligatorUp = false;
+                  MABreakAlligatorDn = false;
+
+                  double alligatorLipsEndArr[];
+                  double alligatorTeethEndArr[];
+                  double alligatorJawEndArr[];
+
+                  ArraySetAsSeries(alligatorLipsEndArr,true);
+                  ArraySetAsSeries(alligatorTeethEndArr,true);
+                  ArraySetAsSeries(alligatorJawEndArr,true);
+
+                  CopyBuffer(handleAlligatorMABreak,2,-4*alligatorMultiplierMABreak,8,alligatorLipsEndArr);
+                  CopyBuffer(handleAlligatorMABreak,1,-6*alligatorMultiplierMABreak,8,alligatorTeethEndArr);
+                  CopyBuffer(handleAlligatorMABreak,0,-9*alligatorMultiplierMABreak,8,alligatorJawEndArr);
+
+                  if(alligatorLipsEndArr[0] > alligatorTeethEndArr[0] && alligatorTeethEndArr[0] > alligatorJawEndArr[0])
+                    {
+                     MABreakAlligatorUp = true;
+                     MABreakAlligatorDn = false;
+                    }
+                  else
+                     if(alligatorLipsEndArr[0] < alligatorTeethEndArr[0] && alligatorTeethEndArr[0] < alligatorJawEndArr[0])
+                       {
+                        MABreakAlligatorUp = false;
+                        MABreakAlligatorDn = true;
+                       }
+                 }
+
+               // Using filter to filter out signals for currency pairs which contain one of the parts of the pair for which we have an open position already
+               if(useSymmetricalPositionFilter && SymmetricalPositionFilter(_Symbol))
+                 {
+                  Print("Rejecting MA Breakout signal on ",_Symbol," because symmetrical position is open already...");
+                  MABreakAlligatorUp = false;
                   MABreakAlligatorDn = false;
                  }
+
+               // Using filter to filter out signals for instrumentis which already have open positions
+               if(useOpenPositionFilter && OpenPositionFilter(_Symbol))
+                 {
+                  Print("Rejecting MA Breakout signal on ",_Symbol," because this instrument has an open position already");
+                  MABreakAlligatorUp = false;
+                  MABreakAlligatorDn = false;
+                 }
+
+               // --------------------
+               // --- BUY POSITION ---
+               // --------------------
+               if(ClosePrPrevBarMABreak < MABreakPrPrevBar && ClosePrevBarMABreak > MABreakPrevBar && MABreakAlligatorUp)
+                 {
+                  Alert("=== MOVING AVERAGE BREAK ALERT === BULLISH");
+                  Print("ClosePrPrevBarMABreak < MABreakPrPrevBar && ClosePrevBarMABreak > MABreakPrevBar");
+                  Print(DoubleToString(ClosePrPrevBarMABreak,_Digits)," < ",DoubleToString(MABreakPrPrevBar,_Digits)," && ",DoubleToString(ClosePrevBarMABreak,_Digits)," > ",DoubleToString(MABreakPrevBar,_Digits));
+                 }
+
+               // --------------------
+               // --- SELL POSITION --
+               // --------------------
                else
-                  if(alligatorLipsEndArr[0] < alligatorTeethEndArr[0] && alligatorTeethEndArr[0] < alligatorJawEndArr[0])
+                  if(ClosePrPrevBarMABreak > MABreakPrPrevBar && ClosePrevBarMABreak < MABreakPrevBar && MABreakAlligatorDn)
                     {
-                     MABreakAlligatorUp = false;
-                     MABreakAlligatorDn = true;
+                     Alert("=== MOVING AVERAGE BREAK ALERT === BEARISH");
+                     Print("ClosePrPrevBarMABreak > MABreakPrPrevBar && ClosePrevBarMABreak < MABreakPrevBar");
+                     Print(DoubleToString(ClosePrPrevBarMABreak,_Digits)," > ",DoubleToString(MABreakPrPrevBar,_Digits)," && ",DoubleToString(ClosePrevBarMABreak,_Digits)," < ",DoubleToString(MABreakPrevBar,_Digits));
                     }
               }
 
-            // Using filter to filter out signals for currency pairs which contain one of the parts of the pair for which we have an open position already
-            if(useSymmetricalPositionFilter && SymmetricalPositionFilter(_Symbol))
-              {
-               Print("Rejecting MA Breakout signal on ",_Symbol," because symmetrical position is open already...");
-               MABreakAlligatorUp = false;
-               MABreakAlligatorDn = false;
-              }
-
-            // Using filter to filter out signals for instrumentis which already have open positions
-            if(useOpenPositionFilter && OpenPositionFilter(_Symbol))
-              {
-               Print("Rejecting MA Breakout signal on ",_Symbol," because this instrument has an open position already");
-               MABreakAlligatorUp = false;
-               MABreakAlligatorDn = false;
-              }
-
-            // --------------------
-            // --- BUY POSITION ---
-            // --------------------
-            if(ClosePrPrevBarMABreak < MABreakPrPrevBar && ClosePrevBarMABreak > MABreakPrevBar && MABreakAlligatorUp)
-              {
-               Alert("=== MOVING AVERAGE BREAK ALERT === BULLISH");
-               Print("ClosePrPrevBarMABreak < MABreakPrPrevBar && ClosePrevBarMABreak > MABreakPrevBar");
-               Print(DoubleToString(ClosePrPrevBarMABreak,_Digits)," < ",DoubleToString(MABreakPrPrevBar,_Digits)," && ",DoubleToString(ClosePrevBarMABreak,_Digits)," > ",DoubleToString(MABreakPrevBar,_Digits));
-              }
-
-            // --------------------
-            // --- SELL POSITION --
-            // --------------------
-            else
-               if(ClosePrPrevBarMABreak > MABreakPrPrevBar && ClosePrevBarMABreak < MABreakPrevBar && MABreakAlligatorDn)
-                 {
-                  Alert("=== MOVING AVERAGE BREAK ALERT === BEARISH");
-                  Print("ClosePrPrevBarMABreak > MABreakPrPrevBar && ClosePrevBarMABreak < MABreakPrevBar");
-                  Print(DoubleToString(ClosePrPrevBarMABreak,_Digits)," > ",DoubleToString(MABreakPrPrevBar,_Digits)," && ",DoubleToString(ClosePrevBarMABreak,_Digits)," < ",DoubleToString(MABreakPrevBar,_Digits));
-                 }
-           }
-
-        } //    if(MABreak)
+           } //    if(MABreak)
 
 
-      //+------------------------------------------------------------------+
-      //|                                                                  |
-      //|  ----- End of Handling MA Break Alert -------------------------- |
-      //|                                                                  |
-      //+------------------------------------------------------------------+
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //|  ----- End of Handling MA Break Alert -------------------------- |
+         //|                                                                  |
+         //+------------------------------------------------------------------+
 
-      //+------------------------------------------------------------------+
-      //|                                                                  |
-      //|  ----- Handling 3 Lines Strike Alert --------------------------- |
-      //|                                                                  |
-      //+------------------------------------------------------------------+
-      if(threeLinesStrikeActivate)
-        {
-         int bars = iBars(_Symbol, TimeFrame);
-
-         if(barsTotal != bars) // New bar appeared on the chart
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //|  ----- Handling 3 Lines Strike Alert --------------------------- |
+         //|                                                                  |
+         //+------------------------------------------------------------------+
+         if(threeLinesStrikeActivate)
            {
-            barsTotal = bars;
-            double ToleranceOpenCoef = ToleranceOpenPercent / 100;
-            double ToleranceCloseCoef = ToleranceClosePercent / 100;
-            bool strike_up=false;
-            bool strike_dn=false;
-            bool priceUnderMa = false;
-            bool priceAboveMA = false;
+            int bars = iBars(_Symbol, TimeFrame);
 
-            // Strike UP
-            double closeUP = iClose(_Symbol,TimeFrame,1) + (iClose(_Symbol,TimeFrame,1) - iOpen(_Symbol,TimeFrame,1)) * ToleranceCloseCoef;
-            double openUP = iOpen(_Symbol,TimeFrame,1) - (iClose(_Symbol,TimeFrame,1) - iOpen(_Symbol,TimeFrame,1)) * ToleranceCloseCoef;
-
-            if(
-               closeUP >= MathMax(iClose(_Symbol,TimeFrame,2), MathMax(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
-               closeUP >= MathMax(iOpen(_Symbol,TimeFrame,2), MathMax(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
-               closeUP >= MathMin(iOpen(_Symbol,TimeFrame,2), MathMin(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4)))&&
-               openUP <= MathMin(iClose(_Symbol,TimeFrame,2), MathMin(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
-               openUP <= MathMax(iClose(_Symbol,TimeFrame,2), MathMax(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
-               openUP <= MathMin(iOpen(_Symbol,TimeFrame,2), MathMin(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
-               openUP <= MathMax(iOpen(_Symbol,TimeFrame,2), MathMax(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
-               openUP <= closeUP
-            )
+            if(barsTotal != bars) // New bar appeared on the chart
               {
-               strike_up = true;
+               barsTotal = bars;
+               double ToleranceOpenCoef = ToleranceOpenPercent / 100;
+               double ToleranceCloseCoef = ToleranceClosePercent / 100;
+               bool strike_up=false;
+               bool strike_dn=false;
+               bool priceUnderMa = false;
+               bool priceAboveMA = false;
 
-               // checking if strict rule is on
-               if(EngulfingModeStrict && !(iOpen(_Symbol,TimeFrame,2) >= iClose(_Symbol,TimeFrame,2) && iOpen(_Symbol,TimeFrame,3) >= iClose(_Symbol,TimeFrame,3) && iOpen(_Symbol,TimeFrame,4) >= iClose(_Symbol,TimeFrame,4)))
+               // Strike UP
+               double closeUP = iClose(_Symbol,TimeFrame,1) + (iClose(_Symbol,TimeFrame,1) - iOpen(_Symbol,TimeFrame,1)) * ToleranceCloseCoef;
+               double openUP = iOpen(_Symbol,TimeFrame,1) - (iClose(_Symbol,TimeFrame,1) - iOpen(_Symbol,TimeFrame,1)) * ToleranceCloseCoef;
+
+               if(
+                  closeUP >= MathMax(iClose(_Symbol,TimeFrame,2), MathMax(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
+                  closeUP >= MathMax(iOpen(_Symbol,TimeFrame,2), MathMax(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
+                  closeUP >= MathMin(iOpen(_Symbol,TimeFrame,2), MathMin(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4)))&&
+                  openUP <= MathMin(iClose(_Symbol,TimeFrame,2), MathMin(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
+                  openUP <= MathMax(iClose(_Symbol,TimeFrame,2), MathMax(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
+                  openUP <= MathMin(iOpen(_Symbol,TimeFrame,2), MathMin(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
+                  openUP <= MathMax(iOpen(_Symbol,TimeFrame,2), MathMax(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
+                  openUP <= closeUP
+               )
+                 {
+                  strike_up = true;
+
+                  // checking if strict rule is on
+                  if(EngulfingModeStrict && !(iOpen(_Symbol,TimeFrame,2) >= iClose(_Symbol,TimeFrame,2) && iOpen(_Symbol,TimeFrame,3) >= iClose(_Symbol,TimeFrame,3) && iOpen(_Symbol,TimeFrame,4) >= iClose(_Symbol,TimeFrame,4)))
+                    {
+                     strike_up = false;
+                    }
+                 }
+
+               // Strike DN
+               double closeDN = iClose(_Symbol,TimeFrame,1) - (iOpen(_Symbol,TimeFrame,1) - iClose(_Symbol,TimeFrame,1)) * ToleranceCloseCoef;
+               double openDN = iOpen(_Symbol,TimeFrame,1) + (iOpen(_Symbol,TimeFrame,1) - iClose(_Symbol,TimeFrame,1)) * ToleranceCloseCoef;
+
+               if(closeDN <= MathMax(iClose(_Symbol,TimeFrame,2), MathMax(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
+                  closeDN <= MathMax(iOpen(_Symbol,TimeFrame,2), MathMax(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
+                  closeDN <= MathMin(iOpen(_Symbol,TimeFrame,2), MathMin(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
+                  openDN >= MathMin(iClose(_Symbol,TimeFrame,2), MathMin(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
+                  openDN >= MathMax(iClose(_Symbol,TimeFrame,2), MathMax(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
+                  openDN >= MathMin(iOpen(_Symbol,TimeFrame,2), MathMin(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
+                  openDN >= MathMax(iOpen(_Symbol,TimeFrame,2), MathMax(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
+                  openDN >= closeDN)
+                 {
+                  strike_dn = true;
+
+                  // checking if strict rule is on
+
+                  if(EngulfingModeStrict && !(iOpen(_Symbol,TimeFrame,2) <= iClose(_Symbol,TimeFrame,2) && iOpen(_Symbol,TimeFrame,3) <= iClose(_Symbol,TimeFrame,3) && iOpen(_Symbol,TimeFrame,4) <= iClose(_Symbol,TimeFrame,4)))
+                    {
+                     strike_dn = false;
+                    }
+                 }
+
+               // --- checking that the engulfed candles are shorter than the engulfing candle
+
+               double mainCandleBodyLength = MathAbs(iOpen(_Symbol,TimeFrame,1) - iClose(_Symbol,TimeFrame,1));
+               double firstCandleBodyLength = MathAbs(iOpen(_Symbol,TimeFrame,2) - iClose(_Symbol,TimeFrame,2));
+               double secondCandleBodyLength = MathAbs(iOpen(_Symbol,TimeFrame,3) - iClose(_Symbol,TimeFrame,3));
+               double thirdCandleBodyLength = MathAbs(iOpen(_Symbol,TimeFrame,4) - iClose(_Symbol,TimeFrame,4));
+
+               if(mainCandleBodyLength < firstCandleBodyLength || mainCandleBodyLength < secondCandleBodyLength || mainCandleBodyLength < thirdCandleBodyLength)
                  {
                   strike_up = false;
-                 }
-              }
-
-            // Strike DN
-            double closeDN = iClose(_Symbol,TimeFrame,1) - (iOpen(_Symbol,TimeFrame,1) - iClose(_Symbol,TimeFrame,1)) * ToleranceCloseCoef;
-            double openDN = iOpen(_Symbol,TimeFrame,1) + (iOpen(_Symbol,TimeFrame,1) - iClose(_Symbol,TimeFrame,1)) * ToleranceCloseCoef;
-
-            if(closeDN <= MathMax(iClose(_Symbol,TimeFrame,2), MathMax(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
-               closeDN <= MathMax(iOpen(_Symbol,TimeFrame,2), MathMax(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
-               closeDN <= MathMin(iOpen(_Symbol,TimeFrame,2), MathMin(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
-               openDN >= MathMin(iClose(_Symbol,TimeFrame,2), MathMin(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
-               openDN >= MathMax(iClose(_Symbol,TimeFrame,2), MathMax(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
-               openDN >= MathMin(iOpen(_Symbol,TimeFrame,2), MathMin(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
-               openDN >= MathMax(iOpen(_Symbol,TimeFrame,2), MathMax(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
-               openDN >= closeDN)
-              {
-               strike_dn = true;
-
-               // checking if strict rule is on
-
-               if(EngulfingModeStrict && !(iOpen(_Symbol,TimeFrame,2) <= iClose(_Symbol,TimeFrame,2) && iOpen(_Symbol,TimeFrame,3) <= iClose(_Symbol,TimeFrame,3) && iOpen(_Symbol,TimeFrame,4) <= iClose(_Symbol,TimeFrame,4)))
-                 {
                   strike_dn = false;
                  }
-              }
 
-            // --- checking that the engulfed candles are shorter than the engulfing candle
-
-            double mainCandleBodyLength = MathAbs(iOpen(_Symbol,TimeFrame,1) - iClose(_Symbol,TimeFrame,1));
-            double firstCandleBodyLength = MathAbs(iOpen(_Symbol,TimeFrame,2) - iClose(_Symbol,TimeFrame,2));
-            double secondCandleBodyLength = MathAbs(iOpen(_Symbol,TimeFrame,3) - iClose(_Symbol,TimeFrame,3));
-            double thirdCandleBodyLength = MathAbs(iOpen(_Symbol,TimeFrame,4) - iClose(_Symbol,TimeFrame,4));
-
-            if(mainCandleBodyLength < firstCandleBodyLength || mainCandleBodyLength < secondCandleBodyLength || mainCandleBodyLength < thirdCandleBodyLength)
-              {
-               strike_up = false;
-               strike_dn = false;
-              }
-
-            if(useMAFilter3LS)
-              {
-               priceAboveMA = false;
-               priceUnderMa = false;
-
-               double ClosePrevBar3LS = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price
-
-               double FastMa3LSArr[];
-               CopyBuffer(handleFast3LSMA,MAIN_LINE,1,1,FastMa3LSArr);
-               ArraySetAsSeries(FastMa3LSArr,true);
-               double FastMa3LSArrPrevBar = NormalizeDouble(FastMa3LSArr[0],_Digits);
-
-               double MiddleMa3LSArr[];
-               CopyBuffer(handleMiddle3LSMA,MAIN_LINE,1,1,MiddleMa3LSArr);
-               ArraySetAsSeries(MiddleMa3LSArr,true);
-               double MiddleMa3LSArrPrevBar = NormalizeDouble(MiddleMa3LSArr[0],_Digits);
-
-               double SlowMa3LSArr[];
-               CopyBuffer(handleSlow3LSMA,MAIN_LINE,1,1,SlowMa3LSArr);
-               ArraySetAsSeries(SlowMa3LSArr,true);
-               double SlowMa3LSArrPrevBar = NormalizeDouble(SlowMa3LSArr[0],_Digits);
-
-               if(ClosePrevBar3LS > FastMa3LSArrPrevBar && FastMa3LSArrPrevBar > MiddleMa3LSArrPrevBar && MiddleMa3LSArrPrevBar > SlowMa3LSArrPrevBar)
+               if(useMAFilter3LS)
                  {
-                  priceAboveMA = true;
+                  priceAboveMA = false;
                   priceUnderMa = false;
+
+                  double ClosePrevBar3LS = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price
+
+                  double FastMa3LSArr[];
+                  CopyBuffer(handleFast3LSMA,MAIN_LINE,1,1,FastMa3LSArr);
+                  ArraySetAsSeries(FastMa3LSArr,true);
+                  double FastMa3LSArrPrevBar = NormalizeDouble(FastMa3LSArr[0],_Digits);
+
+                  double MiddleMa3LSArr[];
+                  CopyBuffer(handleMiddle3LSMA,MAIN_LINE,1,1,MiddleMa3LSArr);
+                  ArraySetAsSeries(MiddleMa3LSArr,true);
+                  double MiddleMa3LSArrPrevBar = NormalizeDouble(MiddleMa3LSArr[0],_Digits);
+
+                  double SlowMa3LSArr[];
+                  CopyBuffer(handleSlow3LSMA,MAIN_LINE,1,1,SlowMa3LSArr);
+                  ArraySetAsSeries(SlowMa3LSArr,true);
+                  double SlowMa3LSArrPrevBar = NormalizeDouble(SlowMa3LSArr[0],_Digits);
+
+                  if(ClosePrevBar3LS > FastMa3LSArrPrevBar && FastMa3LSArrPrevBar > MiddleMa3LSArrPrevBar && MiddleMa3LSArrPrevBar > SlowMa3LSArrPrevBar)
+                    {
+                     priceAboveMA = true;
+                     priceUnderMa = false;
+                    }
+                  else
+                     if(ClosePrevBar3LS < FastMa3LSArrPrevBar && FastMa3LSArrPrevBar < MiddleMa3LSArrPrevBar && MiddleMa3LSArrPrevBar < SlowMa3LSArrPrevBar)
+                       {
+                        priceUnderMa = true;
+                        priceAboveMA = false;
+                       }
                  }
                else
-                  if(ClosePrevBar3LS < FastMa3LSArrPrevBar && FastMa3LSArrPrevBar < MiddleMa3LSArrPrevBar && MiddleMa3LSArrPrevBar < SlowMa3LSArrPrevBar)
+                  if(!useMAFilter3LS)
                     {
+                     priceAboveMA = true;
                      priceUnderMa = true;
-                     priceAboveMA = false;
                     }
+
+               if(strike_up && priceAboveMA)
+                  Alert("=== 3 LINES STRIKE ALERT === STRIKE UP === MA Filter is: ",IntegerToString(useMAFilter3LS));
+               else
+                  if(strike_dn && priceUnderMa)
+                     Alert("=== 3 LINES STRIKE ALERT === STRIKE DOWN === MA Filter is: ",IntegerToString(useMAFilter3LS));
+
               }
-            else
-               if(!useMAFilter3LS)
-                 {
-                  priceAboveMA = true;
-                  priceUnderMa = true;
-                 }
+           } //   if(threeLinesStrikeActivate)
 
-            if(strike_up && priceAboveMA)
-               Alert("=== 3 LINES STRIKE ALERT === STRIKE UP === MA Filter is: ",IntegerToString(useMAFilter3LS));
-            else
-               if(strike_dn && priceUnderMa)
-                  Alert("=== 3 LINES STRIKE ALERT === STRIKE DOWN === MA Filter is: ",IntegerToString(useMAFilter3LS));
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //|  ----- End of Handling 3 Lines Strike Alert -------------------- |
+         //|                                                                  |
+         //+------------------------------------------------------------------+
 
-           }
-        } //   if(threeLinesStrikeActivate)
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //|  ----- Handling Divergent Bar Alert WM1 ------------------------ |
+         //|                                                                  |
+         //+------------------------------------------------------------------+
 
-      //+------------------------------------------------------------------+
-      //|                                                                  |
-      //|  ----- End of Handling 3 Lines Strike Alert -------------------- |
-      //|                                                                  |
-      //+------------------------------------------------------------------+
-
-      //+------------------------------------------------------------------+
-      //|                                                                  |
-      //|  ----- Handling Divergent Bar Alert WM1 ------------------------ |
-      //|                                                                  |
-      //+------------------------------------------------------------------+
-
-      //+------------------------------------------------------------------+
-      //|                                                                  |
-      //+------------------------------------------------------------------+
-      if(wm1AlertToggle || wiseMan1PermanentToggle)
-        {
-         int bars = iBars(_Symbol, TimeFrame);
-         if(barsTotal != bars) // New bar appeared on the chart
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //+------------------------------------------------------------------+
+         if(wm1AlertToggle || wiseMan1PermanentToggle)
            {
-            barsTotal = bars;
-
-            //getting previous bar Close Open Low High values
-            double closePrevBar = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits);
-            double openPrevBar = NormalizeDouble(iOpen(_Symbol,TimeFrame,1),_Digits);
-            double lowPrevBar = NormalizeDouble(iLow(_Symbol,TimeFrame,1),_Digits);
-            double highPrevBar = NormalizeDouble(iHigh(_Symbol,TimeFrame,1),_Digits);
-
-            double upperWickPrevBar = 0;
-            double lowerWickPrevBar = 0;
-            double bodyPrevBar = 0;
-            double distanceToTeethPrevBar = 0;
-
-            double atrPrevBarArr[];
-            double alligatorTeethPrevBarArr[];
-
-            CopyBuffer(handleATR,0,0,2,atrPrevBarArr);
-            CopyBuffer(handleAlligator,1,0,2,alligatorTeethPrevBarArr);
-
-            double atrPrevBar = NormalizeDouble(atrPrevBarArr[1],_Digits);
-            double alligatorTeethPrevBar = alligatorTeethPrevBarArr[1];
-
-            if(closePrevBar > openPrevBar)  // Bullish bar
+            int bars = iBars(_Symbol, TimeFrame);
+            if(barsTotal != bars) // New bar appeared on the chart
               {
-               upperWickPrevBar = NormalizeDouble(highPrevBar - closePrevBar,_Digits);
-               lowerWickPrevBar = NormalizeDouble(openPrevBar - lowPrevBar,_Digits);
-               bodyPrevBar = NormalizeDouble(closePrevBar - openPrevBar,_Digits);
-              }
-            else
-               if(closePrevBar <= openPrevBar) // Bearish bar
-                 {
-                  upperWickPrevBar = NormalizeDouble(highPrevBar - openPrevBar,_Digits);
-                  lowerWickPrevBar = NormalizeDouble(closePrevBar - lowPrevBar,_Digits);
-                  bodyPrevBar = NormalizeDouble(openPrevBar - closePrevBar,_Digits);
-                  distanceToTeethPrevBar = NormalizeDouble(alligatorTeethPrevBar - openPrevBar,_Digits);
-                 }
+               barsTotal = bars;
 
-            if(closePrevBar > alligatorTeethPrevBar)
-               distanceToTeethPrevBar = NormalizeDouble(closePrevBar - alligatorTeethPrevBar,_Digits);
-            else
-               if(closePrevBar < alligatorTeethPrevBar)
-                  distanceToTeethPrevBar = NormalizeDouble(alligatorTeethPrevBar - closePrevBar,_Digits);
+               //getting previous bar Close Open Low High values
+               double closePrevBar = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits);
+               double openPrevBar = NormalizeDouble(iOpen(_Symbol,TimeFrame,1),_Digits);
+               double lowPrevBar = NormalizeDouble(iLow(_Symbol,TimeFrame,1),_Digits);
+               double highPrevBar = NormalizeDouble(iHigh(_Symbol,TimeFrame,1),_Digits);
 
-            if(distanceToTeethPrevBar > atrPrevBar * NormalizeDouble(atrMultiplier,2))
-              {
-               if(closePrevBar < alligatorTeethPrevBar && lowerWickPrevBar > upperWickPrevBar && lowerWickPrevBar > bodyPrevBar) // Bullish bar
+               double upperWickPrevBar = 0;
+               double lowerWickPrevBar = 0;
+               double bodyPrevBar = 0;
+               double distanceToTeethPrevBar = 0;
+
+               double atrPrevBarArr[];
+               double alligatorTeethPrevBarArr[];
+
+               CopyBuffer(handleATR,0,0,2,atrPrevBarArr);
+               CopyBuffer(handleAlligator,1,0,2,alligatorTeethPrevBarArr);
+
+               double atrPrevBar = NormalizeDouble(atrPrevBarArr[1],_Digits);
+               double alligatorTeethPrevBar = alligatorTeethPrevBarArr[1];
+
+               if(closePrevBar > openPrevBar)  // Bullish bar
                  {
-                  Alert("=== DIVERGENT BAR ALERT WISE MAN 1 === BULLISH");
+                  upperWickPrevBar = NormalizeDouble(highPrevBar - closePrevBar,_Digits);
+                  lowerWickPrevBar = NormalizeDouble(openPrevBar - lowPrevBar,_Digits);
+                  bodyPrevBar = NormalizeDouble(closePrevBar - openPrevBar,_Digits);
                  }
                else
-                  if(closePrevBar > alligatorTeethPrevBar && upperWickPrevBar > lowerWickPrevBar && upperWickPrevBar > bodyPrevBar) // Bearish bar
+                  if(closePrevBar <= openPrevBar) // Bearish bar
                     {
-                     Alert("=== DIVERGENT BAR ALERT WISE MAN 2 === BEARISH");
+                     upperWickPrevBar = NormalizeDouble(highPrevBar - openPrevBar,_Digits);
+                     lowerWickPrevBar = NormalizeDouble(closePrevBar - lowPrevBar,_Digits);
+                     bodyPrevBar = NormalizeDouble(openPrevBar - closePrevBar,_Digits);
+                     distanceToTeethPrevBar = NormalizeDouble(alligatorTeethPrevBar - openPrevBar,_Digits);
                     }
+
+               if(closePrevBar > alligatorTeethPrevBar)
+                  distanceToTeethPrevBar = NormalizeDouble(closePrevBar - alligatorTeethPrevBar,_Digits);
+               else
+                  if(closePrevBar < alligatorTeethPrevBar)
+                     distanceToTeethPrevBar = NormalizeDouble(alligatorTeethPrevBar - closePrevBar,_Digits);
+
+               if(distanceToTeethPrevBar > atrPrevBar * NormalizeDouble(atrMultiplier,2))
+                 {
+                  if(closePrevBar < alligatorTeethPrevBar && lowerWickPrevBar > upperWickPrevBar && lowerWickPrevBar > bodyPrevBar) // Bullish bar
+                    {
+                     Alert("=== DIVERGENT BAR ALERT WISE MAN 1 === BULLISH");
+                    }
+                  else
+                     if(closePrevBar > alligatorTeethPrevBar && upperWickPrevBar > lowerWickPrevBar && upperWickPrevBar > bodyPrevBar) // Bearish bar
+                       {
+                        Alert("=== DIVERGENT BAR ALERT WISE MAN 2 === BEARISH");
+                       }
+                 }
+
               }
-
            }
-        }
 
-      //+------------------------------------------------------------------+
-      //|                                                                  |
-      //|  ----- End Handling Divergent Bar Alert ------------------------ |
-      //|                                                                  |
-      //+------------------------------------------------------------------+
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //|  ----- End Handling Divergent Bar Alert ------------------------ |
+         //|                                                                  |
+         //+------------------------------------------------------------------+
 
-      //+------------------------------------------------------------------+
-      //|                                                                  |
-      //|  ----- Handling Awesome Oscillator Alert WM2 ------------------- |
-      //|                                                                  |
-      //+------------------------------------------------------------------+
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //|  ----- Handling Awesome Oscillator Alert WM2 ------------------- |
+         //|                                                                  |
+         //+------------------------------------------------------------------+
 
-      //+------------------------------------------------------------------+
-      //|                                                                  |
-      //+------------------------------------------------------------------+
-      if(wm2AlertToggle || wiseMan2PermanentToggle)
-        {
-         double awesomeOscillatorArr[];
-         CopyBuffer(handleAwesomeOscillator,0,0,5,awesomeOscillatorArr);
-
-         if(awesomeOscillatorArr[3] < awesomeOscillatorArr[2] && awesomeOscillatorArr[2] < awesomeOscillatorArr[1] && awesomeOscillatorArr[1] > awesomeOscillatorArr[0])
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //+------------------------------------------------------------------+
+         if(wm2AlertToggle || wiseMan2PermanentToggle)
            {
-            Alert("=== AWESOME OSCILLATOR ALERT WISE MAN 2 === BEARISH");
-            wm2AlertToggle = false;
-            ObjectSetString(0,ExtDialog.Name()+"wm2AlertBtn",OBJPROP_TEXT,"W2");
-           }
+            double awesomeOscillatorArr[];
+            CopyBuffer(handleAwesomeOscillator,0,0,5,awesomeOscillatorArr);
 
-         else
-            if(awesomeOscillatorArr[3] > awesomeOscillatorArr[2] && awesomeOscillatorArr[2] > awesomeOscillatorArr[1] && awesomeOscillatorArr[1] < awesomeOscillatorArr[0])
+            if(awesomeOscillatorArr[3] < awesomeOscillatorArr[2] && awesomeOscillatorArr[2] < awesomeOscillatorArr[1] && awesomeOscillatorArr[1] > awesomeOscillatorArr[0])
               {
-               Alert("=== AWESOME OSCILLATOR ALERT WISE MAN 2 === BULLISH");
+               Alert("=== AWESOME OSCILLATOR ALERT WISE MAN 2 === BEARISH");
                wm2AlertToggle = false;
                ObjectSetString(0,ExtDialog.Name()+"wm2AlertBtn",OBJPROP_TEXT,"W2");
               }
-        }
 
-      //+------------------------------------------------------------------+
-      //|                                                                  |
-      //|  ----- End of Handling Awesome Oscillator Alert WM2 ------------ |
-      //|                                                                  |
-      //+------------------------------------------------------------------+
-
-
-      //+------------------------------------------------------------------+
-      //|                                                                  |
-      //|  ----- Handling Fractal Break Alert WM3 ------------------------ |
-      //|                                                                  |
-      //+------------------------------------------------------------------+
-
-      //+------------------------------------------------------------------+
-      //|                                                                  |
-      //+------------------------------------------------------------------+
-      if(wm3AlertToggle || wiseMan3PermanentToggle)
-        {
-         int bars = iBars(_Symbol, PERIOD_CURRENT);
-         if(barsTotal != bars) // New bar appeared on the chart
-           {
-            barsTotal = bars;
-
-            double upperFractal = 0;
-            double lowerFractal = 0;
-
-            double high_1 = 0;
-            double high_2 = 0;
-            double high_3 = 0;
-            double high_4 = 0;
-            double high_5 = 0;
-
-            double low_1 = 0;
-            double low_2 = 0;
-            double low_3 = 0;
-            double low_4 = 0;
-            double low_5 = 0;
-
-            alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits);
-            alertClosePrevBar2 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,2),_Digits);
-
-            double fractalBufferWM3Double = NormalizeDouble(fractalBufferWM3*_Point,_Digits);
-
-            for(int i=3; i<200; i++)
-              {
-               high_1 = iHigh(_Symbol,PERIOD_CURRENT,i+2);
-               high_2 = iHigh(_Symbol,PERIOD_CURRENT,i+1);
-               high_3 = iHigh(_Symbol,PERIOD_CURRENT,i);
-               high_4 = iHigh(_Symbol,PERIOD_CURRENT,i-1);
-               high_5 = iHigh(_Symbol,PERIOD_CURRENT,i-2);
-
-               if(high_3 > high_2 && high_3 > high_1 && high_3 > high_4 && high_3 > high_5)
-                 {
-                  upperFractal = high_3 + fractalBufferWM3Double;
-                  break;
-                 }
-              }
-
-            for(int i=3; i<200; i++)
-              {
-               low_1 = iLow(_Symbol,PERIOD_CURRENT,i+2);
-               low_2 = iLow(_Symbol,PERIOD_CURRENT,i+1);
-               low_3 = iLow(_Symbol,PERIOD_CURRENT,i);
-               low_4 = iLow(_Symbol,PERIOD_CURRENT,i-1);
-               low_5 = iLow(_Symbol,PERIOD_CURRENT,i-2);
-
-               if(low_3 < low_2 && low_3 < low_1 && low_3 < low_4 && low_3 < low_5)
-                 {
-                  lowerFractal = low_3  - fractalBufferWM3Double;
-                  break;
-                 }
-              }
-
-            bool alligatorWM3Up = true;
-            bool alligatorWM3Down = true;
-
-            if(wiseMan3AlligatorFilter)
-              {
-               alligatorWM3Up = false;
-               alligatorWM3Down = false;
-               double alligatorLipsEndArr[];
-               double alligatorTeethEndArr[];
-               double alligatorJawEndArr[];
-
-               ArraySetAsSeries(alligatorLipsEndArr,true);
-               ArraySetAsSeries(alligatorTeethEndArr,true);
-               ArraySetAsSeries(alligatorJawEndArr,true);
-
-               CopyBuffer(handleAlligator,2,-4*alligatorMultiplier,8,alligatorLipsEndArr);
-               CopyBuffer(handleAlligator,1,-6*alligatorMultiplier,8,alligatorTeethEndArr);
-               CopyBuffer(handleAlligator,0,-9*alligatorMultiplier,8,alligatorJawEndArr);
-
-               if(alligatorLipsEndArr[0] > alligatorTeethEndArr[0] && alligatorTeethEndArr[0] > alligatorJawEndArr[0])
-                 {
-                  alligatorWM3Up = true;
-                  alligatorWM3Down = false;
-                 }
-               else
-                  if(alligatorLipsEndArr[0] < alligatorTeethEndArr[0] && alligatorTeethEndArr[0] < alligatorJawEndArr[0])
-                    {
-                     alligatorWM3Up = false;
-                     alligatorWM3Down = true;
-                    }
-
-              }
-
-            if(upperFractal !=0 && lowerFractal !=0)
-               if(alertClosePrevBar1 > upperFractal && alertClosePrevBar2 < upperFractal && alligatorWM3Up)
-                  Alert("=== FRACTAL BREAK ALERT WISE MAN 3 === BULLISH");
-               else
-                  if(alertClosePrevBar1 < lowerFractal && alertClosePrevBar2 > lowerFractal && alligatorWM3Down)
-                     Alert("=== FRACTAL BREAK ALERT WISE MAN 3 === BEARISH");
-           }
-        }
-
-      //+------------------------------------------------------------------+
-      //|                                                                  |
-      //|  ----- End of Handling Fractal Break Alert WM3 ----------------- |
-      //|                                                                  |
-      //+------------------------------------------------------------------+
-
-      //+------------------------------------------------------------------+
-      //|                                                                  |
-      //|  ----- Signal If TK Break Strategy Conditions Met -------------- |
-      //|                                                                  |
-      //+------------------------------------------------------------------+
-
-      if(SignalTenkansenBreak)
-        {
-         bool BuySignal_1 = false;
-         bool BuySignal_2 = false;
-         bool BuySignal_3 = false;
-         bool BuySignal_4 = false;
-         bool BuySignal_GO = false;
-
-         bool SellSignal_1 = false;
-         bool SellSignal_2 = false;
-         bool SellSignal_3 = false;
-         bool SellSignal_4 = false;
-         bool SellSignal_GO = false;
-
-         bool KJSSAFilterUp = false;
-         bool KJSSAFilterDn = false;
-         bool KumoIsWider = false;
-
-         // Upper TF Ichimoku Variables
-
-         bool UpperTFKJSSAFilterUp = false;
-         bool UpperTFKJSSAFilterDn = false;
-         bool UpperTFKumoIsWider = false;
-
-         static datetime timeStamp;
-         datetime time = iTime(_Symbol,TimeFrame,0);
-
-         double ClosePrice_1 = iClose(_Symbol,TimeFrame,1);
-         double ClosePrice_2 = iClose(_Symbol,TimeFrame,2);
-         double ClosePrice_3 = iClose(_Symbol,TimeFrame,3);
-
-         double TenkansenArr[];
-         double KijunsenArr[];
-         double SenkouspanAArr[];
-         double SenkouspanBArr[];
-
-         double ShiftedSenkouspanAArr[];
-         double ShiftedSenkouspanBArr[];
-
-         double ChikouspanArr[];
-
-         double Bar26High = iHigh(_Symbol,TimeFrame,26);
-         double Bar26Low = iLow(_Symbol,TimeFrame,26);
-         double CurrentHigh = iHigh(_Symbol,TimeFrame,0);
-         double CurrentLow = iLow(_Symbol,TimeFrame,0);
-
-         CopyBuffer(handleIchimoku,0,0,KJSSAFilterRange+1,TenkansenArr);
-         CopyBuffer(handleIchimoku,1,0,KJSSAFilterRange+1,KijunsenArr);
-         CopyBuffer(handleIchimoku,2,0,KJSSAFilterRange+1,SenkouspanAArr);
-         CopyBuffer(handleIchimoku,3,0,KJSSAFilterRange+1,SenkouspanBArr);
-
-         CopyBuffer(handleIchimoku,2,-26,KJSSAFilterRange+1,ShiftedSenkouspanAArr);
-         CopyBuffer(handleIchimoku,3,-26,KJSSAFilterRange+1,ShiftedSenkouspanBArr);
-
-         CopyBuffer(handleIchimoku,4,26,KJSSAFilterRange+1,ChikouspanArr);
-
-         double KumoDeltaCurrent = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr[KJSSAFilterRange] - ShiftedSenkouspanBArr[KJSSAFilterRange]),_Digits);
-         double KumoDeltaPrevious = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr[0] - ShiftedSenkouspanBArr[0]),_Digits);
-
-         if(KumoDeltaCurrent > KumoDeltaPrevious)
-            KumoIsWider = true;
-         else
-            KumoIsWider = false;
-
-
-         bool UpperTFBuyGo = true;
-         bool UpperTFSellGo = true;
-
-
-         if(upperTFFilterIchimoku)
-           {
-            UpperTFBuyGo = false;
-            UpperTFSellGo = false;
-
-            double UpperTFTenkansenArr[];
-            double UpperTFKijunsenArr[];
-            double UpperTFSenkouspanAArr[];
-            double UpperTFSenkouspanBArr[];
-
-            double UpperTFShiftedSenkouspanAArr[];
-            double UpperTFShiftedSenkouspanBArr[];
-
-            double UpperTFChikouspanArr[];
-
-            double UpperTFBar26High = iHigh(_Symbol,UpperTimeFrame,27);
-            double UpperTFBar26Low = iLow(_Symbol,UpperTimeFrame,27);
-            double UpperTFCurrentHigh = iHigh(_Symbol,UpperTimeFrame,0);
-            double UpperTFCurrentLow = iLow(_Symbol,UpperTimeFrame,0);
-
-            double UpperTFPreviousClose = iClose(_Symbol,UpperTimeFrame,0);
-
-            CopyBuffer(handleUpperTFIchimoku,0,1,KJSSAFilterRange+1,UpperTFTenkansenArr);
-            CopyBuffer(handleUpperTFIchimoku,1,1,KJSSAFilterRange+1,UpperTFKijunsenArr);
-            CopyBuffer(handleUpperTFIchimoku,2,1,KJSSAFilterRange+1,UpperTFSenkouspanAArr);
-            CopyBuffer(handleUpperTFIchimoku,3,1,KJSSAFilterRange+1,UpperTFSenkouspanBArr);
-
-            CopyBuffer(handleUpperTFIchimoku,2,-26,KJSSAFilterRange+1,UpperTFShiftedSenkouspanAArr);
-            CopyBuffer(handleUpperTFIchimoku,3,-26,KJSSAFilterRange+1,UpperTFShiftedSenkouspanBArr);
-
-            CopyBuffer(handleUpperTFIchimoku,4,26,KJSSAFilterRange+1,UpperTFChikouspanArr);
-
-            double UpperTFKumoDeltaCurrent = NormalizeDouble(MathAbs(UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] - UpperTFShiftedSenkouspanBArr[KJSSAFilterRange]),_Digits);
-            double UpperTFKumoDeltaPrevious = NormalizeDouble(MathAbs(UpperTFShiftedSenkouspanAArr[0] - UpperTFShiftedSenkouspanBArr[0]),_Digits);
-
-
-            // Check if Upper TF Ichimoku is Bullish
-            if(
-               UpperTFTenkansenArr[KJSSAFilterRange] > UpperTFKijunsenArr[KJSSAFilterRange]  &&
-               UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] > UpperTFShiftedSenkouspanBArr[KJSSAFilterRange] &&
-               // UpperTFTenkansenArr[0] > UpperTFKijunsenArr[0] &&
-               // UpperTFKijunsenArr[KJSSAFilterRange] > UpperTFKijunsenArr[0] &&
-               // UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] > UpperTFShiftedSenkouspanAArr[0] &&
-               // UpperTFKumoDeltaCurrent > UpperTFKumoDeltaPrevious &&
-               UpperTFChikouspanArr[0] > UpperTFBar26High
-            )
-              {
-               UpperTFBuyGo = true;
-               UpperTFSellGo = false;
-              }
-            // Check if Upper TF Ichimoku is Bearish
             else
+               if(awesomeOscillatorArr[3] > awesomeOscillatorArr[2] && awesomeOscillatorArr[2] > awesomeOscillatorArr[1] && awesomeOscillatorArr[1] < awesomeOscillatorArr[0])
+                 {
+                  Alert("=== AWESOME OSCILLATOR ALERT WISE MAN 2 === BULLISH");
+                  wm2AlertToggle = false;
+                  ObjectSetString(0,ExtDialog.Name()+"wm2AlertBtn",OBJPROP_TEXT,"W2");
+                 }
+           }
+
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //|  ----- End of Handling Awesome Oscillator Alert WM2 ------------ |
+         //|                                                                  |
+         //+------------------------------------------------------------------+
+
+
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //|  ----- Handling Fractal Break Alert WM3 ------------------------ |
+         //|                                                                  |
+         //+------------------------------------------------------------------+
+
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //+------------------------------------------------------------------+
+         if(wm3AlertToggle || wiseMan3PermanentToggle)
+           {
+            int bars = iBars(_Symbol, PERIOD_CURRENT);
+            if(barsTotal != bars) // New bar appeared on the chart
+              {
+               barsTotal = bars;
+
+               double upperFractal = 0;
+               double lowerFractal = 0;
+
+               double high_1 = 0;
+               double high_2 = 0;
+               double high_3 = 0;
+               double high_4 = 0;
+               double high_5 = 0;
+
+               double low_1 = 0;
+               double low_2 = 0;
+               double low_3 = 0;
+               double low_4 = 0;
+               double low_5 = 0;
+
+               alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits);
+               alertClosePrevBar2 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,2),_Digits);
+
+               double fractalBufferWM3Double = NormalizeDouble(fractalBufferWM3*_Point,_Digits);
+
+               for(int i=3; i<200; i++)
+                 {
+                  high_1 = iHigh(_Symbol,PERIOD_CURRENT,i+2);
+                  high_2 = iHigh(_Symbol,PERIOD_CURRENT,i+1);
+                  high_3 = iHigh(_Symbol,PERIOD_CURRENT,i);
+                  high_4 = iHigh(_Symbol,PERIOD_CURRENT,i-1);
+                  high_5 = iHigh(_Symbol,PERIOD_CURRENT,i-2);
+
+                  if(high_3 > high_2 && high_3 > high_1 && high_3 > high_4 && high_3 > high_5)
+                    {
+                     upperFractal = high_3 + fractalBufferWM3Double;
+                     break;
+                    }
+                 }
+
+               for(int i=3; i<200; i++)
+                 {
+                  low_1 = iLow(_Symbol,PERIOD_CURRENT,i+2);
+                  low_2 = iLow(_Symbol,PERIOD_CURRENT,i+1);
+                  low_3 = iLow(_Symbol,PERIOD_CURRENT,i);
+                  low_4 = iLow(_Symbol,PERIOD_CURRENT,i-1);
+                  low_5 = iLow(_Symbol,PERIOD_CURRENT,i-2);
+
+                  if(low_3 < low_2 && low_3 < low_1 && low_3 < low_4 && low_3 < low_5)
+                    {
+                     lowerFractal = low_3  - fractalBufferWM3Double;
+                     break;
+                    }
+                 }
+
+               bool alligatorWM3Up = true;
+               bool alligatorWM3Down = true;
+
+               if(wiseMan3AlligatorFilter)
+                 {
+                  alligatorWM3Up = false;
+                  alligatorWM3Down = false;
+                  double alligatorLipsEndArr[];
+                  double alligatorTeethEndArr[];
+                  double alligatorJawEndArr[];
+
+                  ArraySetAsSeries(alligatorLipsEndArr,true);
+                  ArraySetAsSeries(alligatorTeethEndArr,true);
+                  ArraySetAsSeries(alligatorJawEndArr,true);
+
+                  CopyBuffer(handleAlligator,2,-4*alligatorMultiplier,8,alligatorLipsEndArr);
+                  CopyBuffer(handleAlligator,1,-6*alligatorMultiplier,8,alligatorTeethEndArr);
+                  CopyBuffer(handleAlligator,0,-9*alligatorMultiplier,8,alligatorJawEndArr);
+
+                  if(alligatorLipsEndArr[0] > alligatorTeethEndArr[0] && alligatorTeethEndArr[0] > alligatorJawEndArr[0])
+                    {
+                     alligatorWM3Up = true;
+                     alligatorWM3Down = false;
+                    }
+                  else
+                     if(alligatorLipsEndArr[0] < alligatorTeethEndArr[0] && alligatorTeethEndArr[0] < alligatorJawEndArr[0])
+                       {
+                        alligatorWM3Up = false;
+                        alligatorWM3Down = true;
+                       }
+
+                 }
+
+               if(upperFractal !=0 && lowerFractal !=0)
+                  if(alertClosePrevBar1 > upperFractal && alertClosePrevBar2 < upperFractal && alligatorWM3Up)
+                     Alert("=== FRACTAL BREAK ALERT WISE MAN 3 === BULLISH");
+                  else
+                     if(alertClosePrevBar1 < lowerFractal && alertClosePrevBar2 > lowerFractal && alligatorWM3Down)
+                        Alert("=== FRACTAL BREAK ALERT WISE MAN 3 === BEARISH");
+              }
+           }
+
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //|  ----- End of Handling Fractal Break Alert WM3 ----------------- |
+         //|                                                                  |
+         //+------------------------------------------------------------------+
+
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //|  ----- Signal If TK Break Strategy Conditions Met -------------- |
+         //|                                                                  |
+         //+------------------------------------------------------------------+
+
+         if(SignalTenkansenBreak)
+           {
+            bool BuySignal_1 = false;
+            bool BuySignal_2 = false;
+            bool BuySignal_3 = false;
+            bool BuySignal_4 = false;
+            bool BuySignal_GO = false;
+
+            bool SellSignal_1 = false;
+            bool SellSignal_2 = false;
+            bool SellSignal_3 = false;
+            bool SellSignal_4 = false;
+            bool SellSignal_GO = false;
+
+            bool KJSSAFilterUp = false;
+            bool KJSSAFilterDn = false;
+            bool KumoIsWider = false;
+
+            // Upper TF Ichimoku Variables
+
+            bool UpperTFKJSSAFilterUp = false;
+            bool UpperTFKJSSAFilterDn = false;
+            bool UpperTFKumoIsWider = false;
+
+            static datetime timeStamp;
+            datetime time = iTime(_Symbol,TimeFrame,0);
+
+            double ClosePrice_1 = iClose(_Symbol,TimeFrame,1);
+            double ClosePrice_2 = iClose(_Symbol,TimeFrame,2);
+            double ClosePrice_3 = iClose(_Symbol,TimeFrame,3);
+
+            double TenkansenArr[];
+            double KijunsenArr[];
+            double SenkouspanAArr[];
+            double SenkouspanBArr[];
+
+            double ShiftedSenkouspanAArr[];
+            double ShiftedSenkouspanBArr[];
+
+            double ChikouspanArr[];
+
+            double Bar26High = iHigh(_Symbol,TimeFrame,26);
+            double Bar26Low = iLow(_Symbol,TimeFrame,26);
+            double CurrentHigh = iHigh(_Symbol,TimeFrame,0);
+            double CurrentLow = iLow(_Symbol,TimeFrame,0);
+
+            CopyBuffer(handleIchimoku,0,0,KJSSAFilterRange+1,TenkansenArr);
+            CopyBuffer(handleIchimoku,1,0,KJSSAFilterRange+1,KijunsenArr);
+            CopyBuffer(handleIchimoku,2,0,KJSSAFilterRange+1,SenkouspanAArr);
+            CopyBuffer(handleIchimoku,3,0,KJSSAFilterRange+1,SenkouspanBArr);
+
+            CopyBuffer(handleIchimoku,2,-26,KJSSAFilterRange+1,ShiftedSenkouspanAArr);
+            CopyBuffer(handleIchimoku,3,-26,KJSSAFilterRange+1,ShiftedSenkouspanBArr);
+
+            CopyBuffer(handleIchimoku,4,26,KJSSAFilterRange+1,ChikouspanArr);
+
+            double KumoDeltaCurrent = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr[KJSSAFilterRange] - ShiftedSenkouspanBArr[KJSSAFilterRange]),_Digits);
+            double KumoDeltaPrevious = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr[0] - ShiftedSenkouspanBArr[0]),_Digits);
+
+            if(KumoDeltaCurrent > KumoDeltaPrevious)
+               KumoIsWider = true;
+            else
+               KumoIsWider = false;
+
+
+            bool UpperTFBuyGo = true;
+            bool UpperTFSellGo = true;
+
+
+            if(upperTFFilterIchimoku)
+              {
+               UpperTFBuyGo = false;
+               UpperTFSellGo = false;
+
+               double UpperTFTenkansenArr[];
+               double UpperTFKijunsenArr[];
+               double UpperTFSenkouspanAArr[];
+               double UpperTFSenkouspanBArr[];
+
+               double UpperTFShiftedSenkouspanAArr[];
+               double UpperTFShiftedSenkouspanBArr[];
+
+               double UpperTFChikouspanArr[];
+
+               double UpperTFBar26High = iHigh(_Symbol,UpperTimeFrame,27);
+               double UpperTFBar26Low = iLow(_Symbol,UpperTimeFrame,27);
+               double UpperTFCurrentHigh = iHigh(_Symbol,UpperTimeFrame,0);
+               double UpperTFCurrentLow = iLow(_Symbol,UpperTimeFrame,0);
+
+               double UpperTFPreviousClose = iClose(_Symbol,UpperTimeFrame,0);
+
+               CopyBuffer(handleUpperTFIchimoku,0,1,KJSSAFilterRange+1,UpperTFTenkansenArr);
+               CopyBuffer(handleUpperTFIchimoku,1,1,KJSSAFilterRange+1,UpperTFKijunsenArr);
+               CopyBuffer(handleUpperTFIchimoku,2,1,KJSSAFilterRange+1,UpperTFSenkouspanAArr);
+               CopyBuffer(handleUpperTFIchimoku,3,1,KJSSAFilterRange+1,UpperTFSenkouspanBArr);
+
+               CopyBuffer(handleUpperTFIchimoku,2,-26,KJSSAFilterRange+1,UpperTFShiftedSenkouspanAArr);
+               CopyBuffer(handleUpperTFIchimoku,3,-26,KJSSAFilterRange+1,UpperTFShiftedSenkouspanBArr);
+
+               CopyBuffer(handleUpperTFIchimoku,4,26,KJSSAFilterRange+1,UpperTFChikouspanArr);
+
+               double UpperTFKumoDeltaCurrent = NormalizeDouble(MathAbs(UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] - UpperTFShiftedSenkouspanBArr[KJSSAFilterRange]),_Digits);
+               double UpperTFKumoDeltaPrevious = NormalizeDouble(MathAbs(UpperTFShiftedSenkouspanAArr[0] - UpperTFShiftedSenkouspanBArr[0]),_Digits);
+
+
+               // Check if Upper TF Ichimoku is Bullish
                if(
-                  UpperTFTenkansenArr[KJSSAFilterRange] < UpperTFKijunsenArr[KJSSAFilterRange]  &&
-                  UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] < UpperTFShiftedSenkouspanBArr[KJSSAFilterRange] &&
+                  UpperTFTenkansenArr[KJSSAFilterRange] > UpperTFKijunsenArr[KJSSAFilterRange]  &&
+                  UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] > UpperTFShiftedSenkouspanBArr[KJSSAFilterRange] &&
                   // UpperTFTenkansenArr[0] > UpperTFKijunsenArr[0] &&
-                  // UpperTFKijunsenArr[KJSSAFilterRange] < UpperTFKijunsenArr[0] &&
-                  // UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] < UpperTFShiftedSenkouspanAArr[0] &&
+                  // UpperTFKijunsenArr[KJSSAFilterRange] > UpperTFKijunsenArr[0] &&
+                  // UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] > UpperTFShiftedSenkouspanAArr[0] &&
                   // UpperTFKumoDeltaCurrent > UpperTFKumoDeltaPrevious &&
-                  UpperTFChikouspanArr[0] < UpperTFBar26High
+                  UpperTFChikouspanArr[0] > UpperTFBar26High
                )
                  {
-                  UpperTFBuyGo = false;
-                  UpperTFSellGo = true;
+                  UpperTFBuyGo = true;
+                  UpperTFSellGo = false;
                  }
+               // Check if Upper TF Ichimoku is Bearish
+               else
+                  if(
+                     UpperTFTenkansenArr[KJSSAFilterRange] < UpperTFKijunsenArr[KJSSAFilterRange]  &&
+                     UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] < UpperTFShiftedSenkouspanBArr[KJSSAFilterRange] &&
+                     // UpperTFTenkansenArr[0] > UpperTFKijunsenArr[0] &&
+                     // UpperTFKijunsenArr[KJSSAFilterRange] < UpperTFKijunsenArr[0] &&
+                     // UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] < UpperTFShiftedSenkouspanAArr[0] &&
+                     // UpperTFKumoDeltaCurrent > UpperTFKumoDeltaPrevious &&
+                     UpperTFChikouspanArr[0] < UpperTFBar26High
+                  )
+                    {
+                     UpperTFBuyGo = false;
+                     UpperTFSellGo = true;
+                    }
+
+               if(debuggingComments)
+                 {
+                  debugComment += "======== DEBUGGING UPPER TF ICHIMOKU FILTER ===\n";
+                  debugComment += "|=> CURRENT  UpperTFKijunsenArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFKijunsenArr[KJSSAFilterRange],_Digits) + " \n";
+                  debugComment += "|=> PREVIOUS UpperTFKijunsenArr[ 0 ] = " + DoubleToString(UpperTFKijunsenArr[0],_Digits) + " \n";
+                  debugComment += "|=> CURRENT  UpperTFTenkansenArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFTenkansenArr[KJSSAFilterRange],_Digits) + " \n";
+                  debugComment += "|=> PREVIOUS UpperTFTenkansenArr[ 0 ] = " + DoubleToString(UpperTFTenkansenArr[0],_Digits) + " \n";
+                  debugComment += "|=> CURRENT  UpperTFShiftedSenkouspanAArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n";
+                  debugComment += "|=> CURRENT  UpperTFShiftedSenkouspanBArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFShiftedSenkouspanBArr[KJSSAFilterRange],_Digits) + " \n";
+                  debugComment += "|=> PREVIOUS UpperTFShiftedSenkouspanAArr[ 0 ] = " + DoubleToString(UpperTFShiftedSenkouspanAArr[0],_Digits) + " \n";
+                  debugComment += "|=> PREVIOUS UpperTFShiftedSenkouspanBArr[ 0 ] = " + DoubleToString(UpperTFShiftedSenkouspanBArr[0],_Digits) + " \n";
+                  debugComment += "|=> UpperTFChikouspanArr[ 0 ] = " + DoubleToString(UpperTFChikouspanArr[0],_Digits) + " \n";
+                  debugComment += "|=> UpperTFBar26Hi = " + DoubleToString(UpperTFBar26High,_Digits) + " \n";
+                  debugComment += "|=> UpperTFBar26Lo = " + DoubleToString(UpperTFBar26Low,_Digits) + " \n";
+                  debugComment += "|=> UpperTFBuyGo  = " + IntegerToString(UpperTFBuyGo) + " \n";
+                  debugComment += "|=> UpperTFSellGo = " + IntegerToString(UpperTFSellGo) + " \n";
+                 }
+
+
+
+              }  // End of upper TF Ichimoku
+
+            if(KJSSAFilter)
+               if(KumoIsWider)
+                  if(KijunsenArr[KJSSAFilterRange] > KijunsenArr[0] && UpperTFBuyGo)
+                     if(ShiftedSenkouspanAArr[KJSSAFilterRange] >  ShiftedSenkouspanAArr[0])
+                       {
+                        KJSSAFilterUp = true;
+                        KJSSAFilterDn = false;
+                       }
+                     else
+                        if(KijunsenArr[KJSSAFilterRange] < KijunsenArr[0] && UpperTFSellGo)
+                           if(ShiftedSenkouspanAArr[KJSSAFilterRange] <  ShiftedSenkouspanAArr[0])
+                             {
+                              KJSSAFilterUp = false;
+                              KJSSAFilterDn = true;
+                             }
+                           else
+                              if(!KJSSAFilter)
+                                {
+                                 KJSSAFilterUp = true;
+                                 KJSSAFilterDn = true;
+                                }
 
             if(debuggingComments)
               {
-               debugComment += "======== DEBUGGING UPPER TF ICHIMOKU FILTER ===\n";
-               debugComment += "|=> CURRENT  UpperTFKijunsenArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFKijunsenArr[KJSSAFilterRange],_Digits) + " \n";
-               debugComment += "|=> PREVIOUS UpperTFKijunsenArr[ 0 ] = " + DoubleToString(UpperTFKijunsenArr[0],_Digits) + " \n";
-               debugComment += "|=> CURRENT  UpperTFTenkansenArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFTenkansenArr[KJSSAFilterRange],_Digits) + " \n";
-               debugComment += "|=> PREVIOUS UpperTFTenkansenArr[ 0 ] = " + DoubleToString(UpperTFTenkansenArr[0],_Digits) + " \n";
-               debugComment += "|=> CURRENT  UpperTFShiftedSenkouspanAArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n";
-               debugComment += "|=> CURRENT  UpperTFShiftedSenkouspanBArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFShiftedSenkouspanBArr[KJSSAFilterRange],_Digits) + " \n";
-               debugComment += "|=> PREVIOUS UpperTFShiftedSenkouspanAArr[ 0 ] = " + DoubleToString(UpperTFShiftedSenkouspanAArr[0],_Digits) + " \n";
-               debugComment += "|=> PREVIOUS UpperTFShiftedSenkouspanBArr[ 0 ] = " + DoubleToString(UpperTFShiftedSenkouspanBArr[0],_Digits) + " \n";
-               debugComment += "|=> UpperTFChikouspanArr[ 0 ] = " + DoubleToString(UpperTFChikouspanArr[0],_Digits) + " \n";
-               debugComment += "|=> UpperTFBar26Hi = " + DoubleToString(UpperTFBar26High,_Digits) + " \n";
-               debugComment += "|=> UpperTFBar26Lo = " + DoubleToString(UpperTFBar26Low,_Digits) + " \n";
-               debugComment += "|=> UpperTFBuyGo  = " + IntegerToString(UpperTFBuyGo) + " \n";
-               debugComment += "|=> UpperTFSellGo = " + IntegerToString(UpperTFSellGo) + " \n";
+               debugComment += "======== DEBUGGING KJSSAFilter ===============\n";
+               debugComment += "|=> KJSSAFilterRange = " + IntegerToString(KJSSAFilterRange) + " \n";
+               debugComment += "|=> CURRENT  KijunsenArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(KijunsenArr[KJSSAFilterRange],_Digits) + " \n";
+               debugComment += "|=> PREVIOUS KijunsenArr[ 0 ] = " + DoubleToString(KijunsenArr[0],_Digits) + " \n";
+               debugComment += "|=> CURRENT  ShiftedSenkouspanAArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n";
+               debugComment += "|=> CURRENT  ShiftedSenkouspanBArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(ShiftedSenkouspanBArr[KJSSAFilterRange],_Digits) + " \n";
+               debugComment += "|=> PREVIOUS ShiftedSenkouspanAArr[ 0 ] = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + " \n";
+               debugComment += "|=> PREVIOUS ShiftedSenkouspanBArr[ 0 ] = " + DoubleToString(ShiftedSenkouspanBArr[0],_Digits) + " \n";
+               debugComment += "|=> CURRENT Kumo Delta = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange] - ShiftedSenkouspanBArr[KJSSAFilterRange],_Digits) + " \n";
+               debugComment += "|=> PREVIOUS Kumo Delta = " + DoubleToString(ShiftedSenkouspanAArr[0] - ShiftedSenkouspanBArr[0],_Digits) + " \n";
+               debugComment += "|=> KumoIsWider = " + IntegerToString(KumoIsWider) + "\n";
               }
 
 
-
-           }  // End of upper TF Ichimoku
-
-         if(KJSSAFilter)
-            if(KumoIsWider)
-               if(KijunsenArr[KJSSAFilterRange] > KijunsenArr[0] && UpperTFBuyGo)
-                  if(ShiftedSenkouspanAArr[KJSSAFilterRange] >  ShiftedSenkouspanAArr[0])
-                    {
-                     KJSSAFilterUp = true;
-                     KJSSAFilterDn = false;
-                    }
-                  else
-                     if(KijunsenArr[KJSSAFilterRange] < KijunsenArr[0] && UpperTFSellGo)
-                        if(ShiftedSenkouspanAArr[KJSSAFilterRange] <  ShiftedSenkouspanAArr[0])
-                          {
-                           KJSSAFilterUp = false;
-                           KJSSAFilterDn = true;
-                          }
-                        else
-                           if(!KJSSAFilter)
-                             {
-                              KJSSAFilterUp = true;
-                              KJSSAFilterDn = true;
-                             }
-
-         if(debuggingComments)
-           {
-            debugComment += "======== DEBUGGING KJSSAFilter ===============\n";
-            debugComment += "|=> KJSSAFilterRange = " + IntegerToString(KJSSAFilterRange) + " \n";
-            debugComment += "|=> CURRENT  KijunsenArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(KijunsenArr[KJSSAFilterRange],_Digits) + " \n";
-            debugComment += "|=> PREVIOUS KijunsenArr[ 0 ] = " + DoubleToString(KijunsenArr[0],_Digits) + " \n";
-            debugComment += "|=> CURRENT  ShiftedSenkouspanAArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n";
-            debugComment += "|=> CURRENT  ShiftedSenkouspanBArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(ShiftedSenkouspanBArr[KJSSAFilterRange],_Digits) + " \n";
-            debugComment += "|=> PREVIOUS ShiftedSenkouspanAArr[ 0 ] = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + " \n";
-            debugComment += "|=> PREVIOUS ShiftedSenkouspanBArr[ 0 ] = " + DoubleToString(ShiftedSenkouspanBArr[0],_Digits) + " \n";
-            debugComment += "|=> CURRENT Kumo Delta = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange] - ShiftedSenkouspanBArr[KJSSAFilterRange],_Digits) + " \n";
-            debugComment += "|=> PREVIOUS Kumo Delta = " + DoubleToString(ShiftedSenkouspanAArr[0] - ShiftedSenkouspanBArr[0],_Digits) + " \n";
-            debugComment += "|=> KumoIsWider = " + IntegerToString(KumoIsWider) + "\n";
-           }
-
-
-         if(timeStamp != time)
-           {
-            timeStamp = time;
-
-            BuySignal_4 = false;
-            SellSignal_4 = false;
-
-
-            // Buy Signal
-
-            if(TenkansenArr[1] > KijunsenArr[1])
+            if(timeStamp != time)
               {
-               BuySignal_1 = true; // TK Cross
-               SellSignal_1 = false; // cancelling sell signal
-              }
+               timeStamp = time;
 
-            if(ChikouspanArr[0] > Bar26High) // Chikou span above prices
-              {
-               BuySignal_2 = true;
-               SellSignal_2 = false;
-              }
-            else
-               BuySignal_2 = false;
-
-            if((ShiftedSenkouspanAArr[0] > ShiftedSenkouspanBArr[0])) // Kumo green
-              {
-               BuySignal_3 = true;
-               SellSignal_3 = false;
-              }
-
-            if(ClosePrice_2 < TenkansenArr[0] && ClosePrice_1 > TenkansenArr[1]) // <<<<<<<<<<<<<<<<<<<<<<<< Buy Signal
-              {
-               BuySignal_4 = true;
-               SellSignal_4 = false;
-              }
-
-            if(BuySignal_1 && BuySignal_2 && BuySignal_3 && BuySignal_4)
-              {
-               BuySignal_GO = true;
-               SellSignal_GO = false;
-              }
-
-            StrBuySignal_GO = IntegerToString(BuySignal_GO);
-            StrBuySignal_1 = IntegerToString(BuySignal_1);
-            StrBuySignal_2 = IntegerToString(BuySignal_2);
-            StrBuySignal_3 = IntegerToString(BuySignal_3);
-            StrBuySignal_4 = IntegerToString(BuySignal_4);
-
-            if(BuySignal_GO && KJSSAFilterUp)
-              {
-               Alert(_Symbol," === Tenkansen Break Strategy: Buy Signal = ",BuySignal_GO," ===");
-
-               BuySignal_GO = false;
-               BuySignal_1 = false;
-               BuySignal_2 = false;
-               BuySignal_3 = false;
                BuySignal_4 = false;
-              }
-
-            // SELL trades
-
-            if(TenkansenArr[1] < KijunsenArr[1])
-              {
-               SellSignal_1 = true; // KT Cross
-               BuySignal_1 = false; // cancelling buy signal
-              }
-
-            if(ChikouspanArr[0] < Bar26Low) // Chikous span
-              {
-               SellSignal_2 = true;
-               BuySignal_2 = false;
-              }
-            else
-              {
-               SellSignal_2 = false;
-              }
-
-            if((ShiftedSenkouspanAArr[0] < ShiftedSenkouspanBArr[0]))
-              {
-               SellSignal_3 = true; // Kumo red
-               BuySignal_3 = false;
-              }
-
-            if(ClosePrice_2 > TenkansenArr[0] && ClosePrice_1 < TenkansenArr[1]) // <<<<<<<<<<<<<<<<<<<<<<<< Sell Signal
-              {
-               BuySignal_4 = false;
-               SellSignal_4 = true;
-              }
-
-            if(SellSignal_1 && SellSignal_2 && SellSignal_3 && SellSignal_4)
-              {
-               SellSignal_GO = true;
-               BuySignal_GO = false;
-              }
-
-            StrSellSignal_GO = IntegerToString(SellSignal_GO);
-            StrSellSignal_1 = IntegerToString(SellSignal_1);
-            StrSellSignal_2 = IntegerToString(SellSignal_2);
-            StrSellSignal_3 = IntegerToString(SellSignal_3);
-            StrSellSignal_4 = IntegerToString(SellSignal_4);
-
-            if(SellSignal_GO  && KJSSAFilterDn)
-              {
-               Alert(_Symbol," === Tenkansen Break Strategy: Sell Signal = ",SellSignal_GO," ===");
-
-               SellSignal_GO = false;
-               SellSignal_1 = false;
-               SellSignal_2 = false;
-               SellSignal_3 = false;
                SellSignal_4 = false;
+
+
+               // Buy Signal
+
+               if(TenkansenArr[1] > KijunsenArr[1])
+                 {
+                  BuySignal_1 = true; // TK Cross
+                  SellSignal_1 = false; // cancelling sell signal
+                 }
+
+               if(ChikouspanArr[0] > Bar26High) // Chikou span above prices
+                 {
+                  BuySignal_2 = true;
+                  SellSignal_2 = false;
+                 }
+               else
+                  BuySignal_2 = false;
+
+               if((ShiftedSenkouspanAArr[0] > ShiftedSenkouspanBArr[0])) // Kumo green
+                 {
+                  BuySignal_3 = true;
+                  SellSignal_3 = false;
+                 }
+
+               if(ClosePrice_2 < TenkansenArr[0] && ClosePrice_1 > TenkansenArr[1]) // <<<<<<<<<<<<<<<<<<<<<<<< Buy Signal
+                 {
+                  BuySignal_4 = true;
+                  SellSignal_4 = false;
+                 }
+
+               if(BuySignal_1 && BuySignal_2 && BuySignal_3 && BuySignal_4)
+                 {
+                  BuySignal_GO = true;
+                  SellSignal_GO = false;
+                 }
+
+               StrBuySignal_GO = IntegerToString(BuySignal_GO);
+               StrBuySignal_1 = IntegerToString(BuySignal_1);
+               StrBuySignal_2 = IntegerToString(BuySignal_2);
+               StrBuySignal_3 = IntegerToString(BuySignal_3);
+               StrBuySignal_4 = IntegerToString(BuySignal_4);
+
+               if(BuySignal_GO && KJSSAFilterUp)
+                 {
+                  Alert(_Symbol," === Tenkansen Break Strategy: Buy Signal = ",BuySignal_GO," ===");
+
+                  BuySignal_GO = false;
+                  BuySignal_1 = false;
+                  BuySignal_2 = false;
+                  BuySignal_3 = false;
+                  BuySignal_4 = false;
+                 }
+
+               // SELL trades
+
+               if(TenkansenArr[1] < KijunsenArr[1])
+                 {
+                  SellSignal_1 = true; // KT Cross
+                  BuySignal_1 = false; // cancelling buy signal
+                 }
+
+               if(ChikouspanArr[0] < Bar26Low) // Chikous span
+                 {
+                  SellSignal_2 = true;
+                  BuySignal_2 = false;
+                 }
+               else
+                 {
+                  SellSignal_2 = false;
+                 }
+
+               if((ShiftedSenkouspanAArr[0] < ShiftedSenkouspanBArr[0]))
+                 {
+                  SellSignal_3 = true; // Kumo red
+                  BuySignal_3 = false;
+                 }
+
+               if(ClosePrice_2 > TenkansenArr[0] && ClosePrice_1 < TenkansenArr[1]) // <<<<<<<<<<<<<<<<<<<<<<<< Sell Signal
+                 {
+                  BuySignal_4 = false;
+                  SellSignal_4 = true;
+                 }
+
+               if(SellSignal_1 && SellSignal_2 && SellSignal_3 && SellSignal_4)
+                 {
+                  SellSignal_GO = true;
+                  BuySignal_GO = false;
+                 }
+
+               StrSellSignal_GO = IntegerToString(SellSignal_GO);
+               StrSellSignal_1 = IntegerToString(SellSignal_1);
+               StrSellSignal_2 = IntegerToString(SellSignal_2);
+               StrSellSignal_3 = IntegerToString(SellSignal_3);
+               StrSellSignal_4 = IntegerToString(SellSignal_4);
+
+               if(SellSignal_GO  && KJSSAFilterDn)
+                 {
+                  Alert(_Symbol," === Tenkansen Break Strategy: Sell Signal = ",SellSignal_GO," ===");
+
+                  SellSignal_GO = false;
+                  SellSignal_1 = false;
+                  SellSignal_2 = false;
+                  SellSignal_3 = false;
+                  SellSignal_4 = false;
+                 }
+
+              } // timeStamp != time
+
+            textComment += "----- TK BREAK STRATEGY SIGNALS -----\n";
+            textComment += "Kinjunsen SSA Filter Toggle = " + IntegerToString(KJSSAFilter) + " \n";
+
+            if(KJSSAFilter)
+              {
+               textComment += "KJSSAFilterRange = " + IntegerToString(KJSSAFilterRange) + " \n";
+               textComment += "KJSSAFilterUp = " + IntegerToString(KJSSAFilterUp) + " \n";
+               textComment += "KJSSAFilterDn = " + IntegerToString(KJSSAFilterDn) + " \n";
+               textComment += "----- KijunsenArr -----\n";
+               textComment += "KijunsenArr[0] previous = " + DoubleToString(KijunsenArr[0],_Digits) + " \n"; // current
+               textComment += "KijunsenArr["+IntegerToString(KJSSAFilterRange)+"] current  = " + DoubleToString(KijunsenArr[KJSSAFilterRange],_Digits) + " \n"; // current
+               textComment += "----- SenkouspanAArr -----\n";
+               textComment += "ShiftedSenkouspanAArr[0] previous = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + " \n"; // previous
+               textComment += "ShiftedSenkouspanAArr["+IntegerToString(KJSSAFilterRange)+"] current  = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n"; // current
               }
 
-           } // timeStamp != time
-
-         textComment += "----- TK BREAK STRATEGY SIGNALS -----\n";
-         textComment += "Kinjunsen SSA Filter Toggle = " + IntegerToString(KJSSAFilter) + " \n";
-
-         if(KJSSAFilter)
-           {
-            textComment += "KJSSAFilterRange = " + IntegerToString(KJSSAFilterRange) + " \n";
-            textComment += "KJSSAFilterUp = " + IntegerToString(KJSSAFilterUp) + " \n";
-            textComment += "KJSSAFilterDn = " + IntegerToString(KJSSAFilterDn) + " \n";
-            textComment += "----- KijunsenArr -----\n";
-            textComment += "KijunsenArr[0] previous = " + DoubleToString(KijunsenArr[0],_Digits) + " \n"; // current
-            textComment += "KijunsenArr["+IntegerToString(KJSSAFilterRange)+"] current  = " + DoubleToString(KijunsenArr[KJSSAFilterRange],_Digits) + " \n"; // current
-            textComment += "----- SenkouspanAArr -----\n";
-            textComment += "ShiftedSenkouspanAArr[0] previous = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + " \n"; // previous
-            textComment += "ShiftedSenkouspanAArr["+IntegerToString(KJSSAFilterRange)+"] current  = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n"; // current
-           }
 
 
 
+            textComment += "Buy Signels  = " + StrBuySignal_1 + " " + StrBuySignal_2 + " " + StrBuySignal_3 + " " + StrBuySignal_4 + " = " + StrSellSignal_GO + "\n";
+            textComment += "Sell Signals = " + StrSellSignal_1 + " " + StrSellSignal_2 + " " + StrSellSignal_3 + " " + StrSellSignal_4 + " = " + StrSellSignal_GO + "\n";
 
-         textComment += "Buy Signels  = " + StrBuySignal_1 + " " + StrBuySignal_2 + " " + StrBuySignal_3 + " " + StrBuySignal_4 + " = " + StrSellSignal_GO + "\n";
-         textComment += "Sell Signals = " + StrSellSignal_1 + " " + StrSellSignal_2 + " " + StrSellSignal_3 + " " + StrSellSignal_4 + " = " + StrSellSignal_GO + "\n";
+           } //SignalTenkansenBreak
 
-        } //SignalTenkansenBreak
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //|  ----- End of Signal If TK Break Strategy Conditions Met ------- |
+         //|                                                                  |
+         //+------------------------------------------------------------------+
 
-      //+------------------------------------------------------------------+
-      //|                                                                  |
-      //|  ----- End of Signal If TK Break Strategy Conditions Met ------- |
-      //|                                                                  |
-      //+------------------------------------------------------------------+
-
-
-
-     } // if VaRfilterGo(maxVARFiltervalue)
-
+        } // if VaRfilterGo(maxVARFiltervalue)
+     } // if(Period() == TimeFrame)
 //+------------------------------------------------------------------+
 //|                                                                  |
 //|  ----- Handling Manual BE -------------------------------------- |
