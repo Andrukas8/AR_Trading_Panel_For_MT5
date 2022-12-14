@@ -3952,9 +3952,9 @@ void OnTick()
                         if(OpenBar > 1)
                            if(trade.PositionClose(posTicket))
                              {
-                              Print(__FUNCTION__," > Position #",posTicket," was closed with profit ",NormalizeDouble(positionProfit,2)," because price closed above Moving Average. ",ClosePrevBar," < ",ClosePosMaPrevBar);
+                              Print(__FUNCTION__," > Position #",posTicket," was closed with profit ",NormalizeDouble(positionProfit,2)," because price closed below Moving Average. ",ClosePrevBar," < ",ClosePosMaPrevBar);
                               if(AlertAutoClosePosition)
-                                 Alert(" > Position #",posTicket," was closed with profit ",NormalizeDouble(positionProfit,2)," because price closed above Moving Average. ",ClosePrevBar," < ",ClosePosMaPrevBar);
+                                 Alert(" > Position #",posTicket," was closed with profit ",NormalizeDouble(positionProfit,2)," because price closed below Moving Average. ",ClosePrevBar," < ",ClosePosMaPrevBar);
                              }
                        }
                  }
@@ -3974,9 +3974,9 @@ void OnTick()
                         if(OpenBar > 1)
                            if(trade.PositionClose(posTicket))
                              {
-                              Print(__FUNCTION__," > Position #",posTicket," was closed with profit ",positionProfit," because price closed below Moving Average. ",ClosePrevBar," > ",ClosePosMaPrevBar);
+                              Print(__FUNCTION__," > Position #",posTicket," was closed with profit ",positionProfit," because price closed above Moving Average. ",ClosePrevBar," > ",ClosePosMaPrevBar);
                               if(AlertAutoClosePosition)
-                                 Alert(" > Position #",posTicket," was closed with profit ",NormalizeDouble(positionProfit,2)," because price closed below Moving Average. ",ClosePrevBar," > ",ClosePosMaPrevBar);
+                                 Alert(" > Position #",posTicket," was closed with profit ",NormalizeDouble(positionProfit,2)," because price closed above Moving Average. ",ClosePrevBar," > ",ClosePosMaPrevBar);
                              }
                        }
                  }
