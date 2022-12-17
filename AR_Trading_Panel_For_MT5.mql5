@@ -46,8 +46,7 @@ input int TslOffsetPoints = 10; // TSL BUFFER POINTS FOR MA/TKS/KJS
 input ENUM_TIMEFRAMES TimeFrame = 5; // EA TIMEFRAME
 input bool showTotalRiskCurrent = true; // Show Total Risk in Caption
 input double maxVARFiltervalue = 2; // Max VaR filter value in % (use 100% to turn off)
-
-input group "------------- Position Variables ----------------------------"
+input group "------------- General Settings ----------------------------"
 input bool showEAComment = false; // SHOW EA COMMENT
 input bool debuggingComments = false; // SHOW DEBUGGING COMMENTS
 input bool showProfitOnChart = false; // SHOW POSITION PROFIT ON CHART
@@ -59,71 +58,70 @@ input string slPipsDef = "10"; // SL pips
 input string RiskToRewardDef = "2"; // RRR
 input string RiskLevelDef = "2"; // RISK % OF DEPOSIT
 input double marginToBallancePercent = 90; // MARGIN TO DEPOSIT %
-
+input group "------------- Trailing Stop Loss Methods ------------"
+input bool movingAverageTSL = false; // TSL MA
+input bool pointsTSL = false; // TSL REGULAR IN POINTS
+input bool fractalsTSL = false; // TSL FRACTALS
+input bool tenkansenTSL = false; // TSL ICHIMOKU TENKANSEN
+input bool kijunsenTSL = false; // TSL ICHIMOKU KIJUNSEN
 input group "------------- Auto Position Management Controls ------------"
 input bool autoBreakEven = false; // AUTO BREAKEVEN
 input double breakevenRatio = 1; //  _____ BE RATIO
 input bool alertBreakEven = false; // _____ ALERT ON BE
-input bool movingAverageTSL = false; // TSL MA
-input int MaPeriod = 8; // _____ MA PERIOD
-input int MaShift = 5; // _____ MA SHIFT
-input ENUM_MA_METHOD TslMaMethod = MODE_SMMA; // _____ TSL MA METHOD
-input ENUM_APPLIED_PRICE TslMaAppPrice = PRICE_MEDIAN; // _____ TSL MA PRICE
-input bool pointsTSL = false; // TSL REGULAR IN POINTS
-input int TslPoints = 50; // _____ TSL REGULAR POINTS
-input bool fractalsTSL = false; // TSL FRACTALS
-input bool tenkansenTSL = false; // TSL ICHIMOKU TENKANSEN
-input bool kijunsenTSL = false; // TSL ICHIMOKU KIJUNSEN
-input bool NewBarAlert = false; // == NEW BAR ALERT ==
-input bool wiseMenAlertsToggle = false; // == ACTIVATE WISE MEN ALERT BUTTONS ==
+input group "------------- TSL Settings ------------"
+input int MaPeriod = 8; // MA TSL PERIOD
+input int MaShift = 5;  // MA TSL SHIFT
+input ENUM_MA_METHOD TslMaMethod = MODE_SMMA; // MA TSL METHOD
+input ENUM_APPLIED_PRICE TslMaAppPrice = PRICE_MEDIAN; // MA TSL PRICE
+input int TslPoints = 50; // TSL REGULAR POINTS
+input group "------------- Alerts ------------"
+input bool SignalTenkansenBreak = true; // ALERT ON TK BREAK
+input bool MABreak = false; // ALERT ON MA BREAK
+input bool wiseMenAlertsToggle = false; // ACTIVATE BW PROFITUNITY 3 WISE MEN ALERT BUTTONS
 input bool wiseMan1PermanentToggle = false; // _____ activeate WM1 permanently
 input bool wiseMan2PermanentToggle = false; // _____ activeate WM2 permanently
 input bool wiseMan3PermanentToggle = false; // _____ activeate WM3 permanently
 input bool wiseMan3AlligatorFilter = false; // ________ activate WM3 Alligator Filter
+input bool threeLinesStrikeActivate = false; // 3 LINES STRIKE
+input group "------------- General Alerts ------------"
+input bool NewBarAlert = false; // NEW BAR ALERT
+input bool AlertAutoClosePosition = false; // ALERT ON POSITIONS CLOSE
+input group "------------- BW Profitunity Alerts Settings------------"
 input double atrMultiplier = 1; // ATR multiplier for filtering WM1 signals
 input int atrPeriod = 14; // ATR PERIOD
 input int fractalBufferWM3 = 20; // FRACTAL BUFFER for WM3 in points
 input int alligatorMultiplier = 1; // Alligator multiplier for filtering WM signals
-input bool AlertAutoClosePosition = false; // ALERT ON POSITIONS CLOSE
-input group "------------- 3 Lines Strike Alert ------------"
-input bool threeLinesStrikeActivate = false; // == ACTIVATE 3 LINES STRIKE ALERT ==
+input group "------------- Auto Closing Position on Condition -------------"
+input bool ClosePosTenkansen = true; // CLOSE OVER TENKANSEN
+input bool ClosePosMa = false; // CLOSE OVER MA
+input group "------------- 3 Lines Strike Alert Settings ------------"
 input double ToleranceOpenPercent = 50; // Engulfing Range Tolerance Open %
 input double ToleranceClosePercent = 50; // Engulfing Range Tolerance Close %
 input bool EngulfingModeStrict = false; // Strict mode
 input bool useMAFilter3LS = false; // USE MA FILTER FOR 3LS SIGNALS
-
 input int FastMaPeriod3LS = 21; // _____ 3 LS FAST MA PERIOD
 input int FastMaShift3LS = 0; // _____ 3 LS FAST MA SHIFT
 input ENUM_MA_METHOD FastMaMethod3LS = MODE_SMMA; // _____ 3LS FAST MA METHOD
 input ENUM_APPLIED_PRICE FastMaAppPrice3LS = PRICE_CLOSE; // _____ 3LS FAST MA PRICE
-
 input int MiddleMaPeriod3LS = 50; // _____ 3 LS MIDDLE MA PERIOD
 input int MiddleMaShift3LS = 0; // _____ 3 LS MIDDLE MA SHIFT
 input ENUM_MA_METHOD MiddleMaMethod3LS = MODE_SMMA; // _____ 3LS MIDDLE MA METHOD
 input ENUM_APPLIED_PRICE MiddleMaAppPrice3LS = PRICE_CLOSE; // _____ 3LS MIDDLE MA PRICE
-
 input int SlowMaPeriod3LS = 200; // _____ 3 LS SLOW MA PERIOD
 input int SlowMaShift3LS = 0; // _____ 3 LS SLOW MA SHIFT
 input ENUM_MA_METHOD SlowMaMethod3LS = MODE_SMMA; // _____ 3LS SLOW MA METHOD
 input ENUM_APPLIED_PRICE SlowMaAppPrice3LS = PRICE_CLOSE; // _____ 3LS SLOW MA PRICE
-
-input group "------------- Auto Closing Position on Condition -------------"
-input bool ClosePosTenkansen = true; // CLOSE ON CLOSE OVER TENKANSEN
-input bool ClosePosMa = false; // CLOSE ON CLOSE OVER MA
+input group "------------- Close Over MA Alert Settings ------------"
 input int ClosePosMaPeriod = 5; // _____ CLOSE MA PERIOD
 input int ClosePosMaShift = 3; // _____ CLOSE MA SHIFT
 input ENUM_MA_METHOD ClosePosMaMethod = MODE_SMMA; // _____ CLOSE MA METHOD
 input ENUM_APPLIED_PRICE ClosePosMaAppPrice = PRICE_MEDIAN; // _____ CLOSE MA PRICE
-
-input group "------------- TENKANSEN BREAK ALERT --------------------------"
-input bool SignalTenkansenBreak = true; // ALERT ON TK BREAK
+input group "------------- TENKANSEN BREAK ALERT Settings --------------------------"
 input bool KJSSAFilter = true; // _____ KJ & SSA FILTER
 input int KJSSAFilterRange = 2; // __________ KJ & SSA FILTER RANGE
 input bool upperTFFilterIchimoku = true; // UPPER TF ICHIMOKU FILTER
 input ENUM_TIMEFRAMES UpperTimeFrame = 30; // UPPER TF ICHIMOKU TF
-
-input group "------------- MOVING AVERAGE BREAK ALERT ---------------------"
-input bool MABreak = false; // ALERT ON MA BREAK
+input group "------------- MOVING AVERAGE BREAK ALERT SETTINGS ---------------------"
 input bool MABreakUseAlligatorFilter = false; // _____ USE ALLIGATOR FILTER ON MA BREAK ALERT
 input int alligatorMultiplierMABreak = 1; // __________ ALLIGATOR MULTIPLIER FILTER ON MA BREAK ALERT
 input int MABreakPeriod = 5; // __________ BREAK MA PERIOD
@@ -132,8 +130,30 @@ input ENUM_MA_METHOD MABreakMethod = MODE_SMMA; // __________ BREAK MA METHOD
 input ENUM_APPLIED_PRICE MABreakPrice = PRICE_MEDIAN; // __________ BREAK MA PRICE
 
 input group "------------- Box Settings ----------------------------------"
-input string timeFrom = "15:00"; // TIME FROM
-input string timeTill = "23:59"; // TIME TILL
+input bool customBox = true;
+input string timeCustomBoxFrom = "00:00"; // CUSTOM BOX FROM
+input string timeCustomBoxTill = "23:59"; // CUSTOM BOX TILL
+input color colorCustomBox = clrDarkGray; // CUSTOM BOX COLOR
+
+input bool SydneySession = true; // SHOW SYDNEY SESSION
+input string timeFromSydney = "00:00"; // SYDNEY SESSION START
+input string timeTillSydney = "08:00"; // SYDNEY SESSION FINISH
+input color colorSydney = clrIndianRed; // SYDNEY SESSION COLOR
+
+input bool TokyoSession = true; // SHOW TOKYO SESSION
+input string timeFromTokyo = "02:00"; // TOKYO SESSION START
+input string timeTillTokyo = "10:00"; // TOKYO SESSION FINISH
+input color colorTokyo = clrDeepSkyBlue; // TOKYO SESSION COLOR
+
+input bool LondonSession = true; // SHOW LONDON SESSION
+input string timeFromLondon = "10:00"; // LONDON SESSION START
+input string timeTillLondon = "19:00"; // LONDON SESSION FINISH
+input color colorLondon = clrLimeGreen; // LONDON SESSION COLOR
+
+input bool NewYorkSession = true; // SHOW NEW YORK SESSION
+input string timeFromNewYork = "15:00"; // NEW YORK SESSION START
+input string timeTillNewYork = "23:59"; // NEW YORK SESSION FINISH
+input color colorNewYork = clrGoldenrod; // NEW YORK SESSION COLOR
 
 int barsTotal;
 
@@ -1726,29 +1746,43 @@ void CControlsDialog::OnClickBoxBtn(void)
 
    if(boxOnToggle)
      {
-      Print("Making box");
-      datetime time1 = StringToTime(timeFrom);
-      datetime time2 = StringToTime(timeTill);
-      int      time1_shift    = iBarShift(_Symbol,PERIOD_CURRENT,time1);
-      int      time2_shift    = iBarShift(_Symbol,PERIOD_CURRENT,time2);
-      int      bar_count   = time1_shift-time2_shift;
-      int      high_shift  = iHighest(_Symbol,PERIOD_CURRENT,MODE_HIGH,bar_count,time2_shift);
-      int      low_shift   = iLowest(_Symbol,PERIOD_CURRENT,MODE_LOW,bar_count,time2_shift);
-      double   price1        = iHigh(_Symbol,PERIOD_CURRENT,high_shift);
-      double   price2         = iLow(_Symbol,PERIOD_CURRENT,low_shift);
-      Print(time1," -> ",time2,":: High = ",price1," Low = ",price2);
+      if(customBox)
+         if(!drawBox("Box_Custom", timeCustomBoxFrom, timeCustomBoxTill, colorCustomBox))
+            Print("Failed to draw box...");
 
-      ObjectCreate(0, "BoxRectangle", OBJ_RECTANGLE, 0, time1, price1, time2, price2);
-      ObjectSetInteger(0,"BoxRectangle",OBJPROP_COLOR,clrSkyBlue);
-      ObjectSetInteger(0,"BoxRectangle",OBJPROP_FILL,false);
-      ObjectSetInteger(0,"BoxRectangle",OBJPROP_SELECTABLE,true);
+      if(SydneySession)
+         if(!drawBox("Box_Sydney", timeFromSydney, timeTillSydney, colorSydney))
+            Print("Failed to draw box...");
+
+      if(TokyoSession)
+         if(!drawBox("Box_Tokyo", timeFromTokyo, timeTillTokyo, colorTokyo))
+            Print("Failed to draw box...");
+
+
+
+      if(LondonSession)
+         if(!drawBox("Box_London", timeFromLondon, timeTillLondon, colorLondon))
+            Print("Failed to draw box...");
+
+
+      if(NewYorkSession)
+         if(!drawBox("Box_NewYork", timeFromNewYork, timeTillNewYork, colorNewYork))
+            Print("Failed to draw box...");
+
      }
    else
       if(!boxOnToggle)
         {
          // remove box
-         Print("Removing box");
-         ObjectDelete(0,"BoxRectangle");
+         string Name;
+         for(int i = ObjectsTotal(0,0) -1 ; i >= 0; i--)
+           {
+            Name = ObjectName(0,i);
+            if(StringSubstr(Name, 0, 4) == "Box_")
+               ObjectDelete(0,Name);
+           }
+
+
         }
   }
 
@@ -5458,6 +5492,27 @@ bool CControlsDialog::SetManualBE()
   }
 
 
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+bool drawBox(string boxName, string boxTime1, string boxTime2, color boxColor)
+  {
+   datetime time1 = StringToTime(boxTime1);
+   datetime time2 = StringToTime(boxTime2);
+   int      time1_shift    = iBarShift(_Symbol,PERIOD_CURRENT,time1);
+   int      time2_shift    = iBarShift(_Symbol,PERIOD_CURRENT,time2);
+   int      bar_count   = time1_shift-time2_shift;
+   int      high_shift  = iHighest(_Symbol,PERIOD_CURRENT,MODE_HIGH,bar_count,time2_shift);
+   int      low_shift   = iLowest(_Symbol,PERIOD_CURRENT,MODE_LOW,bar_count,time2_shift);
+   double   price1        = iHigh(_Symbol,PERIOD_CURRENT,high_shift);
+   double   price2         = iLow(_Symbol,PERIOD_CURRENT,low_shift);
+   ObjectCreate(0, boxName, OBJ_RECTANGLE, 0, time1, price1, time2, price2);
+   ObjectSetInteger(0,boxName,OBJPROP_COLOR,boxColor);
+   ObjectSetInteger(0,boxName,OBJPROP_FILL,false);
+   ObjectSetInteger(0,boxName,OBJPROP_SELECTABLE,true);
+   ObjectSetInteger(0,boxName,OBJPROP_STYLE,STYLE_DOT);
+   return true;
 
+  }
 
 //+------------------------------------------------------------------+
