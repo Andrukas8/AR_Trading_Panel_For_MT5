@@ -2814,6 +2814,12 @@ void OnTick()
    textComment = "";
    debugComment = "";
 
+
+// sandbox
+//   fractalsBulishTrendFilter();
+//   fractalsBearishTrendFilter();
+// end of sandbox
+
 //+------------------------------------------------------------------+
 //|                                                                  |
 //|  ----- Show total risk value in Caption ------------------------ |
@@ -5527,7 +5533,7 @@ bool fractalsBulishTrendFilter()
    double maxFractal = 0;
    double upperFractals[];
 
-   ArrayResize(upperFractals,5);
+   ArrayResize(upperFractals,3);
    ArrayInitialize(upperFractals,0);
    ArraySetAsSeries(upperFractals,true);
 
@@ -5541,7 +5547,7 @@ bool fractalsBulishTrendFilter()
       high_5 = iHigh(_Symbol,TimeFrame,i-2);
 
       if(high_3 > high_2 && high_3 > high_1 && high_3 > high_4 && high_3 > high_5)
-         if(k<5)
+         if(k<3)
            {
             upperFractals[k] = high_3;
             k+=1;
@@ -5556,7 +5562,7 @@ bool fractalsBulishTrendFilter()
 
 // Debugging
    debugComment += "======== "+ __FUNCTION__ " ===\n";
-   debugComment += "|=> " + DoubleToString(upperFractals[0],_Digits) + " " + DoubleToString(upperFractals[1],_Digits) + " " + DoubleToString(upperFractals[2],_Digits) + " " + DoubleToString(upperFractals[3],_Digits) + " " + DoubleToString(upperFractals[4],_Digits) + " | MAX = " + DoubleToString(maxFractal,_Digits) + "\n";
+   debugComment += "|=> " + DoubleToString(upperFractals[0],_Digits) + " " + DoubleToString(upperFractals[1],_Digits) + " " + DoubleToString(upperFractals[2],_Digits) + " | MAX = " + DoubleToString(maxFractal,_Digits) + "\n";
    debugComment += "|=> Bullish Trend = " + IntegerToString(fractalsTrend) + "\n";
 
    return fractalsTrend;
@@ -5581,7 +5587,7 @@ bool fractalsBearishTrendFilter()
    double minFractal = 0;
    double lowerFractals[];
 
-   ArrayResize(lowerFractals,5);
+   ArrayResize(lowerFractals,3);
    ArrayInitialize(lowerFractals,0);
    ArraySetAsSeries(lowerFractals,true);
 
@@ -5595,7 +5601,7 @@ bool fractalsBearishTrendFilter()
       low_5 = iLow(_Symbol,PERIOD_CURRENT,i-2);
 
       if(low_3 < low_2 && low_3 < low_1 && low_3 < low_4 && low_3 < low_5)
-         if(l<5)
+         if(l<3)
            {
             lowerFractals[l] = low_3;
             l+=1;
@@ -5609,7 +5615,7 @@ bool fractalsBearishTrendFilter()
 
 // Debugging
    debugComment += "======== "+ __FUNCTION__ " ===\n";
-   debugComment += "|=> " + DoubleToString(lowerFractals[0],_Digits) + " " + DoubleToString(lowerFractals[1],_Digits) + " " + DoubleToString(lowerFractals[2],_Digits) + " " + DoubleToString(lowerFractals[3],_Digits) + " " + DoubleToString(lowerFractals[4],_Digits) + " | MIN = " + DoubleToString(minFractal,_Digits) + "\n";
+   debugComment += "|=> " + DoubleToString(lowerFractals[0],_Digits) + " " + DoubleToString(lowerFractals[1],_Digits) + " " + DoubleToString(lowerFractals[2],_Digits) + " | MIN = " + DoubleToString(minFractal,_Digits) + "\n";
    debugComment += "|=> Fractals Bearish Trend = " + IntegerToString(fractalsTrend) + "\n";
 
    return fractalsTrend;
