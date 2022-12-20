@@ -121,6 +121,7 @@ input bool KJSSAFilter = true; // _____ KJ & SSA FILTER
 input int KJSSAFilterRange = 2; // __________ KJ & SSA FILTER RANGE
 input bool upperTFFilterIchimoku = true; // UPPER TF ICHIMOKU FILTER
 input ENUM_TIMEFRAMES UpperTimeFrame = 30; // UPPER TF ICHIMOKU TF
+input bool fractalTrendFilter = false; // USE FRACTALS FILTER
 input group "------------- MOVING AVERAGE BREAK ALERT SETTINGS ---------------------"
 input bool MABreakUseAlligatorFilter = false; // _____ USE ALLIGATOR FILTER ON MA BREAK ALERT
 input int alligatorMultiplierMABreak = 1; // __________ ALLIGATOR MULTIPLIER FILTER ON MA BREAK ALERT
@@ -5524,46 +5525,55 @@ bool fractalsBulishTrendFilter()
 
    bool fractalsTrend = false;
 
-   double high_1 = 0;
-   double high_2 = 0;
-   double high_3 = 0;
-   double high_4 = 0;
-   double high_5 = 0;
 
-   double maxFractal = 0;
-   double upperFractals[];
-
-   ArrayResize(upperFractals,3);
-   ArrayInitialize(upperFractals,0);
-   ArraySetAsSeries(upperFractals,true);
-
-   int k = 0;
-   for(int i=3; i<200; i++)
+   if(fractalTrendFilter)
      {
-      high_1 = iHigh(_Symbol,TimeFrame,i+2);
-      high_2 = iHigh(_Symbol,TimeFrame,i+1);
-      high_3 = iHigh(_Symbol,TimeFrame,i);
-      high_4 = iHigh(_Symbol,TimeFrame,i-1);
-      high_5 = iHigh(_Symbol,TimeFrame,i-2);
+      double high_1 = 0;
+      double high_2 = 0;
+      double high_3 = 0;
+      double high_4 = 0;
+      double high_5 = 0;
 
-      if(high_3 > high_2 && high_3 > high_1 && high_3 > high_4 && high_3 > high_5)
-         if(k<3)
-           {
-            upperFractals[k] = high_3;
-            k+=1;
-           }
+      double maxFractal = 0;
+      double upperFractals[];
+
+      ArrayResize(upperFractals,3);
+      ArrayInitialize(upperFractals,0);
+      ArraySetAsSeries(upperFractals,true);
+
+      int k = 0;
+      for(int i=3; i<200; i++)
+        {
+         high_1 = iHigh(_Symbol,TimeFrame,i+2);
+         high_2 = iHigh(_Symbol,TimeFrame,i+1);
+         high_3 = iHigh(_Symbol,TimeFrame,i);
+         high_4 = iHigh(_Symbol,TimeFrame,i-1);
+         high_5 = iHigh(_Symbol,TimeFrame,i-2);
+
+         if(high_3 > high_2 && high_3 > high_1 && high_3 > high_4 && high_3 > high_5)
+            if(k<3)
+              {
+               upperFractals[k] = high_3;
+               k+=1;
+              }
+        }
+
+      maxFractal = upperFractals[ArrayMaximum(upperFractals)];
+
+      if(ArrayMaximum(upperFractals) == 0 || upperFractals[0] > upperFractals[1])
+         fractalsTrend = true;
+
+
+      // Debugging
+      debugComment += "======== "+ __FUNCTION__ " ===\n";
+      debugComment += "|=> " + DoubleToString(upperFractals[0],_Digits) + " " + DoubleToString(upperFractals[1],_Digits) + " " + DoubleToString(upperFractals[2],_Digits) + " | MAX = " + DoubleToString(maxFractal,_Digits) + "\n";
+      debugComment += "|=> Bullish Trend = " + IntegerToString(fractalsTrend) + "\n";
      }
+   else
+      if(!fractalTrendFilter)
 
-   maxFractal = upperFractals[ArrayMaximum(upperFractals)];
+         fractalsTrend = true;
 
-   if(ArrayMaximum(upperFractals) == 0 || upperFractals[0] > upperFractals[1])
-      fractalsTrend = true;
-
-
-// Debugging
-   debugComment += "======== "+ __FUNCTION__ " ===\n";
-   debugComment += "|=> " + DoubleToString(upperFractals[0],_Digits) + " " + DoubleToString(upperFractals[1],_Digits) + " " + DoubleToString(upperFractals[2],_Digits) + " | MAX = " + DoubleToString(maxFractal,_Digits) + "\n";
-   debugComment += "|=> Bullish Trend = " + IntegerToString(fractalsTrend) + "\n";
 
    return fractalsTrend;
   }
@@ -5579,44 +5589,51 @@ bool fractalsBearishTrendFilter()
 
    bool fractalsTrend = false;
 
-   double low_1 = 0;
-   double low_2 = 0;
-   double low_3 = 0;
-   double low_4 = 0;
-   double low_5 = 0;
-   double minFractal = 0;
-   double lowerFractals[];
-
-   ArrayResize(lowerFractals,3);
-   ArrayInitialize(lowerFractals,0);
-   ArraySetAsSeries(lowerFractals,true);
-
-   int l = 0;
-   for(int i=3; i<200; i++)
+   if(fractalTrendFilter)
      {
-      low_1 = iLow(_Symbol,PERIOD_CURRENT,i+2);
-      low_2 = iLow(_Symbol,PERIOD_CURRENT,i+1);
-      low_3 = iLow(_Symbol,PERIOD_CURRENT,i);
-      low_4 = iLow(_Symbol,PERIOD_CURRENT,i-1);
-      low_5 = iLow(_Symbol,PERIOD_CURRENT,i-2);
+      double low_1 = 0;
+      double low_2 = 0;
+      double low_3 = 0;
+      double low_4 = 0;
+      double low_5 = 0;
+      double minFractal = 0;
+      double lowerFractals[];
 
-      if(low_3 < low_2 && low_3 < low_1 && low_3 < low_4 && low_3 < low_5)
-         if(l<3)
-           {
-            lowerFractals[l] = low_3;
-            l+=1;
-           }
+      ArrayResize(lowerFractals,3);
+      ArrayInitialize(lowerFractals,0);
+      ArraySetAsSeries(lowerFractals,true);
+
+      int l = 0;
+      for(int i=3; i<200; i++)
+        {
+         low_1 = iLow(_Symbol,PERIOD_CURRENT,i+2);
+         low_2 = iLow(_Symbol,PERIOD_CURRENT,i+1);
+         low_3 = iLow(_Symbol,PERIOD_CURRENT,i);
+         low_4 = iLow(_Symbol,PERIOD_CURRENT,i-1);
+         low_5 = iLow(_Symbol,PERIOD_CURRENT,i-2);
+
+         if(low_3 < low_2 && low_3 < low_1 && low_3 < low_4 && low_3 < low_5)
+            if(l<3)
+              {
+               lowerFractals[l] = low_3;
+               l+=1;
+              }
+        }
+
+      minFractal = lowerFractals[ArrayMinimum(lowerFractals)];
+
+      if(ArrayMinimum(lowerFractals) == 0 || lowerFractals[0] < lowerFractals[1])
+         fractalsTrend = true;
+
+      // Debugging
+      debugComment += "======== "+ __FUNCTION__ " ===\n";
+      debugComment += "|=> " + DoubleToString(lowerFractals[0],_Digits) + " " + DoubleToString(lowerFractals[1],_Digits) + " " + DoubleToString(lowerFractals[2],_Digits) + " | MIN = " + DoubleToString(minFractal,_Digits) + "\n";
+      debugComment += "|=> Fractals Bearish Trend = " + IntegerToString(fractalsTrend) + "\n";
      }
+   else
+      if(!fractalTrendFilter)
+         fractalsTrend = true;
 
-   minFractal = lowerFractals[ArrayMinimum(lowerFractals)];
-
-   if(ArrayMinimum(lowerFractals) == 0 || lowerFractals[0] < lowerFractals[1])
-      fractalsTrend = true;
-
-// Debugging
-   debugComment += "======== "+ __FUNCTION__ " ===\n";
-   debugComment += "|=> " + DoubleToString(lowerFractals[0],_Digits) + " " + DoubleToString(lowerFractals[1],_Digits) + " " + DoubleToString(lowerFractals[2],_Digits) + " | MIN = " + DoubleToString(minFractal,_Digits) + "\n";
-   debugComment += "|=> Fractals Bearish Trend = " + IntegerToString(fractalsTrend) + "\n";
 
    return fractalsTrend;
   }
