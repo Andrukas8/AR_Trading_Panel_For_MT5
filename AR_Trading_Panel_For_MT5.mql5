@@ -2815,12 +2815,6 @@ void OnTick()
    textComment = "";
    debugComment = "";
 
-
-// sandbox
-   fractalsBulishTrendFilter();
-   fractalsBearishTrendFilter();
-// end of sandbox
-
 //+------------------------------------------------------------------+
 //|                                                                  |
 //|  ----- Show total risk value in Caption ------------------------ |
@@ -3593,7 +3587,7 @@ void OnTick()
                StrBuySignal_3 = IntegerToString(BuySignal_3);
                StrBuySignal_4 = IntegerToString(BuySignal_4);
 
-               if(BuySignal_GO && KJSSAFilterUp && fractalsBulishTrendFilter())
+               if(BuySignal_GO && KJSSAFilterUp && fractalsBullishTrendFilter())
                  {
                   Alert(_Symbol," === Tenkansen Break Strategy: Buy Signal = ",BuySignal_GO," ===");
 
@@ -5537,7 +5531,7 @@ bool drawBox(string boxName, string boxTime1, string boxTime2, color boxColor)
 //+------------------------------------------------------------------+
 //|                  fractalsBearishTrendFilter                      |
 //+------------------------------------------------------------------+
-bool fractalsBulishTrendFilter()
+bool fractalsBearishTrendFilter()
   {
 
    bool fractalsTrend = false;
