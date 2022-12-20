@@ -129,6 +129,12 @@ input int MABreakPeriod = 5; // __________ BREAK MA PERIOD
 input int MABreakShift = 3; // __________ BREAK MA SHIFT
 input ENUM_MA_METHOD MABreakMethod = MODE_SMMA; // __________ BREAK MA METHOD
 input ENUM_APPLIED_PRICE MABreakPrice = PRICE_MEDIAN; // __________ BREAK MA PRICE
+input group "------------- STOCHASTIC OSCILATOR FILTER ---------------------"
+input bool soFilter = true; // STOCHASTIC OSCILATOR FILTER
+input int soKPeriod = 30; // __________ %K Period
+input int soDPeriod = 10; // __________ %D Period
+input int soSlowing = 10; // __________ SLOWING
+
 
 input group "------------- Box Settings ----------------------------------"
 input bool customBox = true;
@@ -176,6 +182,8 @@ int handleSlow3LSMA;
 int handleMABreak;
 int handleAlligatorMABreak;
 int handleUpperTFIchimoku;
+int handleSOFilter;
+
 int barCountFractals;
 string textComment;
 string debugComment;
@@ -2774,6 +2782,11 @@ int OnInit()
      }
 
 
+   if(soFilter)
+     {
+      handleSOFilter = iStochastic(_Symbol,TimeFrame,soKPeriod,soDPeriod,soSlowing,MODE_SMA,STO_LOWHIGH);
+     }
+
 //--- succeed
    return(INIT_SUCCEEDED);
   }
@@ -3587,7 +3600,7 @@ void OnTick()
                StrBuySignal_3 = IntegerToString(BuySignal_3);
                StrBuySignal_4 = IntegerToString(BuySignal_4);
 
-               if(BuySignal_GO && KJSSAFilterUp && fractalsBullishTrendFilter())
+               if(BuySignal_GO && KJSSAFilterUp && fractalsBullishTrendFilter() && StochasticOscillatorFilterBull())
                  {
                   Alert(_Symbol," === Tenkansen Break Strategy: Buy Signal = ",BuySignal_GO," ===");
 
@@ -3640,7 +3653,7 @@ void OnTick()
                StrSellSignal_3 = IntegerToString(SellSignal_3);
                StrSellSignal_4 = IntegerToString(SellSignal_4);
 
-               if(SellSignal_GO  && KJSSAFilterDn && fractalsBearishTrendFilter())
+               if(SellSignal_GO  && KJSSAFilterDn && fractalsBearishTrendFilter() && StochasticOscillatorFilterBear())
                  {
                   Alert(_Symbol," === Tenkansen Break Strategy: Sell Signal = ",SellSignal_GO," ===");
 
@@ -5312,7 +5325,6 @@ double calculateVaR()
 
            }
 
-
         }
      }
 
@@ -5647,5 +5659,83 @@ bool fractalsBullishTrendFilter()
         }
 
    return fractalsTrend;
+  }
+//+------------------------------------------------------------------+
+
+
+//+------------------------------------------------------------------+
+//|                  StochasticOscillatorFilterBull                   |
+//+------------------------------------------------------------------+
+bool StochasticOscillatorFilterBull()
+  {
+
+   bool stochasticOscillatorFilterBull = false;
+
+   if(soFilter)
+     {
+      double main_buffer[];
+      double signal_buffer[];
+
+      if(CopyBuffer(handleSOFilter,MAIN_LINE,0,2,main_buffer)<0)
+        {
+         PrintFormat("Failed to copy data from the iStochastic indicator, error code %d",GetLastError());
+         return false;
+        }
+
+
+      if(CopyBuffer(handleSOFilter,SIGNAL_LINE,0,2,signal_buffer)<0)
+        {
+         PrintFormat("Failed to copy data from the iStochastic indicator, error code %d",GetLastError());
+         return false;
+        }
+
+
+      if(main_buffer[1] > signal_buffer[1])
+         stochasticOscillatorFilterBull = true;
+     }
+   else
+      if(!soFilter)
+         stochasticOscillatorFilterBull = true;
+
+   return stochasticOscillatorFilterBull;
+  }
+//+------------------------------------------------------------------+
+
+
+//+------------------------------------------------------------------+
+//|                  StochasticOscilatorFilterBear                   |
+//+------------------------------------------------------------------+
+bool StochasticOscillatorFilterBear()
+  {
+
+   bool stochasticOscillatorFilterBear = false;
+
+   if(soFilter)
+     {
+      double main_buffer[];
+      double signal_buffer[];
+
+      if(CopyBuffer(handleSOFilter,MAIN_LINE,0,2,main_buffer)<0)
+        {
+         PrintFormat("Failed to copy data from the iStochastic indicator, error code %d",GetLastError());
+         return false;
+        }
+
+
+      if(CopyBuffer(handleSOFilter,SIGNAL_LINE,0,2,signal_buffer)<0)
+        {
+         PrintFormat("Failed to copy data from the iStochastic indicator, error code %d",GetLastError());
+         return false;
+        }
+
+      if(main_buffer[1] < signal_buffer[1])
+         stochasticOscillatorFilterBear = true;
+
+     }
+   else
+      if(!soFilter)
+         stochasticOscillatorFilterBear = true;
+
+   return stochasticOscillatorFilterBear;
   }
 //+------------------------------------------------------------------+
