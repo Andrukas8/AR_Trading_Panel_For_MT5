@@ -5582,7 +5582,7 @@ bool fractalsBearishTrendFilter()
         {
          fractalsTrend = true;
          debugComment += "======== "+ __FUNCTION__ " ===\n";
-         debugComment += "|=> Bullish Trend = " + IntegerToString(fractalsTrend) + "\n";
+         debugComment += "|=> Bearish Trend = " + IntegerToString(fractalsTrend) + "\n";
         }
 
    return fractalsTrend;
@@ -5636,14 +5636,14 @@ bool fractalsBullishTrendFilter()
       // Debugging
       debugComment += "======== "+ __FUNCTION__ " ===\n";
       debugComment += "|=> " + DoubleToString(lowerFractals[0],_Digits) + " " + DoubleToString(lowerFractals[1],_Digits) + " " + DoubleToString(lowerFractals[2],_Digits) + " \n";
-      debugComment += "|=> Fractals Bearish Trend = " + IntegerToString(fractalsTrend) + "\n";
+      debugComment += "|=> Fractals Bullish Trend = " + IntegerToString(fractalsTrend) + "\n";
      }
    else
       if(!fractalTrendFilter)
         {
          fractalsTrend = true;
          debugComment += "======== "+ __FUNCTION__ " ===\n";
-         debugComment += "|=> Bearish Trend = " + IntegerToString(fractalsTrend) + "\n";
+         debugComment += "|=> Bullish Trend = " + IntegerToString(fractalsTrend) + "\n";
         }
 
    return fractalsTrend;
