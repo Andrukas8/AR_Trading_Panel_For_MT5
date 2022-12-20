@@ -2817,8 +2817,8 @@ void OnTick()
 
 
 // sandbox
-//   fractalsBulishTrendFilter();
-//   fractalsBearishTrendFilter();
+   fractalsBulishTrendFilter();
+   fractalsBearishTrendFilter();
 // end of sandbox
 
 //+------------------------------------------------------------------+
@@ -3468,6 +3468,8 @@ void OnTick()
                      UpperTFSellGo = true;
                     }
 
+
+
                if(debuggingComments)
                  {
                   debugComment += "======== DEBUGGING UPPER TF ICHIMOKU FILTER ===\n";
@@ -3487,10 +3489,21 @@ void OnTick()
                  }
 
 
+              }
+            else
+               if(!upperTFFilterIchimoku)
+                 {
 
-              }  // End of upper TF Ichimoku
+                  UpperTFBuyGo = true;
+                  UpperTFSellGo = true;
+                 } // End of upper TF Ichimoku
+
+
+
+
 
             if(KJSSAFilter)
+              {
                if(KumoIsWider)
                   if(KijunsenArr[KJSSAFilterRange] > KijunsenArr[0] && UpperTFBuyGo)
                      if(ShiftedSenkouspanAArr[KJSSAFilterRange] >  ShiftedSenkouspanAArr[0])
@@ -3505,17 +3518,21 @@ void OnTick()
                               KJSSAFilterUp = false;
                               KJSSAFilterDn = true;
                              }
-                           else
-                              if(!KJSSAFilter)
-                                {
-                                 KJSSAFilterUp = true;
-                                 KJSSAFilterDn = true;
-                                }
+              }
+            else
+               if(!KJSSAFilter)
+                 {
+                  KJSSAFilterUp = true;
+                  KJSSAFilterDn = true;
+                 }
 
             if(debuggingComments)
               {
                debugComment += "======== DEBUGGING KJSSAFilter ===============\n";
                debugComment += "|=> KJSSAFilterRange = " + IntegerToString(KJSSAFilterRange) + " \n";
+               debugComment += "|=> KJSSAFilter SWITCH = " + IntegerToString(KJSSAFilter) + " \n";
+               debugComment += "|=> KJSSAFilterUp = " + IntegerToString(KJSSAFilterUp) + " \n";
+               debugComment += "|=> KJSSAFilterDn = " + IntegerToString(KJSSAFilterDn) + " \n";
                debugComment += "|=> CURRENT  KijunsenArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(KijunsenArr[KJSSAFilterRange],_Digits) + " \n";
                debugComment += "|=> PREVIOUS KijunsenArr[ 0 ] = " + DoubleToString(KijunsenArr[0],_Digits) + " \n";
                debugComment += "|=> CURRENT  ShiftedSenkouspanAArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n";
@@ -5518,7 +5535,7 @@ bool drawBox(string boxName, string boxTime1, string boxTime2, color boxColor)
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
-//|                  fractalsBulishTrendFilter                       |
+//|                  fractalsBearishTrendFilter                      |
 //+------------------------------------------------------------------+
 bool fractalsBulishTrendFilter()
   {
@@ -5533,8 +5550,6 @@ bool fractalsBulishTrendFilter()
       double high_3 = 0;
       double high_4 = 0;
       double high_5 = 0;
-
-      double maxFractal = 0;
       double upperFractals[];
 
       ArrayResize(upperFractals,3);
@@ -5558,22 +5573,23 @@ bool fractalsBulishTrendFilter()
               }
         }
 
-      maxFractal = upperFractals[ArrayMaximum(upperFractals)];
 
-      if(ArrayMaximum(upperFractals) == 0 || upperFractals[0] > upperFractals[1])
+      if(upperFractals[0] < upperFractals[1] && upperFractals[1] < upperFractals[2])
          fractalsTrend = true;
 
 
       // Debugging
       debugComment += "======== "+ __FUNCTION__ " ===\n";
-      debugComment += "|=> " + DoubleToString(upperFractals[0],_Digits) + " " + DoubleToString(upperFractals[1],_Digits) + " " + DoubleToString(upperFractals[2],_Digits) + " | MAX = " + DoubleToString(maxFractal,_Digits) + "\n";
-      debugComment += "|=> Bullish Trend = " + IntegerToString(fractalsTrend) + "\n";
+      debugComment += "|=> " + DoubleToString(upperFractals[0],_Digits) + " " + DoubleToString(upperFractals[1],_Digits) + " " + DoubleToString(upperFractals[2],_Digits) + " \n";
+      debugComment += "|=> Bearish Trend = " + IntegerToString(fractalsTrend) + "\n";
      }
    else
       if(!fractalTrendFilter)
-
+        {
          fractalsTrend = true;
-
+         debugComment += "======== "+ __FUNCTION__ " ===\n";
+         debugComment += "|=> Bullish Trend = " + IntegerToString(fractalsTrend) + "\n";
+        }
 
    return fractalsTrend;
   }
@@ -5582,9 +5598,9 @@ bool fractalsBulishTrendFilter()
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
-//|                  fractalsBearishTrendFilter                      |
+//|                  fractalsBullishTrendFilter                      |
 //+------------------------------------------------------------------+
-bool fractalsBearishTrendFilter()
+bool fractalsBullishTrendFilter()
   {
 
    bool fractalsTrend = false;
@@ -5596,7 +5612,6 @@ bool fractalsBearishTrendFilter()
       double low_3 = 0;
       double low_4 = 0;
       double low_5 = 0;
-      double minFractal = 0;
       double lowerFractals[];
 
       ArrayResize(lowerFractals,3);
@@ -5620,20 +5635,22 @@ bool fractalsBearishTrendFilter()
               }
         }
 
-      minFractal = lowerFractals[ArrayMinimum(lowerFractals)];
 
-      if(ArrayMinimum(lowerFractals) == 0 || lowerFractals[0] < lowerFractals[1])
+      if(lowerFractals[0] > lowerFractals[1] && lowerFractals[1] > lowerFractals[2])
          fractalsTrend = true;
 
       // Debugging
       debugComment += "======== "+ __FUNCTION__ " ===\n";
-      debugComment += "|=> " + DoubleToString(lowerFractals[0],_Digits) + " " + DoubleToString(lowerFractals[1],_Digits) + " " + DoubleToString(lowerFractals[2],_Digits) + " | MIN = " + DoubleToString(minFractal,_Digits) + "\n";
+      debugComment += "|=> " + DoubleToString(lowerFractals[0],_Digits) + " " + DoubleToString(lowerFractals[1],_Digits) + " " + DoubleToString(lowerFractals[2],_Digits) + " \n";
       debugComment += "|=> Fractals Bearish Trend = " + IntegerToString(fractalsTrend) + "\n";
      }
    else
       if(!fractalTrendFilter)
+        {
          fractalsTrend = true;
-
+         debugComment += "======== "+ __FUNCTION__ " ===\n";
+         debugComment += "|=> Bearish Trend = " + IntegerToString(fractalsTrend) + "\n";
+        }
 
    return fractalsTrend;
   }
