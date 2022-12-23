@@ -58,7 +58,7 @@ input ENUM_STRATEGY StrategySelect = ICHI_TENKANBR;
 input string posLotsDef = "0.2"; // LOT SIZE
 input string slPipsDef = "5"; // SL pips
 input string RiskToRewardDef = "2"; // RRR
-input string RiskLevelDef = "0.1"; // RISK % OF DEPOSIT
+input string RiskLevelDef = "1"; // RISK % OF DEPOSIT
 input double marginToBallancePercent = 90; // MARGIN TO DEPOSIT %
 
 input group "------------- TRAILING STOP LOSS ------------"
@@ -77,8 +77,6 @@ input group "------------- TENKANSEN BREAK ALERT --------------------------"
 input bool SignalTenkansenBreak = true; // ALERT ON TK BREAK
 input bool KJSSAFilter = true; // _____ KJ & SSA FILTER
 input int KJSSAFilterRange = 2; // __________ KJ & SSA FILTER RANGE
-input bool upperTFFilterIchimoku = true; // UPPER TF ICHIMOKU FILTER
-input ENUM_TIMEFRAMES UpperTimeFrame = 30; // UPPER TF ICHIMOKU TF
 input bool fractalTrendFilter = false; // USE FRACTALS FILTER
 
 input group "------------- MOVING AVERAGE BREAK ALERT --------------------------"
@@ -2779,13 +2777,6 @@ int OnInit()
       handleAlligatorMABreak = iAlligator(_Symbol,TimeFrame,13*alligatorMultiplier,8*alligatorMultiplier,8*alligatorMultiplier,5*alligatorMultiplier,5*alligatorMultiplier,3*alligatorMultiplier,MODE_SMMA,PRICE_MEDIAN);
      }
 
-
-   if(upperTFFilterIchimoku)
-     {
-      handleUpperTFIchimoku = iIchimoku(_Symbol,UpperTimeFrame,9,26,52);
-     }
-
-
    if(soFilter)
      {
       handleSOFilter = iStochastic(_Symbol,TimeFrame,soKPeriod,soDPeriod,soSlowing,MODE_SMA,STO_LOWHIGH);
@@ -3375,12 +3366,6 @@ void OnTick()
             bool KJSSAFilterDn = false;
             bool KumoIsWider = false;
 
-            // Upper TF Ichimoku Variables
-
-            bool UpperTFKJSSAFilterUp = false;
-            bool UpperTFKJSSAFilterDn = false;
-            bool UpperTFKumoIsWider = false;
-
             static datetime timeStamp;
             datetime time = iTime(_Symbol,TimeFrame,0);
 
@@ -3421,121 +3406,17 @@ void OnTick()
             else
                KumoIsWider = false;
 
-
-            bool UpperTFBuyGo = true;
-            bool UpperTFSellGo = true;
-
-
-            if(upperTFFilterIchimoku)
-              {
-               UpperTFBuyGo = false;
-               UpperTFSellGo = false;
-
-               double UpperTFTenkansenArr[];
-               double UpperTFKijunsenArr[];
-               double UpperTFSenkouspanAArr[];
-               double UpperTFSenkouspanBArr[];
-
-               double UpperTFShiftedSenkouspanAArr[];
-               double UpperTFShiftedSenkouspanBArr[];
-
-               double UpperTFChikouspanArr[];
-
-               double UpperTFBar26High = iHigh(_Symbol,UpperTimeFrame,27);
-               double UpperTFBar26Low = iLow(_Symbol,UpperTimeFrame,27);
-               double UpperTFCurrentHigh = iHigh(_Symbol,UpperTimeFrame,0);
-               double UpperTFCurrentLow = iLow(_Symbol,UpperTimeFrame,0);
-
-               double UpperTFPreviousClose = iClose(_Symbol,UpperTimeFrame,0);
-
-               CopyBuffer(handleUpperTFIchimoku,0,1,KJSSAFilterRange+1,UpperTFTenkansenArr);
-               CopyBuffer(handleUpperTFIchimoku,1,1,KJSSAFilterRange+1,UpperTFKijunsenArr);
-               CopyBuffer(handleUpperTFIchimoku,2,1,KJSSAFilterRange+1,UpperTFSenkouspanAArr);
-               CopyBuffer(handleUpperTFIchimoku,3,1,KJSSAFilterRange+1,UpperTFSenkouspanBArr);
-
-               CopyBuffer(handleUpperTFIchimoku,2,-26,KJSSAFilterRange+1,UpperTFShiftedSenkouspanAArr);
-               CopyBuffer(handleUpperTFIchimoku,3,-26,KJSSAFilterRange+1,UpperTFShiftedSenkouspanBArr);
-
-               CopyBuffer(handleUpperTFIchimoku,4,26,KJSSAFilterRange+1,UpperTFChikouspanArr);
-
-               double UpperTFKumoDeltaCurrent = NormalizeDouble(MathAbs(UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] - UpperTFShiftedSenkouspanBArr[KJSSAFilterRange]),_Digits);
-               double UpperTFKumoDeltaPrevious = NormalizeDouble(MathAbs(UpperTFShiftedSenkouspanAArr[0] - UpperTFShiftedSenkouspanBArr[0]),_Digits);
-
-               // Check if Upper TF Ichimoku is Bullish
-               if(
-                  UpperTFTenkansenArr[KJSSAFilterRange] > UpperTFKijunsenArr[KJSSAFilterRange]  &&
-                  UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] > UpperTFShiftedSenkouspanBArr[KJSSAFilterRange] &&
-                  // UpperTFTenkansenArr[0] > UpperTFKijunsenArr[0] &&
-                  // UpperTFKijunsenArr[KJSSAFilterRange] > UpperTFKijunsenArr[0] &&
-                  // UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] > UpperTFShiftedSenkouspanAArr[0] &&
-                  // UpperTFKumoDeltaCurrent > UpperTFKumoDeltaPrevious &&
-                  UpperTFChikouspanArr[0] > UpperTFBar26High
-               )
-                 {
-                  UpperTFBuyGo = true;
-                  UpperTFSellGo = false;
-                 }
-               // Check if Upper TF Ichimoku is Bearish
-               else
-                  if(
-                     UpperTFTenkansenArr[KJSSAFilterRange] < UpperTFKijunsenArr[KJSSAFilterRange]  &&
-                     UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] < UpperTFShiftedSenkouspanBArr[KJSSAFilterRange] &&
-                     // UpperTFTenkansenArr[0] > UpperTFKijunsenArr[0] &&
-                     // UpperTFKijunsenArr[KJSSAFilterRange] < UpperTFKijunsenArr[0] &&
-                     // UpperTFShiftedSenkouspanAArr[KJSSAFilterRange] < UpperTFShiftedSenkouspanAArr[0] &&
-                     // UpperTFKumoDeltaCurrent > UpperTFKumoDeltaPrevious &&
-                     UpperTFChikouspanArr[0] < UpperTFBar26High
-                  )
-                    {
-                     UpperTFBuyGo = false;
-                     UpperTFSellGo = true;
-                    }
-
-
-
-               if(debuggingComments)
-                 {
-                  debugComment += "======== DEBUGGING UPPER TF ICHIMOKU FILTER ===\n";
-                  debugComment += "|=> CURRENT  UpperTFKijunsenArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFKijunsenArr[KJSSAFilterRange],_Digits) + " \n";
-                  debugComment += "|=> PREVIOUS UpperTFKijunsenArr[ 0 ] = " + DoubleToString(UpperTFKijunsenArr[0],_Digits) + " \n";
-                  debugComment += "|=> CURRENT  UpperTFTenkansenArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFTenkansenArr[KJSSAFilterRange],_Digits) + " \n";
-                  debugComment += "|=> PREVIOUS UpperTFTenkansenArr[ 0 ] = " + DoubleToString(UpperTFTenkansenArr[0],_Digits) + " \n";
-                  debugComment += "|=> CURRENT  UpperTFShiftedSenkouspanAArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n";
-                  debugComment += "|=> CURRENT  UpperTFShiftedSenkouspanBArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(UpperTFShiftedSenkouspanBArr[KJSSAFilterRange],_Digits) + " \n";
-                  debugComment += "|=> PREVIOUS UpperTFShiftedSenkouspanAArr[ 0 ] = " + DoubleToString(UpperTFShiftedSenkouspanAArr[0],_Digits) + " \n";
-                  debugComment += "|=> PREVIOUS UpperTFShiftedSenkouspanBArr[ 0 ] = " + DoubleToString(UpperTFShiftedSenkouspanBArr[0],_Digits) + " \n";
-                  debugComment += "|=> UpperTFChikouspanArr[ 0 ] = " + DoubleToString(UpperTFChikouspanArr[0],_Digits) + " \n";
-                  debugComment += "|=> UpperTFBar26Hi = " + DoubleToString(UpperTFBar26High,_Digits) + " \n";
-                  debugComment += "|=> UpperTFBar26Lo = " + DoubleToString(UpperTFBar26Low,_Digits) + " \n";
-                  debugComment += "|=> UpperTFBuyGo  = " + IntegerToString(UpperTFBuyGo) + " \n";
-                  debugComment += "|=> UpperTFSellGo = " + IntegerToString(UpperTFSellGo) + " \n";
-                 }
-
-
-              }
-            else
-               if(!upperTFFilterIchimoku)
-                 {
-
-                  UpperTFBuyGo = true;
-                  UpperTFSellGo = true;
-                 } // End of upper TF Ichimoku
-
-
-
-
-
             if(KJSSAFilter)
               {
                if(KumoIsWider)
-                  if(KijunsenArr[KJSSAFilterRange] > KijunsenArr[0] && UpperTFBuyGo)
+                  if(KijunsenArr[KJSSAFilterRange] > KijunsenArr[0])
                      if(ShiftedSenkouspanAArr[KJSSAFilterRange] >  ShiftedSenkouspanAArr[0])
                        {
                         KJSSAFilterUp = true;
                         KJSSAFilterDn = false;
                        }
                      else
-                        if(KijunsenArr[KJSSAFilterRange] < KijunsenArr[0] && UpperTFSellGo)
+                        if(KijunsenArr[KJSSAFilterRange] < KijunsenArr[0])
                            if(ShiftedSenkouspanAArr[KJSSAFilterRange] <  ShiftedSenkouspanAArr[0])
                              {
                               KJSSAFilterUp = false;
@@ -5620,7 +5501,7 @@ bool fractalsTrendFilterBear()
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
-//|                  fractalsTrendFilterBull                      |
+//|                  fractalsTrendFilterBull                         |
 //+------------------------------------------------------------------+
 bool fractalsTrendFilterBull()
   {
@@ -5707,6 +5588,7 @@ bool StochasticOscillatorFilterBull()
 
       double soMainSignalDiff = main_buffer[1] - signal_buffer[1];
 
+      //  if((signal_buffer[1] < 80 && signal_buffer[1] > 20) || (main_buffer[1] < 80 && main_buffer[1] > 20))
       if(soMainSignalDiff > soFilterStrength)
          stochasticOscillatorFilterBull = true;
 
@@ -5759,6 +5641,7 @@ bool StochasticOscillatorFilterBear()
 
       double soMainSignalDiff = signal_buffer[1] - main_buffer[1];
 
+      //   if((signal_buffer[1] < 80 && signal_buffer[1] > 20) || (main_buffer[1] < 80 && main_buffer[1] > 20))
       if(soMainSignalDiff > soFilterStrength)
          stochasticOscillatorFilterBear = true;
 
