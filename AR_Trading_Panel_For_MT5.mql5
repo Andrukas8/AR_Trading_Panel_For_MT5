@@ -42,7 +42,7 @@ string StrategyStr[10] =
   };
 
 input group "------------- POSITIONS MANAGEMENT SETTINGS -------------"
-input int TslOffsetPoints = 10; // TSL BUFFER POINTS FOR MA/TKS/KJS
+input int TslOffsetPoints = 0; // TSL BUFFER POINTS FOR MA/TKS/KJS
 input ENUM_TIMEFRAMES TimeFrame = 5; // EA TIMEFRAME
 input bool showTotalRiskCurrent = true; // Show Total Risk in Caption
 input double maxVARFiltervalue = 2; // Max VaR filter value in % (use 100% to turn off)
@@ -63,6 +63,7 @@ input double marginToBallancePercent = 90; // MARGIN TO DEPOSIT %
 
 input group "------------- TRAILING STOP LOSS ------------"
 input bool fractalsTSL = false; // TSL FRACTALS
+input bool prevCandleTSL = false; // TSL PREVIOUS CANDLE
 input bool tenkansenTSL = false; // TSL ICHIMOKU TENKANSEN
 input bool kijunsenTSL = false; // TSL ICHIMOKU KIJUNSEN
 input bool pointsTSL = false; // TSL REGULAR IN POINTS
@@ -4177,7 +4178,6 @@ void OnTick()
 
                   bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
                   ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
-
                   double ma[];
                   CopyBuffer(handleMA,MAIN_LINE,1,MaShift,ma);
 
@@ -4234,6 +4234,71 @@ void OnTick()
                   //+------------------------------------------------------------------+
                   //|        End of Fractals                                           |
                   //+------------------------------------------------------------------+
+
+                  //+------------------------------------------------------------------+
+                  //|        Previous Candle TSL                                       |
+                  //+------------------------------------------------------------------+
+
+                  if(prevCandleTSL)
+                    {
+                     double prevClose = iClose(_Symbol,TimeFrame,1);
+                     double prevOpen = iOpen(_Symbol,TimeFrame,1);
+
+                     Print("prevClose = ",prevClose);
+                     Print("prevOpen = ",prevOpen);
+
+                     // --------------------
+                     // --- BUY POSITION ---
+                     // --------------------
+
+                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
+                       {
+                        if(prevClose > prevOpen)
+                          {
+                           double sl = NormalizeDouble(NormalizeDouble(prevOpen,_Digits) - (TslOffsetPoints + spreadPos) * _Point,_Digits);
+                           if(sl > posSl && sl < bid)
+                             {
+                              if(trade.PositionModify(posTicket,sl,posTp))
+                                {
+                                 Print(NormalizeDouble(sl - posSl,_Digits), " ", NormalizeDouble(bid - sl,_Digits));
+                                 Print("SL = ",sl, " TP = ", posTp);
+                                 Print(__FUNCTION__," > Position #",posTicket," was modified by Prev Candle TSL.");
+                                }
+                             }
+                          }
+
+                       }
+
+                     // ---------------------
+                     // --- SELL POSITION ---
+                     // ---------------------
+
+                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
+                       {
+                        if(prevClose < prevOpen)
+                          {
+                           double sl = NormalizeDouble(NormalizeDouble(prevOpen,_Digits) + (TslOffsetPoints + spreadPos) * _Point,_Digits);
+                           if(sl < posSl || posSl == 0)
+                             {
+                              if(trade.PositionModify(posTicket,sl,posTp))
+                                {
+                                 Print("SL = ",sl, " TP = ", posTp);
+                                 Print(__FUNCTION__," > Position #",posTicket," was modified by Prev Candle TSL.");
+                                }
+                             }
+                          }
+                       }
+
+
+                    }
+
+
+
+                  //+------------------------------------------------------------------+
+                  //|       End of Previous Candle TSL                                 |
+                  //+------------------------------------------------------------------+
+
+
 
 
                   //+------------------------------------------------------------------+
