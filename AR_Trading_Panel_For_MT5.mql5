@@ -58,7 +58,7 @@ input ENUM_STRATEGY StrategySelect = ICHI_TENKANBR;
 input string posLotsDef = "0.2"; // LOT SIZE
 input string slPipsDef = "5"; // SL pips
 input string RiskToRewardDef = "2"; // RRR
-input string RiskLevelDef = "1"; // RISK % OF DEPOSIT
+input string RiskLevelDef = "0.1"; // RISK % OF DEPOSIT
 input double marginToBallancePercent = 90; // MARGIN TO DEPOSIT %
 
 input group "------------- TRAILING STOP LOSS ------------"
@@ -1954,21 +1954,33 @@ void CControlsDialog::OnClickShowLinesBtn(void)
       double linePrice = 0;
       double lineSl = 0;
       double lineTp = 0;
+      double inputLineRRR = 0;
+      inputLineRRR = StringToDouble(ObjectGetString(0,ExtDialog.Name()+"RRR",OBJPROP_TEXT));
+      double lineSlPips = StringToDouble(ObjectGetString(0,ExtDialog.Name()+"SlPips",OBJPROP_TEXT));
+
+      Print("inputLineRRR = ",inputLineRRR); // qqq
 
       if(sellToggle && !buyToggle)
         {
          // SELL
          linePrice = NormalizeDouble(ask,_Digits);
-         lineSl = NormalizeDouble(ask + StringToDouble(slPipsDef)*10*_Point,_Digits);
-         lineTp = NormalizeDouble(ask - StringToDouble(slPipsDef)*StringToDouble(RiskToRewardDef)*10*_Point,_Digits);
+         //lineSl = NormalizeDouble(ask + StringToDouble(slPipsDef)*10*_Point,_Digits);
+         lineSl = NormalizeDouble(ask + lineSlPips*10*_Point,_Digits);
+         //  lineTp = NormalizeDouble(ask - StringToDouble(slPipsDef)*StringToDouble(RiskToRewardDef)*10*_Point,_Digits);
+         //lineTp = ask - (lineSl - ask) * inputLineRRR;
+         lineTp = NormalizeDouble(ask - (lineSl - ask) * inputLineRRR,_Digits);
+
         }
       else
          if(!sellToggle && buyToggle)
            {
             // BUY
             linePrice = NormalizeDouble(bid,_Digits);
-            lineSl = NormalizeDouble(bid - StringToDouble(slPipsDef)*10*_Point,_Digits);
-            lineTp = NormalizeDouble(bid + StringToDouble(slPipsDef)*StringToDouble(RiskToRewardDef)*10*_Point,_Digits);
+            // lineSl = NormalizeDouble(bid - StringToDouble(slPipsDef)*10*_Point,_Digits);
+            lineSl = NormalizeDouble(bid - lineSlPips*10*_Point,_Digits);
+            //lineTp = NormalizeDouble(bid + StringToDouble(slPipsDef)*StringToDouble(RiskToRewardDef)*10*_Point,_Digits);
+            //lineTp = NormalizeDouble((bid + StringToDouble(slPipsDef)*inputLineRRR*10*_Point)-bid,_Digits);
+            lineTp = NormalizeDouble(bid + (bid - lineSl) * inputLineRRR,_Digits);
            }
 
       if(sellToggle || buyToggle)
@@ -2813,6 +2825,36 @@ void OnChartEvent(const int id,         // event ID
                   const string& sparam) // event parameter of the string type
   {
    ExtDialog.ChartEvent(id,lparam,dparam,sparam);
+
+   if(id==CHARTEVENT_OBJECT_DRAG) // qqq   www
+     {
+      if(sparam == "stopLossLine")
+        {
+         inputStopLoss = NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),_Digits);
+         double inputLineRRR = StringToDouble(ObjectGetString(0,ExtDialog.Name()+"RRR",OBJPROP_TEXT));
+         double newInputTakeProfit = 0;
+         if(inputStopLoss < inputTakeProfit) // buy
+           {
+            double input_line_ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK); // buy
+            newInputTakeProfit = (input_line_ask - inputStopLoss) * inputLineRRR + input_line_ask;
+
+           }
+         else
+            if(inputStopLoss > inputTakeProfit) // sell
+              {
+               double input_line_bid = SymbolInfoDouble(_Symbol,SYMBOL_BID); // sell
+               newInputTakeProfit = input_line_bid - (inputStopLoss - input_line_bid) * inputLineRRR;
+              }
+
+         ObjectSetString(0,ExtDialog.Name()+"SlEdit",OBJPROP_TEXT,DoubleToString(inputStopLoss,_Digits));
+         ObjectSetString(0,ExtDialog.Name()+"TpEdit",OBJPROP_TEXT,DoubleToString(newInputTakeProfit,_Digits));
+
+         ObjectSetDouble(0,"takeProfitLine",OBJPROP_PRICE,newInputTakeProfit);
+
+        }
+
+     }
+
   }
 
 //+------------------------------------------------------------------+
@@ -4559,10 +4601,10 @@ bool CControlsDialog::GetOrderData()
    RiskToReward = NormalizeDouble(StringToDouble(m_RiskToRewardRatioEdit.Text()),2);
    ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
    bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);
-   slSell = NormalizeDouble(bid + slPips*_Point*10,_Digits);
-   slBuy = NormalizeDouble(ask - slPips*_Point*10,_Digits);
-   tpSell = NormalizeDouble(bid - RiskToReward * (slSell - bid),_Digits);
-   tpBuy = NormalizeDouble(ask + RiskToReward * (ask - slBuy),_Digits);
+   slSell = NormalizeDouble(ask + slPips*_Point*10,_Digits);
+   slBuy = NormalizeDouble(bid - slPips*_Point*10,_Digits);
+   tpSell = NormalizeDouble(ask - RiskToReward * (slSell - ask),_Digits);
+   tpBuy = NormalizeDouble(bid + RiskToReward * (bid - slBuy),_Digits);
    return(true);
   }
 
@@ -4592,8 +4634,8 @@ bool CControlsDialog::MarketSellOrder()
      {
       GetOrderData();
 
-      Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,_Digits),
-            " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,_Digits));
+      Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",bid," Ask - SL Buy = ",NormalizeDouble(bid-slBuy,_Digits),
+            " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - bid,_Digits));
 
       if(posLots > 0 && slPips > 0 && RiskToReward > 0)
         {
@@ -5001,10 +5043,15 @@ bool CControlsDialog::PendingBuyLimitDoubleOrder()
 
 
 //+------------------------------------------------------------------+
-//|                                                                  |
+//|                                                                  | www
 //+------------------------------------------------------------------+
 bool CControlsDialog::CalculatePosition()
   {
+   calcRRR = 0;
+
+   long spreadLineInput = SymbolInfoInteger(_Symbol,SYMBOL_SPREAD);
+
+   Print("spreadLineInput = ",spreadLineInput);
 
    if(lineInput)
      {
@@ -5039,18 +5086,26 @@ bool CControlsDialog::CalculatePosition()
            {
             if(sellToggle && !buyToggle) // SELL
               {
-               calcTpPips = 0.1*MathAbs(inputTakeProfit - bid)/_Point;
-               calcSlPips = 0.1*MathAbs(inputStopLoss - bid)/_Point;
+               calcSlPips = NormalizeDouble(0.1* (((inputStopLoss - ask)/_Point)),0);
+               calcTpPips = NormalizeDouble(0.1*(((ask - inputTakeProfit)/_Point)),0);
               }
             else
                if(!sellToggle && buyToggle) // BUY
                  {
-                  calcTpPips = 0.1*MathAbs(inputTakeProfit - ask)/_Point;
-                  calcSlPips = 0.1*MathAbs(inputStopLoss - ask)/_Point;
+                  calcSlPips = NormalizeDouble(0.1*(((bid - inputStopLoss)/_Point)),0);
+                  calcTpPips = NormalizeDouble(0.1*(((inputTakeProfit - bid)/_Point)),0);
                  }
+
+            calcRRR = NormalizeDouble(calcTpPips/calcSlPips,2);
            }
 
-      calcRRR = NormalizeDouble(calcTpPips/calcSlPips,2);
+
+      Print("calcSlPips = ",calcSlPips);
+      Print("calcTpPips = ",calcTpPips);
+      Print("calcRRR = ",calcRRR);
+
+
+      //calcRRR = NormalizeDouble(calcTpPips/calcSlPips,2);
 
       m_TpPipsEdit.Text(DoubleToString(NormalizeDouble(MathRound(calcTpPips),1),0));
       m_SlPipsEdit.Text(DoubleToString(NormalizeDouble(MathRound(calcSlPips),1),0));
@@ -5419,7 +5474,7 @@ bool CControlsDialog::DrawPositionRectangles()
                   ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrDarkGreen);
                   ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
                   ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
-              
+
                  }
               }
            }
