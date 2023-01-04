@@ -4756,6 +4756,7 @@ bool CControlsDialog::PendingBuyLimitOrder()
 bool CControlsDialog::MarketSellDoubleOrder()
   {
    CTrade trade;
+   double beLevelLine = 0;
    if(m_LotsEdit.Text() != "" && m_SlPipsEdit.Text() != "" && m_RiskToRewardRatioEdit.Text() != "")
      {
       GetOrderData();
@@ -4776,6 +4777,7 @@ bool CControlsDialog::MarketSellDoubleOrder()
            {
             Print("Sold ",posLots," Lots of ",_Symbol," @ ",bid," SL = ",slSell, " TP = ",tpSell);
            }
+         beLevelLine = tpSell;
          tpSell = 0;
          if(trade.Sell(posLots,_Symbol,bid,slSell,0,tradeComment))
            {
@@ -4791,6 +4793,20 @@ bool CControlsDialog::MarketSellDoubleOrder()
      {
       Print("Not enough input");
      }
+
+// add breakeven line
+   ObjectCreate(0,"alertCloseLine_2",OBJ_HLINE,0,0,beLevelLine);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_STYLE, STYLE_DASH);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_WIDTH, 2);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_BACK, true);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTABLE, true);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, false);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_HIDDEN, false);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_ZORDER, 0);
+
+
+
    return(true);
   }
 
@@ -4800,7 +4816,7 @@ bool CControlsDialog::MarketSellDoubleOrder()
 bool  CControlsDialog::MarketBuyDoubleOrder()
   {
    CTrade trade;
-
+   double beLevelLine = 0;
    if(m_LotsEdit.Text() != "" && m_SlPipsEdit.Text() != "" && m_RiskToRewardRatioEdit.Text() != "")
      {
       GetOrderData();
@@ -4820,6 +4836,7 @@ bool  CControlsDialog::MarketBuyDoubleOrder()
             Print("Bought ",posLots," Lots of ",_Symbol," @ ",ask," SL = ",slBuy, " TP = ",tpBuy);
            }
          tpBuy =  0;
+         beLevelLine = tpBuy;
          if(trade.Buy(posLots,_Symbol,ask,slBuy,tpBuy,tradeComment))
            {
             Print("Bought ",posLots," Lots of ",_Symbol," @ ",ask," SL = ",slBuy, " TP = ",tpBuy);
@@ -4835,6 +4852,20 @@ bool  CControlsDialog::MarketBuyDoubleOrder()
      {
       Print("Not enough input");
      }
+
+// add breakeven line
+   ObjectCreate(0,"alertCloseLine_1",OBJ_HLINE,0,0,beLevelLine);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrSilver);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_STYLE, STYLE_DASH);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_WIDTH, 2);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_BACK, true);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTABLE, true);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTED, false);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_HIDDEN, false);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_ZORDER, 0);
+
+
+
    return(true);
   }
 
@@ -5388,32 +5419,7 @@ bool CControlsDialog::DrawPositionRectangles()
                   ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrDarkGreen);
                   ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
                   ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
-
-                  if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)  // checking if the open position has type BUY
-                    {
-                     ObjectCreate(0,"alertCloseLine_1",OBJ_HLINE,0,0,price3);
-                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrSilver);
-                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_STYLE, STYLE_DASH);
-                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_WIDTH, 2);
-                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_BACK, true);
-                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTABLE, true);
-                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTED, false);
-                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_HIDDEN, false);
-                     ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_ZORDER, 0);
-                    }
-                  else
-                     if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL) // checking if the open position has type BUY
-                       {
-                        ObjectCreate(0,"alertCloseLine_2",OBJ_HLINE,0,0,price3);
-                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
-                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_STYLE, STYLE_DASH);
-                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_WIDTH, 2);
-                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_BACK, true);
-                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTABLE, true);
-                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, false);
-                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_HIDDEN, false);
-                        ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_ZORDER, 0);
-                       }
+              
                  }
               }
            }
@@ -5670,10 +5676,6 @@ bool StochasticOscillatorFilterBull()
       if(!soFilter)
          stochasticOscillatorFilterBull = true;
 
-
-
-
-
    return stochasticOscillatorFilterBull;
   }
 //+------------------------------------------------------------------+
@@ -5722,8 +5724,6 @@ bool StochasticOscillatorFilterBear()
    else
       if(!soFilter)
          stochasticOscillatorFilterBear = true;
-
-
 
    return stochasticOscillatorFilterBear;
   }
