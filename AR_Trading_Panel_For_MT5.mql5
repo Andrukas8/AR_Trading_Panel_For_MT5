@@ -4819,8 +4819,10 @@ bool CControlsDialog::MarketSellDoubleOrder()
            {
             Print("Sold ",posLots," Lots of ",_Symbol," @ ",bid," SL = ",slSell, " TP = ",tpSell);
            }
+
          beLevelLine = tpSell;
          tpSell = 0;
+
          if(trade.Sell(posLots,_Symbol,bid,slSell,0,tradeComment))
            {
             Print("Sold ",posLots," Lots of ",_Symbol," @ ",bid," SL = ",slSell, " TP = ",tpSell);
@@ -4877,8 +4879,10 @@ bool  CControlsDialog::MarketBuyDoubleOrder()
            {
             Print("Bought ",posLots," Lots of ",_Symbol," @ ",ask," SL = ",slBuy, " TP = ",tpBuy);
            }
-         tpBuy =  0;
+
          beLevelLine = tpBuy;
+         tpBuy =  0;
+
          if(trade.Buy(posLots,_Symbol,ask,slBuy,tpBuy,tradeComment))
            {
             Print("Bought ",posLots," Lots of ",_Symbol," @ ",ask," SL = ",slBuy, " TP = ",tpBuy);
@@ -4896,6 +4900,7 @@ bool  CControlsDialog::MarketBuyDoubleOrder()
      }
 
 // add breakeven line
+   Print("beLevelLine = ",beLevelLine);
    ObjectCreate(0,"alertCloseLine_1",OBJ_HLINE,0,0,beLevelLine);
    ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrSilver);
    ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_STYLE, STYLE_DASH);
@@ -5687,7 +5692,7 @@ bool fractalsTrendFilterBull()
 
 
 //+------------------------------------------------------------------+
-//|                  StochasticOscillatorFilterBull                   |
+//|                  StochasticOscillatorFilterBull                  |
 //+------------------------------------------------------------------+
 bool StochasticOscillatorFilterBull()
   {
