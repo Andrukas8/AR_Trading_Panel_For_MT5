@@ -1950,7 +1950,6 @@ void CControlsDialog::OnClickMarketPendingBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickShowLinesBtn(void)
   {
-   Print("Line input = ", lineInput);
    if(!lineInput)
      {
       lineInput = true;
@@ -1966,16 +1965,11 @@ void CControlsDialog::OnClickShowLinesBtn(void)
       inputLineRRR = StringToDouble(ObjectGetString(0,ExtDialog.Name()+"RRR",OBJPROP_TEXT));
       double lineSlPips = StringToDouble(ObjectGetString(0,ExtDialog.Name()+"SlPips",OBJPROP_TEXT));
 
-      Print("inputLineRRR = ",inputLineRRR); // qqq
-
       if(sellToggle && !buyToggle)
         {
          // SELL
          linePrice = NormalizeDouble(ask,_Digits);
-         //lineSl = NormalizeDouble(ask + StringToDouble(slPipsDef)*10*_Point,_Digits);
          lineSl = NormalizeDouble(ask + lineSlPips*10*_Point,_Digits);
-         //  lineTp = NormalizeDouble(ask - StringToDouble(slPipsDef)*StringToDouble(RiskToRewardDef)*10*_Point,_Digits);
-         //lineTp = ask - (lineSl - ask) * inputLineRRR;
          lineTp = NormalizeDouble(ask - (lineSl - ask) * inputLineRRR,_Digits);
 
         }
@@ -1984,10 +1978,7 @@ void CControlsDialog::OnClickShowLinesBtn(void)
            {
             // BUY
             linePrice = NormalizeDouble(bid,_Digits);
-            // lineSl = NormalizeDouble(bid - StringToDouble(slPipsDef)*10*_Point,_Digits);
             lineSl = NormalizeDouble(bid - lineSlPips*10*_Point,_Digits);
-            //lineTp = NormalizeDouble(bid + StringToDouble(slPipsDef)*StringToDouble(RiskToRewardDef)*10*_Point,_Digits);
-            //lineTp = NormalizeDouble((bid + StringToDouble(slPipsDef)*inputLineRRR*10*_Point)-bid,_Digits);
             lineTp = NormalizeDouble(bid + (bid - lineSl) * inputLineRRR,_Digits);
            }
 
@@ -2085,8 +2076,6 @@ void CControlsDialog::OnClickBuyToggleBtn(void)
    m_BuyToggleBtn.Text("[=B=]");
   }
 
-
-
 //+------------------------------------------------------------------+
 //| Event handler for Stop Toggle Button                             |
 //+------------------------------------------------------------------+
@@ -2183,6 +2172,14 @@ void CControlsDialog::OnClickSendOrderBtn(void)
                      PendingBuyStopOrder();
                     }
               }
+
+   ObjectDelete(0,"priceLine");
+   ObjectDelete(0,"stopLossLine");
+   ObjectDelete(0,"takeProfitLine");
+
+   if(!DrawPositionRectangles())
+      Print(__FUNCTION__," Failed...");
+
   }
 
 
@@ -2402,12 +2399,9 @@ void CControlsDialog::OnClickScanChartsBtn(void)
    int symbolListSize = (int)ArrayRange(symbolList,0);
    for(int i=0; i<=symbolListSize-1; i++)
      {
-      //Print(symbolList[i]);
       // D1 && H1
       // D1
 
-      //  if((long)TimeCurrent() - SymbolInfoInteger(symbolList[i],SYMBOL_TIME) < 500) -- if there will be issues with Ichimoku placing on charts
-      // {
       int symbolDigits = (int)SymbolInfoInteger(symbolList[i],SYMBOL_DIGITS);
       int handleIchimoku_D1 = iIchimoku(symbolList[i],PERIOD_D1,9,26,52);
       double ClosePrice_D1 = iClose(symbolList[i],PERIOD_D1,1);
@@ -2888,8 +2882,8 @@ void OnTick()
       //fractalsTrendFilterBear();
       //StochasticOscillatorFilterBull();
       //StochasticOscillatorFilterBear();
-      RSI_MA_FilterBull();
-      RSI_MA_FilterBear();
+      //RSI_MA_FilterBull();
+      //RSI_MA_FilterBear();
      }
 
 
@@ -2933,8 +2927,6 @@ void OnTick()
 //|  ----- Handling MA Break Alert --------------------------------- |
 //|                                                                  |
 //+------------------------------------------------------------------+
-
-//Print("VaRfilterGo = ",VaRfilterGo(maxVARFiltervalue));
 
    if(Period() == TimeFrame)
      {
@@ -3290,7 +3282,6 @@ void OnTick()
          //|  ----- End of Handling Awesome Oscillator Alert WM2 ------------ |
          //|                                                                  |
          //+------------------------------------------------------------------+
-
 
          //+------------------------------------------------------------------+
          //|                                                                  |
@@ -5436,9 +5427,7 @@ bool VaRfilterGo(double riskLimit)
 //+------------------------------------------------------------------+
 bool CControlsDialog::DrawPositionRectangles()
   {
-
    int totalPos = PositionsTotal();
-
 
 // Find number of open positions on current chart
    int totalPosCurrentChart = 0;
@@ -5834,7 +5823,7 @@ bool RSI_MA_FilterBull()
          return false;
         }
 
-      if(RSI_buffer[1] > RSI_MA_buffer[1])
+      if(RSI_buffer[1] > RSI_buffer[0] && RSI_buffer[1] > RSI_MA_buffer[1])
          RSI_MA_BULL = true;
 
       if(debuggingComments)
@@ -5879,7 +5868,7 @@ bool RSI_MA_FilterBear()
          return false;
         }
 
-      if(RSI_buffer[1] < RSI_MA_buffer[1])
+      if(RSI_buffer[1] < RSI_buffer[0] && RSI_buffer[1] < RSI_MA_buffer[1])
          RSI_MA_BEAR = true;
 
       if(debuggingComments)
