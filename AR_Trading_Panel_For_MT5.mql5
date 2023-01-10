@@ -108,10 +108,17 @@ input int fractalBufferWM3 = 20; // _____ FRACTAL BUFFER for WM3 in points
 input int alligatorMultiplier = 1; // _____ Alligator multiplier for filtering WM signals
 
 input group "------------- ALERTS ------------"
-input bool threeLinesStrikeActivate = false; // 3 LINES STRIKE
+input bool threeLinesStrikeActivate = true; // 3 LINES STRIKE
 input double ToleranceOpenPercent = 50; // _____ Engulfing Range Tolerance Open %
 input double ToleranceClosePercent = 50; // _____ Engulfing Range Tolerance Close %
 input bool EngulfingModeStrict = false; // _____ Strict mode
+input group "------------- RSI-MA FILTER for 3LS ------------"
+input bool rsiMAFilter = true; // RSI-MA FILTER
+input int rsiMA_RSI_Range = 150; // __________ RSI RANGE
+input int rsiMA_MA_Range = 35; // __________ MA PERIOD
+input int rsiMA_MA_Shift = 0; // __________ MA SHIFT
+input ENUM_MA_METHOD rsiMA_MA_Method = MODE_SMA; // __________ MA METHOD
+input group "------------- MA FILTER for 3LS ------------"
 input bool useMAFilter3LS = false; // _____ USE MA FILTER FOR 3LS SIGNALS
 input int FastMaPeriod3LS = 21; // __________ 3 LS FAST MA PERIOD
 input int FastMaShift3LS = 0; // __________ 3 LS FAST MA SHIFT
@@ -125,7 +132,6 @@ input int SlowMaPeriod3LS = 200; // __________ 3 LS SLOW MA PERIOD
 input int SlowMaShift3LS = 0; // __________ 3 LS SLOW MA SHIFT
 input ENUM_MA_METHOD SlowMaMethod3LS = MODE_SMMA; // __________ 3LS SLOW MA METHOD
 input ENUM_APPLIED_PRICE SlowMaAppPrice3LS = PRICE_CLOSE; // __________ 3LS SLOW MA PRICE
-
 
 input bool NewBarAlert = false; // NEW BAR ALERT
 input bool AlertAutoClosePosition = false; // ALERT ON POSITIONS CLOSE
@@ -186,6 +192,8 @@ int handleMABreak;
 int handleAlligatorMABreak;
 int handleUpperTFIchimoku;
 int handleSOFilter;
+int handleRSIFilter;
+int handleRSIMAFilter;
 
 int barCountFractals;
 string textComment;
@@ -2795,6 +2803,12 @@ int OnInit()
       handleSOFilter = iStochastic(_Symbol,TimeFrame,soKPeriod,soDPeriod,soSlowing,MODE_SMA,STO_LOWHIGH);
      }
 
+   if(rsiMAFilter)
+     {
+      handleRSIFilter = iRSI(_Symbol,TimeFrame,rsiMA_RSI_Range,PRICE_CLOSE);
+      handleRSIMAFilter = iMA(_Symbol,TimeFrame,rsiMA_MA_Range,rsiMA_MA_Shift,rsiMA_MA_Method,handleRSIFilter);
+     }
+
 //--- succeed
    return(INIT_SUCCEEDED);
   }
@@ -2870,11 +2884,15 @@ void OnTick()
 // sand box
    if(debuggingComments)
      {
-      fractalsTrendFilterBull();
-      fractalsTrendFilterBear();
-      StochasticOscillatorFilterBull();
-      StochasticOscillatorFilterBear();
+      //fractalsTrendFilterBull();
+      //fractalsTrendFilterBear();
+      //StochasticOscillatorFilterBull();
+      //StochasticOscillatorFilterBear();
+      RSI_MA_FilterBull();
+      RSI_MA_FilterBear();
      }
+
+
 
 // end of sand box
 
@@ -3051,7 +3069,8 @@ void OnTick()
                   openUP <= MathMax(iClose(_Symbol,TimeFrame,2), MathMax(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
                   openUP <= MathMin(iOpen(_Symbol,TimeFrame,2), MathMin(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
                   openUP <= MathMax(iOpen(_Symbol,TimeFrame,2), MathMax(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
-                  openUP <= closeUP
+                  openUP <= closeUP &&
+                  RSI_MA_FilterBull()
                )
                  {
                   strike_up = true;
@@ -3074,7 +3093,9 @@ void OnTick()
                   openDN >= MathMax(iClose(_Symbol,TimeFrame,2), MathMax(iClose(_Symbol,TimeFrame,3), iClose(_Symbol,TimeFrame,4))) &&
                   openDN >= MathMin(iOpen(_Symbol,TimeFrame,2), MathMin(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
                   openDN >= MathMax(iOpen(_Symbol,TimeFrame,2), MathMax(iOpen(_Symbol,TimeFrame,3), iOpen(_Symbol,TimeFrame,4))) &&
-                  openDN >= closeDN)
+                  openDN >= closeDN &&
+                  RSI_MA_FilterBear()
+                 )
                  {
                   strike_dn = true;
 
@@ -5786,5 +5807,96 @@ bool StochasticOscillatorFilterBear()
          stochasticOscillatorFilterBear = true;
 
    return stochasticOscillatorFilterBear;
+  }
+//+------------------------------------------------------------------+
+
+
+//+------------------------------------------------------------------+
+//|                  RSI_MA_FilterBull                               |
+//+------------------------------------------------------------------+
+bool RSI_MA_FilterBull()
+  {
+   bool RSI_MA_BULL = false;
+   if(rsiMAFilter)
+     {
+      double RSI_buffer[];
+      double RSI_MA_buffer[];
+
+      if(CopyBuffer(handleRSIFilter,0,0,2,RSI_buffer)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+
+      if(CopyBuffer(handleRSIMAFilter,0,0,2,RSI_MA_buffer)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+
+      if(RSI_buffer[1] > RSI_MA_buffer[1])
+         RSI_MA_BULL = true;
+
+      if(debuggingComments)
+        {
+         debugComment += "======== DEBUGGING RSI_MA_FilterBull ===\n";
+         debugComment += "|=> RSI_buffer[1] = " + DoubleToString(RSI_buffer[1],2) + " RSI_MA_buffer[1] = " + DoubleToString(RSI_MA_buffer[1],2) + " \n";
+         debugComment += "|=> RSI_MA_BULL = " + IntegerToString(RSI_MA_BULL) + " \n";
+        }
+
+     }
+   else
+      if(!rsiMAFilter)
+        {
+         RSI_MA_BULL = true;
+        }
+
+   return RSI_MA_BULL;
+  }
+//+------------------------------------------------------------------+
+
+
+//+------------------------------------------------------------------+
+//|                  RSI_MA_FilterBear                               |
+//+------------------------------------------------------------------+
+bool RSI_MA_FilterBear()
+  {
+   bool RSI_MA_BEAR = false;
+   if(rsiMAFilter)
+     {
+      double RSI_buffer[];
+      double RSI_MA_buffer[];
+
+      if(CopyBuffer(handleRSIFilter,0,0,2,RSI_buffer)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+
+      if(CopyBuffer(handleRSIMAFilter,0,0,2,RSI_MA_buffer)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+
+      if(RSI_buffer[1] < RSI_MA_buffer[1])
+         RSI_MA_BEAR = true;
+
+      if(debuggingComments)
+        {
+         debugComment += "======== DEBUGGING RSI_MA_FilterBull ===\n";
+         debugComment += "|=> RSI_buffer[1] = " + DoubleToString(RSI_buffer[1],2) + " RSI_MA_buffer[1] = " + DoubleToString(RSI_MA_buffer[1],2) + " \n";
+         debugComment += "|=> RSI_MA_BEAR = " + IntegerToString(RSI_MA_BEAR) + " \n";
+        }
+
+     }
+
+   else
+      if(!rsiMAFilter)
+        {
+         RSI_MA_BEAR = true;
+        }
+
+   return RSI_MA_BEAR;
   }
 //+------------------------------------------------------------------+
