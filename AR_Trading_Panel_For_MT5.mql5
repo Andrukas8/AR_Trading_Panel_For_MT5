@@ -2882,8 +2882,8 @@ void OnTick()
       //fractalsTrendFilterBear();
       //StochasticOscillatorFilterBull();
       //StochasticOscillatorFilterBear();
-      //RSI_MA_FilterBull();
-      //RSI_MA_FilterBear();
+      RSI_MA_FilterBull();
+      RSI_MA_FilterBear();
      }
 
 
@@ -3552,7 +3552,7 @@ void OnTick()
                StrBuySignal_3 = IntegerToString(BuySignal_3);
                StrBuySignal_4 = IntegerToString(BuySignal_4);
 
-               if(BuySignal_GO && KJSSAFilterUp && fractalsTrendFilterBull() && StochasticOscillatorFilterBull())
+               if(BuySignal_GO && KJSSAFilterUp && fractalsTrendFilterBull() && StochasticOscillatorFilterBull() && RSI_MA_FilterBull())
                  {
                   Alert(_Symbol," === Tenkansen Break Strategy: Buy Signal = ",BuySignal_GO," ===");
 
@@ -3605,7 +3605,7 @@ void OnTick()
                StrSellSignal_3 = IntegerToString(SellSignal_3);
                StrSellSignal_4 = IntegerToString(SellSignal_4);
 
-               if(SellSignal_GO  && KJSSAFilterDn && fractalsTrendFilterBear() && StochasticOscillatorFilterBear())
+               if(SellSignal_GO  && KJSSAFilterDn && fractalsTrendFilterBear() && StochasticOscillatorFilterBear() && RSI_MA_FilterBear())
                  {
                   Alert(_Symbol," === Tenkansen Break Strategy: Sell Signal = ",SellSignal_GO," ===");
 
@@ -5811,13 +5811,13 @@ bool RSI_MA_FilterBull()
       double RSI_buffer[];
       double RSI_MA_buffer[];
 
-      if(CopyBuffer(handleRSIFilter,0,0,2,RSI_buffer)<0)
+      if(CopyBuffer(handleRSIFilter,0,0,3,RSI_buffer)<0)
         {
          PrintFormat("Failed to copy data, error code %d",GetLastError());
          return false;
         }
 
-      if(CopyBuffer(handleRSIMAFilter,0,0,2,RSI_MA_buffer)<0)
+      if(CopyBuffer(handleRSIMAFilter,0,0,3,RSI_MA_buffer)<0)
         {
          PrintFormat("Failed to copy data, error code %d",GetLastError());
          return false;
@@ -5856,13 +5856,13 @@ bool RSI_MA_FilterBear()
       double RSI_buffer[];
       double RSI_MA_buffer[];
 
-      if(CopyBuffer(handleRSIFilter,0,0,2,RSI_buffer)<0)
+      if(CopyBuffer(handleRSIFilter,0,0,3,RSI_buffer)<0)
         {
          PrintFormat("Failed to copy data, error code %d",GetLastError());
          return false;
         }
 
-      if(CopyBuffer(handleRSIMAFilter,0,0,2,RSI_MA_buffer)<0)
+      if(CopyBuffer(handleRSIMAFilter,0,0,3,RSI_MA_buffer)<0)
         {
          PrintFormat("Failed to copy data, error code %d",GetLastError());
          return false;
