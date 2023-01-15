@@ -43,14 +43,14 @@ string StrategyStr[10] =
 
 input group "------------- POSITIONS MANAGEMENT SETTINGS -------------"
 input int TslOffsetPoints = 0; // TSL BUFFER POINTS FOR MA/TKS/KJS
-input ENUM_TIMEFRAMES TimeFrame = 5; // EA TIMEFRAME
+input ENUM_TIMEFRAMES TimeFrame = 2; // EA TIMEFRAME
 input bool showTotalRiskCurrent = true; // Show Total Risk in Caption
 input double maxVARFiltervalue = 2; // Max VaR filter value in % (use 100% to turn off)
 input bool autoBreakEven = false; // AUTO BREAKEVEN
 input double breakevenRatio = 1; //  _____ BE RATIO
 input bool alertBreakEven = false; // _____ ALERT ON BE
-input bool showEAComment = false; // SHOW EA COMMENT
-input bool debuggingComments = false; // SHOW DEBUGGING COMMENTS
+input bool showEAComment = true; // SHOW EA COMMENT
+input bool debuggingComments = true; // SHOW DEBUGGING COMMENTS
 input bool showProfitOnChart = false; // SHOW POSITION PROFIT ON CHART
 input bool useSymmetricalPositionFilter = false; // DO NOT SHOW SIGNALS FOR SYMMETRICAL PAIRS
 input bool useOpenPositionFilter = false; // DO NOT SHOW SIGNALS FOR INSTRUMENTS WITH OPEN POSITIONS
@@ -68,15 +68,15 @@ input bool tenkansenTSL = false; // TSL ICHIMOKU TENKANSEN
 input bool kijunsenTSL = false; // TSL ICHIMOKU KIJUNSEN
 input bool pointsTSL = false; // TSL REGULAR IN POINTS
 input int TslPoints = 50; // _____ TSL REGULAR POINTS
-input bool movingAverageTSL = false; // TSL MA
+input bool movingAverageTSL = true; // TSL MA
 input int MaPeriod = 8; // _____ MA TSL PERIOD
 input int MaShift = 5;  // _____ MA TSL SHIFT
 input ENUM_MA_METHOD TslMaMethod = MODE_SMMA; // _____ MA TSL METHOD
 input ENUM_APPLIED_PRICE TslMaAppPrice = PRICE_MEDIAN; // _____ MA TSL PRICE
 
 input group "------------- TENKANSEN BREAK ALERT --------------------------"
-input bool SignalTenkansenBreak = true; // ALERT ON TK BREAK
-input bool KJSSAFilter = true; // _____ KJ & SSA FILTER
+input bool SignalTenkansenBreak = false; // ALERT ON TK BREAK
+input bool KJSSAFilter = false; // _____ KJ & SSA FILTER
 input int KJSSAFilterRange = 2; // __________ KJ & SSA FILTER RANGE
 input bool fractalTrendFilter = false; // USE FRACTALS FILTER
 
@@ -108,12 +108,12 @@ input int fractalBufferWM3 = 20; // _____ FRACTAL BUFFER for WM3 in points
 input int alligatorMultiplier = 1; // _____ Alligator multiplier for filtering WM signals
 
 input group "------------- ALERTS ------------"
-input bool threeLinesStrikeActivate = true; // 3 LINES STRIKE
+input bool threeLinesStrikeActivate = false; // 3 LINES STRIKE
 input double ToleranceOpenPercent = 50; // _____ Engulfing Range Tolerance Open %
 input double ToleranceClosePercent = 50; // _____ Engulfing Range Tolerance Close %
 input bool EngulfingModeStrict = false; // _____ Strict mode
 input group "------------- RSI-MA FILTER for 3LS ------------"
-input bool rsiMAFilter = true; // RSI-MA FILTER
+input bool rsiMAFilter = false; // RSI-MA FILTER
 input int rsiMA_RSI_Range = 150; // __________ RSI RANGE
 input int rsiMA_MA_Range = 35; // __________ MA PERIOD
 input int rsiMA_MA_Shift = 0; // __________ MA SHIFT
@@ -137,7 +137,7 @@ input bool NewBarAlert = false; // NEW BAR ALERT
 input bool AlertAutoClosePosition = false; // ALERT ON POSITIONS CLOSE
 
 input group "------------- CLOSE POSITIONS WHEN PRICE CLOSED OVER TENKANSEN -------------"
-input bool ClosePosTenkansen = true; // CLOSE OVER TENKANSEN
+input bool ClosePosTenkansen = false; // CLOSE OVER TENKANSEN
 input group "------------- CLOSE POSITIONS WHEN PRICE CLOSED OVER MOVING AVERAGE ------------"
 input bool ClosePosMa = false; // CLOSE OVER MA
 input int ClosePosMaPeriod = 5; // _____ CLOSE MA PERIOD
@@ -220,6 +220,14 @@ bool manualBEToggle = false;
 bool wm1AlertToggle = false;
 bool wm2AlertToggle = false;
 bool wm3AlertToggle = false;
+double upperFractalWM3;
+double lowerFractalWM3;
+//www
+bool alligatorWM3Up = false;
+bool alligatorWM3Down = false;
+bool fractalBreakBull = false;
+bool fractalBreakBear = false;
+
 
 bool alertCloseLine = false;
 double alertLinePrice1;
@@ -2834,7 +2842,7 @@ void OnChartEvent(const int id,         // event ID
   {
    ExtDialog.ChartEvent(id,lparam,dparam,sparam);
 
-   if(id==CHARTEVENT_OBJECT_DRAG) // qqq   www
+   if(id==CHARTEVENT_OBJECT_DRAG)
      {
       if(sparam == "stopLossLine")
         {
@@ -2882,8 +2890,8 @@ void OnTick()
       //fractalsTrendFilterBear();
       //StochasticOscillatorFilterBull();
       //StochasticOscillatorFilterBear();
-      RSI_MA_FilterBull();
-      RSI_MA_FilterBear();
+      //RSI_MA_FilterBull();
+      //RSI_MA_FilterBear();
      }
 
 
@@ -3004,9 +3012,9 @@ void OnTick()
                // --------------------
                if(ClosePrPrevBarMABreak < MABreakPrPrevBar && ClosePrevBarMABreak > MABreakPrevBar && MABreakAlligatorUp)
                  {
-                  Alert("=== MOVING AVERAGE BREAK ALERT === BULLISH");
-                  Print("ClosePrPrevBarMABreak < MABreakPrPrevBar && ClosePrevBarMABreak > MABreakPrevBar");
-                  Print(DoubleToString(ClosePrPrevBarMABreak,_Digits)," < ",DoubleToString(MABreakPrPrevBar,_Digits)," && ",DoubleToString(ClosePrevBarMABreak,_Digits)," > ",DoubleToString(MABreakPrevBar,_Digits));
+                  Alert(_Symbol," === MOVING AVERAGE BREAK ALERT === BULLISH");
+                  //Print("ClosePrPrevBarMABreak < MABreakPrPrevBar && ClosePrevBarMABreak > MABreakPrevBar");
+                  //Print(DoubleToString(ClosePrPrevBarMABreak,_Digits)," < ",DoubleToString(MABreakPrPrevBar,_Digits)," && ",DoubleToString(ClosePrevBarMABreak,_Digits)," > ",DoubleToString(MABreakPrevBar,_Digits));
                  }
 
                // --------------------
@@ -3015,9 +3023,9 @@ void OnTick()
                else
                   if(ClosePrPrevBarMABreak > MABreakPrPrevBar && ClosePrevBarMABreak < MABreakPrevBar && MABreakAlligatorDn)
                     {
-                     Alert("=== MOVING AVERAGE BREAK ALERT === BEARISH");
-                     Print("ClosePrPrevBarMABreak > MABreakPrPrevBar && ClosePrevBarMABreak < MABreakPrevBar");
-                     Print(DoubleToString(ClosePrPrevBarMABreak,_Digits)," > ",DoubleToString(MABreakPrPrevBar,_Digits)," && ",DoubleToString(ClosePrevBarMABreak,_Digits)," < ",DoubleToString(MABreakPrevBar,_Digits));
+                     Alert(_Symbol," === MOVING AVERAGE BREAK ALERT === BEARISH");
+                     //Print("ClosePrPrevBarMABreak > MABreakPrPrevBar && ClosePrevBarMABreak < MABreakPrevBar");
+                     //Print(DoubleToString(ClosePrPrevBarMABreak,_Digits)," > ",DoubleToString(MABreakPrPrevBar,_Digits)," && ",DoubleToString(ClosePrevBarMABreak,_Digits)," < ",DoubleToString(MABreakPrevBar,_Digits));
                     }
               }
 
@@ -3263,7 +3271,7 @@ void OnTick()
 
             if(awesomeOscillatorArr[3] < awesomeOscillatorArr[2] && awesomeOscillatorArr[2] < awesomeOscillatorArr[1] && awesomeOscillatorArr[1] > awesomeOscillatorArr[0])
               {
-               Alert("=== AWESOME OSCILLATOR ALERT WISE MAN 2 === BEARISH");
+               Alert(_Symbol," === AWESOME OSCILLATOR ALERT WISE MAN 2 === BEARISH");
                wm2AlertToggle = false;
                ObjectSetString(0,ExtDialog.Name()+"wm2AlertBtn",OBJPROP_TEXT,"W2");
               }
@@ -3271,7 +3279,7 @@ void OnTick()
             else
                if(awesomeOscillatorArr[3] > awesomeOscillatorArr[2] && awesomeOscillatorArr[2] > awesomeOscillatorArr[1] && awesomeOscillatorArr[1] < awesomeOscillatorArr[0])
                  {
-                  Alert("=== AWESOME OSCILLATOR ALERT WISE MAN 2 === BULLISH");
+                  Alert(_Symbol," === AWESOME OSCILLATOR ALERT WISE MAN 2 === BULLISH");
                   wm2AlertToggle = false;
                   ObjectSetString(0,ExtDialog.Name()+"wm2AlertBtn",OBJPROP_TEXT,"W2");
                  }
@@ -3290,17 +3298,43 @@ void OnTick()
          //+------------------------------------------------------------------+
 
          //+------------------------------------------------------------------+
-         //|                                                                  |
+         //|                                                                  | qqq
          //+------------------------------------------------------------------+
-         if(wm3AlertToggle || wiseMan3PermanentToggle)
-           {
-            int bars = iBars(_Symbol, PERIOD_CURRENT);
-            if(barsTotal != bars) // New bar appeared on the chart
-              {
-               barsTotal = bars;
 
-               double upperFractal = 0;
-               double lowerFractal = 0;
+         if(wiseMan3PermanentToggle)
+           {
+            wm3AlertToggle = true;
+           }
+
+         if(wm3AlertToggle)
+           {
+
+            alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price
+            alertClosePrevBar2 = NormalizeDouble(iClose(_Symbol,TimeFrame,2),_Digits); // previous close price
+
+            double alligatorLipsEndArr[];
+            double alligatorTeethEndArr[];
+            double alligatorJawEndArr[];
+
+            ArraySetAsSeries(alligatorLipsEndArr,true);
+            ArraySetAsSeries(alligatorTeethEndArr,true);
+            ArraySetAsSeries(alligatorJawEndArr,true);
+
+            ArrayInitialize(alligatorLipsEndArr,0);
+            ArrayInitialize(alligatorTeethEndArr,0);
+            ArrayInitialize(alligatorJawEndArr,0);
+
+
+            CopyBuffer(handleAlligator,2,-4*alligatorMultiplier,8,alligatorLipsEndArr);
+            CopyBuffer(handleAlligator,1,-6*alligatorMultiplier,8,alligatorTeethEndArr);
+            CopyBuffer(handleAlligator,0,-9*alligatorMultiplier,8,alligatorJawEndArr);
+
+            static datetime timeStamp;
+            datetime time = iTime(_Symbol,TimeFrame,0);
+
+            if(timeStamp != time)
+              {
+               timeStamp = time;
 
                double high_1 = 0;
                double high_2 = 0;
@@ -3314,8 +3348,6 @@ void OnTick()
                double low_4 = 0;
                double low_5 = 0;
 
-               alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits);
-               alertClosePrevBar2 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,2),_Digits);
 
                double fractalBufferWM3Double = NormalizeDouble(fractalBufferWM3*_Point,_Digits);
 
@@ -3327,9 +3359,9 @@ void OnTick()
                   high_4 = iHigh(_Symbol,PERIOD_CURRENT,i-1);
                   high_5 = iHigh(_Symbol,PERIOD_CURRENT,i-2);
 
-                  if(high_3 > high_2 && high_3 > high_1 && high_3 > high_4 && high_3 > high_5)
+                  if(high_3 >= high_2 && high_3 >= high_1 && high_3 >= high_4 && high_3 >= high_5)
                     {
-                     upperFractal = high_3 + fractalBufferWM3Double;
+                     upperFractalWM3 = high_3 + fractalBufferWM3Double;
                      break;
                     }
                  }
@@ -3342,53 +3374,94 @@ void OnTick()
                   low_4 = iLow(_Symbol,PERIOD_CURRENT,i-1);
                   low_5 = iLow(_Symbol,PERIOD_CURRENT,i-2);
 
-                  if(low_3 < low_2 && low_3 < low_1 && low_3 < low_4 && low_3 < low_5)
+                  if(low_3 <= low_2 && low_3 <= low_1 && low_3 <= low_4 && low_3 <= low_5)
                     {
-                     lowerFractal = low_3  - fractalBufferWM3Double;
+                     lowerFractalWM3 = low_3  - fractalBufferWM3Double;
                      break;
                     }
                  }
 
-               bool alligatorWM3Up = true;
-               bool alligatorWM3Down = true;
 
                if(wiseMan3AlligatorFilter)
                  {
-                  alligatorWM3Up = false;
-                  alligatorWM3Down = false;
-                  double alligatorLipsEndArr[];
-                  double alligatorTeethEndArr[];
-                  double alligatorJawEndArr[];
-
-                  ArraySetAsSeries(alligatorLipsEndArr,true);
-                  ArraySetAsSeries(alligatorTeethEndArr,true);
-                  ArraySetAsSeries(alligatorJawEndArr,true);
-
-                  CopyBuffer(handleAlligator,2,-4*alligatorMultiplier,8,alligatorLipsEndArr);
-                  CopyBuffer(handleAlligator,1,-6*alligatorMultiplier,8,alligatorTeethEndArr);
-                  CopyBuffer(handleAlligator,0,-9*alligatorMultiplier,8,alligatorJawEndArr);
+                  //Print("==========================");
+                  //Print("|=> wm3AlertToggle = " + IntegerToString(wm3AlertToggle));
+                  //Print("|=> wiseMan3PermanentToggle = " + IntegerToString(wiseMan3PermanentToggle));
+                  //Print("|=> alligatorWM3Down = " + IntegerToString(alligatorWM3Down));
+                  //Print("|=> alligatorWM3Up = " + IntegerToString(alligatorWM3Up));
+                  //Print("|=> upperFractal = " + DoubleToString(upperFractalWM3,_Digits));
+                  //Print("|=> lowerFractal = " + DoubleToString(lowerFractalWM3,_Digits));
+                  //Print("|=> Lips = " + DoubleToString(alligatorLipsEndArr[0],_Digits));
+                  //Print("|=> Teeth = " + DoubleToString(alligatorTeethEndArr[0],_Digits));
+                  //Print("|=> Jaw = " + DoubleToString(alligatorJawEndArr[0],_Digits));
+                  //Print("|=> alertClosePrevBar1 = " + DoubleToString(alertClosePrevBar1,_Digits));
+                  //Print("|=> alertClosePrevBar2 = " + DoubleToString(alertClosePrevBar2,_Digits));
 
                   if(alligatorLipsEndArr[0] > alligatorTeethEndArr[0] && alligatorTeethEndArr[0] > alligatorJawEndArr[0])
                     {
                      alligatorWM3Up = true;
                      alligatorWM3Down = false;
                     }
-                  else
-                     if(alligatorLipsEndArr[0] < alligatorTeethEndArr[0] && alligatorTeethEndArr[0] < alligatorJawEndArr[0])
-                       {
-                        alligatorWM3Up = false;
-                        alligatorWM3Down = true;
-                       }
+
+                  if(alligatorLipsEndArr[0] < alligatorTeethEndArr[0] && alligatorTeethEndArr[0] < alligatorJawEndArr[0])
+                    {
+                     alligatorWM3Up = false;
+                     alligatorWM3Down = true;
+                    }
 
                  }
+               else
+                  if(!wiseMan3AlligatorFilter)
+                    {
+                     alligatorWM3Up = true;
+                     alligatorWM3Down = true;
+                    }
 
-               if(upperFractal !=0 && lowerFractal !=0)
-                  if(alertClosePrevBar1 > upperFractal && alertClosePrevBar2 < upperFractal && alligatorWM3Up)
-                     Alert("=== FRACTAL BREAK ALERT WISE MAN 3 === BULLISH");
+               if(upperFractalWM3 !=0 && lowerFractalWM3 !=0)
+                  if(alertClosePrevBar1 > upperFractalWM3 && alertClosePrevBar2 < upperFractalWM3 && alligatorWM3Up)
+                     fractalBreakBull = true;
+
                   else
-                     if(alertClosePrevBar1 < lowerFractal && alertClosePrevBar2 > lowerFractal && alligatorWM3Down)
-                        Alert("=== FRACTAL BREAK ALERT WISE MAN 3 === BEARISH");
+                     if(alertClosePrevBar1 < lowerFractalWM3 && alertClosePrevBar2 > lowerFractalWM3 && alligatorWM3Down)
+                        fractalBreakBear = true;
+
+
+               if(fractalBreakBull)
+                 {
+                  Alert(_Symbol," === FRACTAL BREAK ALERT WISE MAN 3 === BULLISH");
+                  fractalBreakBull = false;
+                 }
+               if(fractalBreakBear)
+                 {
+                  Alert(_Symbol," === FRACTAL BREAK ALERT WISE MAN 3 === BEARISH");
+                  fractalBreakBear = false;
+                 }
               }
+
+            // Debugging
+            debugComment += "======== DEBUGGING WM3 Alerts ===============\n";
+            debugComment += "|=> wm3AlertToggle = " + IntegerToString(wm3AlertToggle) + " \n";
+            debugComment += "|=> upperFractal = " + DoubleToString(upperFractalWM3,_Digits) + " \n";
+            debugComment += "|=> lowerFractal = " + DoubleToString(lowerFractalWM3,_Digits) + " \n";
+            debugComment += "|=> wiseMan3AlligatorFilter = " + IntegerToString(wiseMan3AlligatorFilter) + " \n";
+            debugComment += "----------------------------------------------\n";
+            if(wiseMan3AlligatorFilter)
+              {
+               debugComment += "|=> Lips = " + DoubleToString(alligatorLipsEndArr[0],_Digits) + " \n";
+               debugComment += "|=> Teeth = " + DoubleToString(alligatorTeethEndArr[0],_Digits) + " \n";
+               debugComment += "|=> Jaw = " + DoubleToString(alligatorJawEndArr[0],_Digits) + " \n";
+              }
+            debugComment += "----------------------------------------------\n";
+            debugComment += "|=> alertClosePrevBar1 = " + DoubleToString(alertClosePrevBar1,_Digits) + " \n";
+            debugComment += "|=> alertClosePrevBar2 = " + DoubleToString(alertClosePrevBar2,_Digits) + " \n";
+            debugComment += "----------------------------------------------\n";
+            debugComment += "|=> alligatorWM3Up = " + IntegerToString(alligatorWM3Up) + " \n";
+            debugComment += "|=> alligatorWM3Down = " + IntegerToString(alligatorWM3Down) + " \n";
+            debugComment += "----------------------------------------------\n";
+            debugComment += "|=> fractalBreakBull = " + IntegerToString(fractalBreakBull) + " \n";
+            debugComment += "|=> fractalBreakBear = " + IntegerToString(fractalBreakBear) + " \n";
+            // End of debugging
+
            }
 
          //+------------------------------------------------------------------+
@@ -3660,8 +3733,8 @@ void OnTick()
      {
       alertLinePrice1 = NormalizeDouble(ObjectGetDouble(0,"alertCloseLine_1",OBJPROP_PRICE),_Digits);
       alertLinePrice2 = NormalizeDouble(ObjectGetDouble(0,"alertCloseLine_2",OBJPROP_PRICE),_Digits);
-      alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits); // previous close price
-      alertClosePrevBar2 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,2),_Digits); // previous close price
+      alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price
+      alertClosePrevBar2 = NormalizeDouble(iClose(_Symbol,TimeFrame,2),_Digits); // previous close price
 
       bid = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_BID),_Digits);
       ask = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_ASK),_Digits);
@@ -5060,7 +5133,7 @@ bool CControlsDialog::PendingBuyLimitDoubleOrder()
 
 
 //+------------------------------------------------------------------+
-//|                                                                  | www
+//|                                                                  |
 //+------------------------------------------------------------------+
 bool CControlsDialog::CalculatePosition()
   {
@@ -5117,11 +5190,9 @@ bool CControlsDialog::CalculatePosition()
            }
 
 
-      Print("calcSlPips = ",calcSlPips);
-      Print("calcTpPips = ",calcTpPips);
-      Print("calcRRR = ",calcRRR);
-
-
+      //Print("calcSlPips = ",calcSlPips);
+      //Print("calcTpPips = ",calcTpPips);
+      //Print("calcRRR = ",calcRRR);
       //calcRRR = NormalizeDouble(calcTpPips/calcSlPips,2);
 
       m_TpPipsEdit.Text(DoubleToString(NormalizeDouble(MathRound(calcTpPips),1),0));
