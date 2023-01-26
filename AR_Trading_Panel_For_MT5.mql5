@@ -118,6 +118,14 @@ input int rsiMA_RSI_Range = 150; // __________ RSI RANGE
 input int rsiMA_MA_Range = 35; // __________ MA PERIOD
 input int rsiMA_MA_Shift = 0; // __________ MA SHIFT
 input ENUM_MA_METHOD rsiMA_MA_Method = MODE_SMA; // __________ MA METHOD
+
+input group "------------- MA FILTER GENERAL ------------"
+input bool useMAFilter = true; // _____ USE MA FILTER
+input int MaFilterPeriod = 200; // __________ MA PERIOD
+input int MaFilterShift = 0; // __________ MA SHIFT
+input ENUM_MA_METHOD MaFilterMethod = MODE_EMA; // __________ MA METHOD
+input ENUM_APPLIED_PRICE MaFilterAppPrice = PRICE_CLOSE; // __________ MA PRICE
+
 input group "------------- MA FILTER for 3LS ------------"
 input bool useMAFilter3LS = false; // _____ USE MA FILTER FOR 3LS SIGNALS
 input int FastMaPeriod3LS = 21; // __________ 3 LS FAST MA PERIOD
@@ -194,6 +202,7 @@ int handleUpperTFIchimoku;
 int handleSOFilter;
 int handleRSIFilter;
 int handleRSIMAFilter;
+int handleMAFilter;
 
 int barCountFractals;
 string textComment;
@@ -222,12 +231,13 @@ bool wm2AlertToggle = false;
 bool wm3AlertToggle = false;
 double upperFractalWM3;
 double lowerFractalWM3;
-//www
+int upperFractalWM3Bar;
+int lowerFractalWM3Bar;
+
 bool alligatorWM3Up = false;
 bool alligatorWM3Down = false;
 bool fractalBreakBull = false;
 bool fractalBreakBear = false;
-
 
 bool alertCloseLine = false;
 double alertLinePrice1;
@@ -2800,6 +2810,13 @@ int OnInit()
       handleAlligatorMABreak = iAlligator(_Symbol,TimeFrame,13*alligatorMultiplier,8*alligatorMultiplier,8*alligatorMultiplier,5*alligatorMultiplier,5*alligatorMultiplier,3*alligatorMultiplier,MODE_SMMA,PRICE_MEDIAN);
      }
 
+
+   if(useMAFilter)
+     {
+      handleMAFilter = iMA(_Symbol,TimeFrame,MaFilterPeriod,MaFilterShift,MaFilterMethod,MaFilterAppPrice);
+     }
+
+
    if(soFilter)
      {
       handleSOFilter = iStochastic(_Symbol,TimeFrame,soKPeriod,soDPeriod,soSlowing,MODE_SMA,STO_LOWHIGH);
@@ -2892,6 +2909,8 @@ void OnTick()
       //StochasticOscillatorFilterBear();
       //RSI_MA_FilterBull();
       //RSI_MA_FilterBear();
+      MA_FilterBull();
+      MA_FilterBear();
      }
 
 
@@ -3237,12 +3256,12 @@ void OnTick()
                  {
                   if(closePrevBar < alligatorTeethPrevBar && lowerWickPrevBar > upperWickPrevBar && lowerWickPrevBar > bodyPrevBar) // Bullish bar
                     {
-                     Alert("=== DIVERGENT BAR ALERT WISE MAN 1 === BULLISH");
+                     Alert(_Symbol," === DIVERGENT BAR ALERT WISE MAN 1 === BULLISH");
                     }
                   else
                      if(closePrevBar > alligatorTeethPrevBar && upperWickPrevBar > lowerWickPrevBar && upperWickPrevBar > bodyPrevBar) // Bearish bar
                        {
-                        Alert("=== DIVERGENT BAR ALERT WISE MAN 2 === BEARISH");
+                        Alert(_Symbol," === DIVERGENT BAR ALERT WISE MAN 1 === BEARISH");
                        }
                  }
 
@@ -3298,7 +3317,7 @@ void OnTick()
          //+------------------------------------------------------------------+
 
          //+------------------------------------------------------------------+
-         //|                                                                  | qqq
+         //|                                                                  |
          //+------------------------------------------------------------------+
 
          if(wiseMan3PermanentToggle)
@@ -3348,7 +3367,6 @@ void OnTick()
                double low_4 = 0;
                double low_5 = 0;
 
-
                double fractalBufferWM3Double = NormalizeDouble(fractalBufferWM3*_Point,_Digits);
 
                for(int i=3; i<200; i++)
@@ -3359,7 +3377,7 @@ void OnTick()
                   high_4 = iHigh(_Symbol,PERIOD_CURRENT,i-1);
                   high_5 = iHigh(_Symbol,PERIOD_CURRENT,i-2);
 
-                  if(high_3 >= high_2 && high_3 >= high_1 && high_3 >= high_4 && high_3 >= high_5)
+                  if(high_3 > high_2 && high_3 > high_1 && high_3 > high_4 && high_3 > high_5)
                     {
                      upperFractalWM3 = high_3 + fractalBufferWM3Double;
                      break;
@@ -3374,13 +3392,12 @@ void OnTick()
                   low_4 = iLow(_Symbol,PERIOD_CURRENT,i-1);
                   low_5 = iLow(_Symbol,PERIOD_CURRENT,i-2);
 
-                  if(low_3 <= low_2 && low_3 <= low_1 && low_3 <= low_4 && low_3 <= low_5)
+                  if(low_3 < low_2 && low_3 < low_1 && low_3 < low_4 && low_3 < low_5)
                     {
                      lowerFractalWM3 = low_3  - fractalBufferWM3Double;
                      break;
                     }
                  }
-
 
                if(wiseMan3AlligatorFilter)
                  {
@@ -3418,11 +3435,11 @@ void OnTick()
                     }
 
                if(upperFractalWM3 !=0 && lowerFractalWM3 !=0)
-                  if(alertClosePrevBar1 > upperFractalWM3 && alertClosePrevBar2 < upperFractalWM3 && alligatorWM3Up)
+                  if(alertClosePrevBar1 > upperFractalWM3 && alertClosePrevBar2 < upperFractalWM3 && alligatorWM3Up && MA_FilterBull())
                      fractalBreakBull = true;
 
                   else
-                     if(alertClosePrevBar1 < lowerFractalWM3 && alertClosePrevBar2 > lowerFractalWM3 && alligatorWM3Down)
+                     if(alertClosePrevBar1 < lowerFractalWM3 && alertClosePrevBar2 > lowerFractalWM3 && alligatorWM3Down && MA_FilterBear())
                         fractalBreakBear = true;
 
 
@@ -3445,6 +3462,7 @@ void OnTick()
             debugComment += "|=> lowerFractal = " + DoubleToString(lowerFractalWM3,_Digits) + " \n";
             debugComment += "|=> wiseMan3AlligatorFilter = " + IntegerToString(wiseMan3AlligatorFilter) + " \n";
             debugComment += "----------------------------------------------\n";
+
             if(wiseMan3AlligatorFilter)
               {
                debugComment += "|=> Lips = " + DoubleToString(alligatorLipsEndArr[0],_Digits) + " \n";
@@ -5189,12 +5207,6 @@ bool CControlsDialog::CalculatePosition()
             calcRRR = NormalizeDouble(calcTpPips/calcSlPips,2);
            }
 
-
-      //Print("calcSlPips = ",calcSlPips);
-      //Print("calcTpPips = ",calcTpPips);
-      //Print("calcRRR = ",calcRRR);
-      //calcRRR = NormalizeDouble(calcTpPips/calcSlPips,2);
-
       m_TpPipsEdit.Text(DoubleToString(NormalizeDouble(MathRound(calcTpPips),1),0));
       m_SlPipsEdit.Text(DoubleToString(NormalizeDouble(MathRound(calcSlPips),1),0));
       m_RiskToRewardRatioEdit.Text(DoubleToString(NormalizeDouble(calcRRR,1),1)); // RRR calculation
@@ -5959,4 +5971,87 @@ bool RSI_MA_FilterBear()
 
    return RSI_MA_BEAR;
   }
+//+------------------------------------------------------------------+
+
+
+
+//+------------------------------------------------------------------+
+//|                  MA_Filter Bull                                  | qqq
+//+------------------------------------------------------------------+
+bool MA_FilterBull()
+  {
+   bool MA_BULL = false;
+   if(useMAFilter)
+     {
+      double MA_buffer[];
+      double LastClosePrice = iClose(_Symbol,TimeFrame,1);
+
+      if(CopyBuffer(handleMAFilter,0,0,3,MA_buffer)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+
+      if(LastClosePrice > MA_buffer[1])
+         MA_BULL = true;
+
+      if(debuggingComments)
+        {
+         debugComment += "======== DEBUGGING MA Filter General BULL ===\n";
+         debugComment += "|=> MA for LastClosePrice = " + DoubleToString(MA_buffer[1],_Digits) + " \n";
+         debugComment += "|=> LastClosePrice = " + DoubleToString(LastClosePrice,_Digits) + " \n";
+         debugComment += "|=> MA_BULL = " + IntegerToString(MA_BULL) + " \n";
+        }
+
+     }
+   else
+      if(!useMAFilter)
+        {
+         MA_BULL = true;
+        }
+
+   return MA_BULL;
+  }
+//+------------------------------------------------------------------+
+
+
+
+//+------------------------------------------------------------------+
+//|                  MA_Filter BEAR                                  | qqq
+//+------------------------------------------------------------------+
+bool MA_FilterBear()
+  {
+   bool MA_BEAR = false;
+   if(useMAFilter)
+     {
+      double MA_buffer[];
+      double LastClosePrice = iClose(_Symbol,TimeFrame,1);
+
+      if(CopyBuffer(handleMAFilter,0,0,3,MA_buffer)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+
+      if(LastClosePrice < MA_buffer[1])
+         MA_BEAR = true;
+
+      if(debuggingComments)
+        {
+         debugComment += "======== DEBUGGING MA Filter General BEAR ===\n";
+         debugComment += "|=> MA for LastClosePrice = " + DoubleToString(MA_buffer[1],_Digits) + " \n";
+         debugComment += "|=> LastClosePrice = " + DoubleToString(LastClosePrice,_Digits) + " \n";
+         debugComment += "|=> MA_BEAR = " + IntegerToString(MA_BEAR) + " \n";
+        }
+
+     }
+   else
+      if(!useMAFilter)
+        {
+         MA_BEAR = true;
+        }
+
+   return MA_BEAR;
+  }
+//+------------------------------------------------------------------+
 //+------------------------------------------------------------------+
