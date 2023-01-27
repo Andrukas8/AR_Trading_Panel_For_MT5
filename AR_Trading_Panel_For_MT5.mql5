@@ -119,6 +119,9 @@ input int rsiMA_MA_Range = 35; // __________ MA PERIOD
 input int rsiMA_MA_Shift = 0; // __________ MA SHIFT
 input ENUM_MA_METHOD rsiMA_MA_Method = MODE_SMA; // __________ MA METHOD
 
+input group "------------- AO FILTER ------------"
+input bool useAOFilter = true; // _____ USE AO FILTER
+
 input group "------------- MA FILTER GENERAL ------------"
 input bool useMAFilter = true; // _____ USE MA FILTER
 input int MaFilterPeriod = 200; // __________ MA PERIOD
@@ -203,6 +206,7 @@ int handleSOFilter;
 int handleRSIFilter;
 int handleRSIMAFilter;
 int handleMAFilter;
+int handleAOFilter;
 
 int barCountFractals;
 string textComment;
@@ -2813,6 +2817,11 @@ int OnInit()
 
    if(useMAFilter)
      {
+      handleAOFilter = iAO(_Symbol,TimeFrame);
+     }
+
+   if(useMAFilter)
+     {
       handleMAFilter = iMA(_Symbol,TimeFrame,MaFilterPeriod,MaFilterShift,MaFilterMethod,MaFilterAppPrice);
      }
 
@@ -2909,8 +2918,10 @@ void OnTick()
       //StochasticOscillatorFilterBear();
       //RSI_MA_FilterBull();
       //RSI_MA_FilterBear();
-      MA_FilterBull();
-      MA_FilterBear();
+      //MA_FilterBull();
+      //MA_FilterBear();
+      //AO_FilterBull();
+      //AO_FilterBear();
      }
 
 
@@ -3435,11 +3446,11 @@ void OnTick()
                     }
 
                if(upperFractalWM3 !=0 && lowerFractalWM3 !=0)
-                  if(alertClosePrevBar1 > upperFractalWM3 && alertClosePrevBar2 < upperFractalWM3 && alligatorWM3Up && MA_FilterBull())
+                  if(alertClosePrevBar1 > upperFractalWM3 && alertClosePrevBar2 < upperFractalWM3 && alligatorWM3Up && MA_FilterBull() && AO_FilterBull())
                      fractalBreakBull = true;
 
                   else
-                     if(alertClosePrevBar1 < lowerFractalWM3 && alertClosePrevBar2 > lowerFractalWM3 && alligatorWM3Down && MA_FilterBear())
+                     if(alertClosePrevBar1 < lowerFractalWM3 && alertClosePrevBar2 > lowerFractalWM3 && alligatorWM3Down && MA_FilterBear() && AO_FilterBear())
                         fractalBreakBear = true;
 
 
@@ -5976,7 +5987,7 @@ bool RSI_MA_FilterBear()
 
 
 //+------------------------------------------------------------------+
-//|                  MA_Filter Bull                                  | qqq
+//|                  MA_Filter Bull                                  |
 //+------------------------------------------------------------------+
 bool MA_FilterBull()
   {
@@ -6017,7 +6028,7 @@ bool MA_FilterBull()
 
 
 //+------------------------------------------------------------------+
-//|                  MA_Filter BEAR                                  | qqq
+//|                  MA_Filter BEAR                                  |
 //+------------------------------------------------------------------+
 bool MA_FilterBear()
   {
@@ -6054,4 +6065,83 @@ bool MA_FilterBear()
    return MA_BEAR;
   }
 //+------------------------------------------------------------------+
+//+------------------------------------------------------------------+
+
+
+//+------------------------------------------------------------------+
+//|                  AO_Filter Bull                                  | qqq
+//+------------------------------------------------------------------+
+bool AO_FilterBull()
+  {
+   bool AO_BULL = false;
+   if(useAOFilter)
+     {
+      double AO_buffer[];
+
+      if(CopyBuffer(handleAOFilter,0,0,3,AO_buffer)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+
+      if(AO_buffer[1] > AO_buffer[0])
+         AO_BULL = true;
+
+      if(debuggingComments)
+        {
+         debugComment += "======== DEBUGGING AO Filter General BULL ===\n";
+         debugComment += "|=> AO_buffer[1] = " + DoubleToString(AO_buffer[1],_Digits) + " \n";
+         debugComment += "|=> AO_buffer[0] = " + DoubleToString(AO_buffer[0],_Digits) + " \n";
+         debugComment += "|=> AO_BULL = " + IntegerToString(AO_BULL) + " \n";
+        }
+
+     }
+   else
+      if(!useAOFilter)
+        {
+         AO_BULL = true;
+        }
+
+   return AO_BULL;
+  }
+//+------------------------------------------------------------------+
+
+
+
+//+------------------------------------------------------------------+
+//|                  AO_Filter Bear                                  | qqq
+//+------------------------------------------------------------------+
+bool AO_FilterBear()
+  {
+   bool AO_BEAR = false;
+   if(useAOFilter)
+     {
+      double AO_buffer[];
+
+      if(CopyBuffer(handleAOFilter,0,0,3,AO_buffer)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+
+      if(AO_buffer[1] < AO_buffer[0])
+         AO_BEAR = true;
+
+      if(debuggingComments)
+        {
+         debugComment += "======== DEBUGGING AO Filter General BULL ===\n";
+         debugComment += "|=> AO_buffer[1] = " + DoubleToString(AO_buffer[1],_Digits) + " \n";
+         debugComment += "|=> AO_buffer[0] = " + DoubleToString(AO_buffer[0],_Digits) + " \n";
+         debugComment += "|=> AO_BEAR = " + IntegerToString(AO_BEAR) + " \n";
+        }
+
+     }
+   else
+      if(!useAOFilter)
+        {
+         AO_BEAR = true;
+        }
+
+   return AO_BEAR;
+  }
 //+------------------------------------------------------------------+
