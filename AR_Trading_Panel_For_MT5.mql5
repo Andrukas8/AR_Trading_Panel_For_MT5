@@ -112,25 +112,29 @@ input bool threeLinesStrikeActivate = false; // 3 LINES STRIKE
 input double ToleranceOpenPercent = 50; // _____ Engulfing Range Tolerance Open %
 input double ToleranceClosePercent = 50; // _____ Engulfing Range Tolerance Close %
 input bool EngulfingModeStrict = false; // _____ Strict mode
-input group "------------- RSI-MA FILTER for 3LS ------------"
+
+input bool NewBarAlert = false; // NEW BAR ALERT
+
+input bool AlertAutoClosePosition = false; // ALERT ON POSITIONS CLOSE
+
+input group "------------- FILTERS ------------"
 input bool rsiMAFilter = false; // RSI-MA FILTER
 input int rsiMA_RSI_Range = 150; // __________ RSI RANGE
 input int rsiMA_MA_Range = 35; // __________ MA PERIOD
 input int rsiMA_MA_Shift = 0; // __________ MA SHIFT
 input ENUM_MA_METHOD rsiMA_MA_Method = MODE_SMA; // __________ MA METHOD
 
-input group "------------- AO FILTER ------------"
-input bool useAOFilter = true; // _____ USE AO FILTER
+input bool useAOFilter = true; // USE AO FILTER
 
-input group "------------- MA FILTER GENERAL ------------"
-input bool useMAFilter = true; // _____ USE MA FILTER
+input bool useACFilter = true; // USE AC FILTER
+
+input bool useMAFilter = true; // USE MA FILTER
 input int MaFilterPeriod = 200; // __________ MA PERIOD
 input int MaFilterShift = 0; // __________ MA SHIFT
 input ENUM_MA_METHOD MaFilterMethod = MODE_EMA; // __________ MA METHOD
 input ENUM_APPLIED_PRICE MaFilterAppPrice = PRICE_CLOSE; // __________ MA PRICE
 
-input group "------------- MA FILTER for 3LS ------------"
-input bool useMAFilter3LS = false; // _____ USE MA FILTER FOR 3LS SIGNALS
+input bool useMAFilter3LS = false; // USE MA FILTER FOR 3LS SIGNALS
 input int FastMaPeriod3LS = 21; // __________ 3 LS FAST MA PERIOD
 input int FastMaShift3LS = 0; // __________ 3 LS FAST MA SHIFT
 input ENUM_MA_METHOD FastMaMethod3LS = MODE_SMMA; // __________ 3LS FAST MA METHOD
@@ -143,9 +147,6 @@ input int SlowMaPeriod3LS = 200; // __________ 3 LS SLOW MA PERIOD
 input int SlowMaShift3LS = 0; // __________ 3 LS SLOW MA SHIFT
 input ENUM_MA_METHOD SlowMaMethod3LS = MODE_SMMA; // __________ 3LS SLOW MA METHOD
 input ENUM_APPLIED_PRICE SlowMaAppPrice3LS = PRICE_CLOSE; // __________ 3LS SLOW MA PRICE
-
-input bool NewBarAlert = false; // NEW BAR ALERT
-input bool AlertAutoClosePosition = false; // ALERT ON POSITIONS CLOSE
 
 input group "------------- CLOSE POSITIONS WHEN PRICE CLOSED OVER TENKANSEN -------------"
 input bool ClosePosTenkansen = false; // CLOSE OVER TENKANSEN
@@ -207,6 +208,7 @@ int handleRSIFilter;
 int handleRSIMAFilter;
 int handleMAFilter;
 int handleAOFilter;
+int handleACFilter;
 
 int barCountFractals;
 string textComment;
@@ -2815,9 +2817,14 @@ int OnInit()
      }
 
 
-   if(useMAFilter)
+   if(useAOFilter)
      {
       handleAOFilter = iAO(_Symbol,TimeFrame);
+     }
+
+   if(useACFilter)
+     {
+      handleACFilter = iAC(_Symbol,TimeFrame);
      }
 
    if(useMAFilter)
@@ -2922,6 +2929,8 @@ void OnTick()
       //MA_FilterBear();
       //AO_FilterBull();
       //AO_FilterBear();
+      AC_FilterBull();
+      AC_FilterBear();
      }
 
 
@@ -3446,11 +3455,11 @@ void OnTick()
                     }
 
                if(upperFractalWM3 !=0 && lowerFractalWM3 !=0)
-                  if(alertClosePrevBar1 > upperFractalWM3 && alertClosePrevBar2 < upperFractalWM3 && alligatorWM3Up && MA_FilterBull() && AO_FilterBull())
+                  if(alertClosePrevBar1 > upperFractalWM3 && alertClosePrevBar2 < upperFractalWM3 && alligatorWM3Up && MA_FilterBull() && AO_FilterBull() && AC_FilterBull())
                      fractalBreakBull = true;
 
                   else
-                     if(alertClosePrevBar1 < lowerFractalWM3 && alertClosePrevBar2 > lowerFractalWM3 && alligatorWM3Down && MA_FilterBear() && AO_FilterBear())
+                     if(alertClosePrevBar1 < lowerFractalWM3 && alertClosePrevBar2 > lowerFractalWM3 && alligatorWM3Down && MA_FilterBear() && AO_FilterBear() && AC_FilterBear())
                         fractalBreakBear = true;
 
 
@@ -6069,7 +6078,7 @@ bool MA_FilterBear()
 
 
 //+------------------------------------------------------------------+
-//|                  AO_Filter Bull                                  | qqq
+//|                  AO_Filter Bull                                  |
 //+------------------------------------------------------------------+
 bool AO_FilterBull()
   {
@@ -6084,14 +6093,19 @@ bool AO_FilterBull()
          return false;
         }
 
-      if(AO_buffer[1] > AO_buffer[0])
+      ArraySetAsSeries(AO_buffer,true);
+
+      // [0] = current bar
+      // [1] = previous bar
+
+      if(AO_buffer[0] > AO_buffer[1])
          AO_BULL = true;
 
       if(debuggingComments)
         {
          debugComment += "======== DEBUGGING AO Filter General BULL ===\n";
-         debugComment += "|=> AO_buffer[1] = " + DoubleToString(AO_buffer[1],_Digits) + " \n";
          debugComment += "|=> AO_buffer[0] = " + DoubleToString(AO_buffer[0],_Digits) + " \n";
+         debugComment += "|=> AO_buffer[1] = " + DoubleToString(AO_buffer[1],_Digits) + " \n";
          debugComment += "|=> AO_BULL = " + IntegerToString(AO_BULL) + " \n";
         }
 
@@ -6109,7 +6123,7 @@ bool AO_FilterBull()
 
 
 //+------------------------------------------------------------------+
-//|                  AO_Filter Bear                                  | qqq
+//|                  AO_Filter Bear                                  |
 //+------------------------------------------------------------------+
 bool AO_FilterBear()
   {
@@ -6124,14 +6138,16 @@ bool AO_FilterBear()
          return false;
         }
 
-      if(AO_buffer[1] < AO_buffer[0])
+      ArraySetAsSeries(AO_buffer,true);
+
+      if(AO_buffer[0] < AO_buffer[1])
          AO_BEAR = true;
 
       if(debuggingComments)
         {
          debugComment += "======== DEBUGGING AO Filter General BULL ===\n";
-         debugComment += "|=> AO_buffer[1] = " + DoubleToString(AO_buffer[1],_Digits) + " \n";
          debugComment += "|=> AO_buffer[0] = " + DoubleToString(AO_buffer[0],_Digits) + " \n";
+         debugComment += "|=> AO_buffer[1] = " + DoubleToString(AO_buffer[1],_Digits) + " \n";
          debugComment += "|=> AO_BEAR = " + IntegerToString(AO_BEAR) + " \n";
         }
 
@@ -6143,5 +6159,91 @@ bool AO_FilterBear()
         }
 
    return AO_BEAR;
+  }
+//+------------------------------------------------------------------+
+
+
+//+------------------------------------------------------------------+
+//|                  AO_Filter Bull                                  |
+//+------------------------------------------------------------------+
+bool AC_FilterBull()
+  {
+   bool AC_BULL = false;
+   if(useACFilter)
+     {
+      double AC_buffer[];
+
+      if(CopyBuffer(handleACFilter,0,0,3,AC_buffer)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+
+      ArraySetAsSeries(AC_buffer,true);
+
+      // [0] = current bar
+      // [1] = previous bar
+
+      if(AC_buffer[0] > AC_buffer[1])
+         AC_BULL = true;
+
+      if(debuggingComments)
+        {
+         debugComment += "======== DEBUGGING AC Filter General BULL ===\n";
+         debugComment += "|=> AC_buffer[0] = " + DoubleToString(AC_buffer[0],_Digits) + " \n";
+         debugComment += "|=> AC_buffer[1] = " + DoubleToString(AC_buffer[1],_Digits) + " \n";
+         debugComment += "|=> AC_BULL = " + IntegerToString(AC_BULL) + " \n";
+        }
+
+     }
+   else
+      if(!useACFilter)
+        {
+         AC_BULL = true;
+        }
+
+   return AC_BULL;
+  }
+//+------------------------------------------------------------------+
+
+
+
+//+------------------------------------------------------------------+
+//|                  AC_Filter Bear                                  |
+//+------------------------------------------------------------------+
+bool AC_FilterBear()
+  {
+   bool AC_BEAR = false;
+   if(useACFilter)
+     {
+      double AC_buffer[];
+
+      if(CopyBuffer(handleACFilter,0,0,3,AC_buffer)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+
+      ArraySetAsSeries(AC_buffer,true);
+
+      if(AC_buffer[0] < AC_buffer[1])
+         AC_BEAR = true;
+
+      if(debuggingComments)
+        {
+         debugComment += "======== DEBUGGING AC Filter General BULL ===\n";
+         debugComment += "|=> AC_buffer[1] = " + DoubleToString(AC_buffer[1],_Digits) + " \n";
+         debugComment += "|=> AC_buffer[0] = " + DoubleToString(AC_buffer[0],_Digits) + " \n";
+         debugComment += "|=> AC_BEAR = " + IntegerToString(AC_BEAR) + " \n";
+        }
+
+     }
+   else
+      if(!useACFilter)
+        {
+         AC_BEAR = true;
+        }
+
+   return AC_BEAR;
   }
 //+------------------------------------------------------------------+
