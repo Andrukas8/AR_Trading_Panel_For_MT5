@@ -101,7 +101,6 @@ input bool wiseMenAlertsToggle = false; // ACTIVATE BW PROFITUNITY 3 WISE MEN AL
 input bool wiseMan1PermanentToggle = false; // _____ activeate WM1 permanently
 input bool wiseMan2PermanentToggle = false; // _____ activeate WM2 permanently
 input bool wiseMan3PermanentToggle = false; // _____ activeate WM3 permanently
-input bool wiseMan3AlligatorFilter = false; // ___________ activate WM3 Alligator Filter
 input double atrMultiplier = 1; // _____ ATR multiplier for filtering WM1 signals
 input int atrPeriod = 14; // _____ ATR PERIOD
 input int fractalBufferWM3 = 20; // _____ FRACTAL BUFFER for WM3 in points
@@ -123,6 +122,8 @@ input int rsiMA_RSI_Range = 150; // __________ RSI RANGE
 input int rsiMA_MA_Range = 35; // __________ MA PERIOD
 input int rsiMA_MA_Shift = 0; // __________ MA SHIFT
 input ENUM_MA_METHOD rsiMA_MA_Method = MODE_SMA; // __________ MA METHOD
+
+input bool useAlligatorFilter = true; // USE ALLIGATOR FILTER
 
 input bool useAOFilter = true; // USE AO FILTER
 
@@ -206,6 +207,7 @@ int handleUpperTFIchimoku;
 int handleSOFilter;
 int handleRSIFilter;
 int handleRSIMAFilter;
+int handleAlligatorFilter;
 int handleMAFilter;
 int handleAOFilter;
 int handleACFilter;
@@ -237,11 +239,9 @@ bool wm2AlertToggle = false;
 bool wm3AlertToggle = false;
 double upperFractalWM3;
 double lowerFractalWM3;
-int upperFractalWM3Bar;
-int lowerFractalWM3Bar;
+double usedFractalWM3Upper;
+double usedFractalWM3Lower;
 
-bool alligatorWM3Up = false;
-bool alligatorWM3Down = false;
 bool fractalBreakBull = false;
 bool fractalBreakBear = false;
 
@@ -2817,6 +2817,14 @@ int OnInit()
      }
 
 
+
+   if(useAlligatorFilter)
+     {
+      handleAlligatorFilter = iAlligator(_Symbol,TimeFrame,13,8,8,5,5,3,MODE_SMMA,PRICE_MEDIAN);
+     }
+
+
+
    if(useAOFilter)
      {
       handleAOFilter = iAO(_Symbol,TimeFrame);
@@ -2929,8 +2937,10 @@ void OnTick()
       //MA_FilterBear();
       //AO_FilterBull();
       //AO_FilterBear();
-      AC_FilterBull();
-      AC_FilterBear();
+      //AC_FilterBull();
+      //AC_FilterBear();
+      Alligator_FilterBull();
+      Alligator_FilterBear();
      }
 
 
@@ -3348,25 +3358,7 @@ void OnTick()
          if(wm3AlertToggle)
            {
 
-            alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price
-            alertClosePrevBar2 = NormalizeDouble(iClose(_Symbol,TimeFrame,2),_Digits); // previous close price
-
-            double alligatorLipsEndArr[];
-            double alligatorTeethEndArr[];
-            double alligatorJawEndArr[];
-
-            ArraySetAsSeries(alligatorLipsEndArr,true);
-            ArraySetAsSeries(alligatorTeethEndArr,true);
-            ArraySetAsSeries(alligatorJawEndArr,true);
-
-            ArrayInitialize(alligatorLipsEndArr,0);
-            ArrayInitialize(alligatorTeethEndArr,0);
-            ArrayInitialize(alligatorJawEndArr,0);
-
-
-            CopyBuffer(handleAlligator,2,-4*alligatorMultiplier,8,alligatorLipsEndArr);
-            CopyBuffer(handleAlligator,1,-6*alligatorMultiplier,8,alligatorTeethEndArr);
-            CopyBuffer(handleAlligator,0,-9*alligatorMultiplier,8,alligatorJawEndArr);
+            alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price, use "2" for previous previous
 
             static datetime timeStamp;
             datetime time = iTime(_Symbol,TimeFrame,0);
@@ -3419,49 +3411,30 @@ void OnTick()
                     }
                  }
 
-               if(wiseMan3AlligatorFilter)
-                 {
-                  //Print("==========================");
-                  //Print("|=> wm3AlertToggle = " + IntegerToString(wm3AlertToggle));
-                  //Print("|=> wiseMan3PermanentToggle = " + IntegerToString(wiseMan3PermanentToggle));
-                  //Print("|=> alligatorWM3Down = " + IntegerToString(alligatorWM3Down));
-                  //Print("|=> alligatorWM3Up = " + IntegerToString(alligatorWM3Up));
-                  //Print("|=> upperFractal = " + DoubleToString(upperFractalWM3,_Digits));
-                  //Print("|=> lowerFractal = " + DoubleToString(lowerFractalWM3,_Digits));
-                  //Print("|=> Lips = " + DoubleToString(alligatorLipsEndArr[0],_Digits));
-                  //Print("|=> Teeth = " + DoubleToString(alligatorTeethEndArr[0],_Digits));
-                  //Print("|=> Jaw = " + DoubleToString(alligatorJawEndArr[0],_Digits));
-                  //Print("|=> alertClosePrevBar1 = " + DoubleToString(alertClosePrevBar1,_Digits));
-                  //Print("|=> alertClosePrevBar2 = " + DoubleToString(alertClosePrevBar2,_Digits));
-
-                  if(alligatorLipsEndArr[0] > alligatorTeethEndArr[0] && alligatorTeethEndArr[0] > alligatorJawEndArr[0])
-                    {
-                     alligatorWM3Up = true;
-                     alligatorWM3Down = false;
-                    }
-
-                  if(alligatorLipsEndArr[0] < alligatorTeethEndArr[0] && alligatorTeethEndArr[0] < alligatorJawEndArr[0])
-                    {
-                     alligatorWM3Up = false;
-                     alligatorWM3Down = true;
-                    }
-
-                 }
-               else
-                  if(!wiseMan3AlligatorFilter)
-                    {
-                     alligatorWM3Up = true;
-                     alligatorWM3Down = true;
-                    }
 
                if(upperFractalWM3 !=0 && lowerFractalWM3 !=0)
-                  if(alertClosePrevBar1 > upperFractalWM3 && alertClosePrevBar2 < upperFractalWM3 && alligatorWM3Up && MA_FilterBull() && AO_FilterBull() && AC_FilterBull())
-                     fractalBreakBull = true;
+                  if(usedFractalWM3Upper != upperFractalWM3 && usedFractalWM3Lower != lowerFractalWM3)
+                     if(alertClosePrevBar1 > upperFractalWM3 &&
+                        Alligator_FilterBull() &&
+                        MA_FilterBull() &&
+                        AO_FilterBull() &&
+                        AC_FilterBull())
+                       {
+                        fractalBreakBull = true;
+                        usedFractalWM3Upper = upperFractalWM3;
+                       }
 
-                  else
-                     if(alertClosePrevBar1 < lowerFractalWM3 && alertClosePrevBar2 > lowerFractalWM3 && alligatorWM3Down && MA_FilterBear() && AO_FilterBear() && AC_FilterBear())
-                        fractalBreakBear = true;
+                     else
+                        if(alertClosePrevBar1 < lowerFractalWM3 &&
+                           Alligator_FilterBear() &&
+                           MA_FilterBear() &&
+                           AO_FilterBear() &&
+                           AC_FilterBear())
+                          {
+                           fractalBreakBear = true;
+                           usedFractalWM3Lower = lowerFractalWM3;
 
+                          }
 
                if(fractalBreakBull)
                  {
@@ -3480,21 +3453,9 @@ void OnTick()
             debugComment += "|=> wm3AlertToggle = " + IntegerToString(wm3AlertToggle) + " \n";
             debugComment += "|=> upperFractal = " + DoubleToString(upperFractalWM3,_Digits) + " \n";
             debugComment += "|=> lowerFractal = " + DoubleToString(lowerFractalWM3,_Digits) + " \n";
-            debugComment += "|=> wiseMan3AlligatorFilter = " + IntegerToString(wiseMan3AlligatorFilter) + " \n";
-            debugComment += "----------------------------------------------\n";
-
-            if(wiseMan3AlligatorFilter)
-              {
-               debugComment += "|=> Lips = " + DoubleToString(alligatorLipsEndArr[0],_Digits) + " \n";
-               debugComment += "|=> Teeth = " + DoubleToString(alligatorTeethEndArr[0],_Digits) + " \n";
-               debugComment += "|=> Jaw = " + DoubleToString(alligatorJawEndArr[0],_Digits) + " \n";
-              }
             debugComment += "----------------------------------------------\n";
             debugComment += "|=> alertClosePrevBar1 = " + DoubleToString(alertClosePrevBar1,_Digits) + " \n";
             debugComment += "|=> alertClosePrevBar2 = " + DoubleToString(alertClosePrevBar2,_Digits) + " \n";
-            debugComment += "----------------------------------------------\n";
-            debugComment += "|=> alligatorWM3Up = " + IntegerToString(alligatorWM3Up) + " \n";
-            debugComment += "|=> alligatorWM3Down = " + IntegerToString(alligatorWM3Down) + " \n";
             debugComment += "----------------------------------------------\n";
             debugComment += "|=> fractalBreakBull = " + IntegerToString(fractalBreakBull) + " \n";
             debugComment += "|=> fractalBreakBear = " + IntegerToString(fractalBreakBear) + " \n";
@@ -6246,4 +6207,142 @@ bool AC_FilterBear()
 
    return AC_BEAR;
   }
+//+------------------------------------------------------------------+
+
+
+//+------------------------------------------------------------------+
+//|                  Alligator_Filter Bull                           |
+//+------------------------------------------------------------------+
+bool Alligator_FilterBull()
+  {
+   bool Alligator_BULL = false;
+   if(useAlligatorFilter)
+     {
+
+      double alligatorLipsEndArr[];
+      double alligatorTeethEndArr[];
+      double alligatorJawEndArr[];
+
+      ArraySetAsSeries(alligatorLipsEndArr,true);
+      ArraySetAsSeries(alligatorTeethEndArr,true);
+      ArraySetAsSeries(alligatorJawEndArr,true);
+
+      ArrayInitialize(alligatorLipsEndArr,0);
+      ArrayInitialize(alligatorTeethEndArr,0);
+      ArrayInitialize(alligatorJawEndArr,0);
+
+      if(CopyBuffer(handleAlligator,2,-4,8,alligatorLipsEndArr)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+
+      if(CopyBuffer(handleAlligator,1,-6,8,alligatorTeethEndArr)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+
+      if(CopyBuffer(handleAlligator,0,-9,8,alligatorJawEndArr)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+
+
+      if(alligatorLipsEndArr[0] > alligatorTeethEndArr[0] && alligatorTeethEndArr[0] > alligatorJawEndArr[0])
+        {
+         Alligator_BULL = true;
+
+        }
+
+      if(debuggingComments)
+        {
+         debugComment += "======== DEBUGGING Alligator Filter BULL ===\n";
+         debugComment += "|=> alligatorLipsEndArr[0] = " + DoubleToString(alligatorLipsEndArr[0],_Digits) + " \n";
+         debugComment += "|=> alligatorTeethEndArr[0] = " + DoubleToString(alligatorTeethEndArr[0],_Digits) + " \n";
+         debugComment += "|=> alligatorJawEndArr[0] = " + DoubleToString(alligatorJawEndArr[0],_Digits) + " \n";
+         debugComment += "|=> Alligator_BULL = " + IntegerToString(Alligator_BULL) + " \n";
+        }
+
+     }
+   else
+      if(!useAlligatorFilter)
+        {
+         Alligator_BULL = true;
+        }
+
+   return Alligator_BULL;
+  }
+//+------------------------------------------------------------------+
+
+
+
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//|                  Alligator_Filter Bear                           | qqq
+//+------------------------------------------------------------------+
+bool Alligator_FilterBear()
+  {
+   bool Alligator_BEAR = false;
+   if(useAlligatorFilter)
+     {
+
+      double alligatorLipsEndArr[];
+      double alligatorTeethEndArr[];
+      double alligatorJawEndArr[];
+
+      ArraySetAsSeries(alligatorLipsEndArr,true);
+      ArraySetAsSeries(alligatorTeethEndArr,true);
+      ArraySetAsSeries(alligatorJawEndArr,true);
+
+      ArrayInitialize(alligatorLipsEndArr,0);
+      ArrayInitialize(alligatorTeethEndArr,0);
+      ArrayInitialize(alligatorJawEndArr,0);
+
+      if(CopyBuffer(handleAlligator,2,-4,8,alligatorLipsEndArr)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+
+      if(CopyBuffer(handleAlligator,1,-6,8,alligatorTeethEndArr)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+
+      if(CopyBuffer(handleAlligator,0,-9,8,alligatorJawEndArr)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+
+
+      if(alligatorLipsEndArr[0] < alligatorTeethEndArr[0] && alligatorTeethEndArr[0] < alligatorJawEndArr[0])
+        {
+         Alligator_BEAR = true;
+
+        }
+
+      if(debuggingComments)
+        {
+         debugComment += "======== DEBUGGING Alligator Filter BEAR ===\n";
+         debugComment += "|=> alligatorLipsEndArr[0] = " + DoubleToString(alligatorLipsEndArr[0],_Digits) + " \n";
+         debugComment += "|=> alligatorTeethEndArr[0] = " + DoubleToString(alligatorTeethEndArr[0],_Digits) + " \n";
+         debugComment += "|=> alligatorJawEndArr[0] = " + DoubleToString(alligatorJawEndArr[0],_Digits) + " \n";
+         debugComment += "|=> Alligator_BEAR = " + IntegerToString(Alligator_BEAR) + " \n";
+        }
+
+     }
+   else
+      if(!useAlligatorFilter)
+        {
+         Alligator_BEAR = true;
+        }
+
+   return Alligator_BEAR;
+  }
+//+------------------------------------------------------------------+
 //+------------------------------------------------------------------+
