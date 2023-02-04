@@ -11,6 +11,8 @@
 #include <Controls\Label.mqh>
 #include <Controls\ComboBox.mqh>
 
+#include <Controls\CheckBox.mqh>
+
 enum ENUM_STRATEGY
   {
    NOSTRATEGY,
@@ -364,6 +366,8 @@ private:
 
    CComboBox         m_StrategySelectorCBox;         // Dropdown list to select the strategy for the trade comment
 
+   CCheckBox         m_AOFilterChkBox;                // Controls AO filter applciation
+
 public:
                      CControlsDialog(void);
                     ~CControlsDialog(void);
@@ -425,6 +429,10 @@ protected:
 
    bool              CreateStrategySelectorCBox(void);
 
+   bool              CreateAOFilterChkBox(void);
+
+
+
    // -- Auxilary functions
    bool              GetOrderData(void);
    bool              GetDataFromLines(void);
@@ -471,6 +479,7 @@ protected:
    void              OnClickWm2AlertBtn(void);
    void              OnClickWm3AlertBtn(void);
    void              OnClickScanChartsBtn(void);
+   void              OnChangeAOFilterChkBox(void);
 
   };
 //+------------------------------------------------------------------+
@@ -501,6 +510,7 @@ ON_EVENT(ON_CLICK,m_wm1AlertBtn,OnClickWm1AlertBtn)
 ON_EVENT(ON_CLICK,m_wm2AlertBtn,OnClickWm2AlertBtn)
 ON_EVENT(ON_CLICK,m_wm3AlertBtn,OnClickWm3AlertBtn)
 ON_EVENT(ON_CLICK,m_ScanChartsBtn,OnClickScanChartsBtn)
+ON_EVENT(ON_CHANGE,m_AOFilterChkBox,OnChangeAOFilterChkBox)
 
 
 //+------------------------------------------------------------------+
@@ -627,6 +637,10 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
       return(false);
 
    if(!CreateStrategySelectorCBox())
+      return(false);
+
+
+   if(!CreateAOFilterChkBox())
       return(false);
 
 //--- succeed
@@ -994,7 +1008,6 @@ bool CControlsDialog::CreateSlPipsEdit(void)
    int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
-
 //--- create
    if(!m_SlPipsEdit.Create(m_chart_id,m_name+"SlPips",m_subwin,x1,y1,x2,y2))
       return(false);
@@ -1039,12 +1052,10 @@ bool CControlsDialog::CreateTpPipsEdit(void)
 bool CControlsDialog::CreateRiskToRewardRatioEdit(void)
   {
 //--- coordinates
-
    int x1=INDENT_LEFT+3*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X);
    int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
-
 //--- create
    if(!m_RiskToRewardRatioEdit.Create(m_chart_id,m_name+"RRR",m_subwin,x1,y1,x2,y2))
       return(false);
@@ -1201,14 +1212,14 @@ bool CControlsDialog::CreateBuyBtn(void)
 bool CControlsDialog::CreateCloseAllBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH/2;
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+2*BUTTON_WIDTH/3;
+   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_CloseAllBtn.Create(m_chart_id,m_name+"CloseAllBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_CloseAllBtn.Text("Close"))
+   if(!m_CloseAllBtn.Text("X"))
       return(false);
    if(!Add(m_CloseAllBtn))
       return(false);
@@ -1222,14 +1233,14 @@ bool CControlsDialog::CreateCloseAllBtn(void)
 bool CControlsDialog::CreateBoxBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+(BUTTON_WIDTH+BUTTON_WIDTH/2+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+BUTTON_WIDTH+CONTROLS_GAP_X+BUTTON_WIDTH/3;
    int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH/2;
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_Box.Create(m_chart_id,m_name+"BoxBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_Box.Text("Box"))
+   if(!m_Box.Text("\x2752"))
       return(false);
    if(!Add(m_Box))
       return(false);
@@ -1243,14 +1254,14 @@ bool CControlsDialog::CreateBoxBtn(void)
 bool CControlsDialog::CreateDoubleOrderBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH/2;
+   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X) + BUTTON_WIDTH/3;
+   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_DoubleOrderBtn.Create(m_chart_id,m_name+"DoubleOrderBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_DoubleOrderBtn.Text("2 "+"\x00BD"+"\x2714"))
+   if(!m_DoubleOrderBtn.Text("\x2713"+"\x2713"))
       return(false);
    if(!Add(m_DoubleOrderBtn))
       return(false);
@@ -1259,19 +1270,19 @@ bool CControlsDialog::CreateDoubleOrderBtn(void)
   }
 
 //+------------------------------------------------------------------+
-//| Create the "CalculateRisk" button                                |
+//| Create the "CalculatePosBtn" button                              |
 //+------------------------------------------------------------------+
 bool CControlsDialog::CreateCalculatePosBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH;
+   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_CalculatePosBtn.Create(m_chart_id,m_name+"CalculatePosBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_CalculatePosBtn.Text("Calc"))
+   if(!m_CalculatePosBtn.Text("CLC"))
       return(false);
    if(!Add(m_CalculatePosBtn))
       return(false);
@@ -1285,14 +1296,16 @@ bool CControlsDialog::CreateCalculatePosBtn(void)
 bool CControlsDialog::CreateClearInputsBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+(BUTTON_WIDTH/3);
    int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH;
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_ClearInputsBtn.Create(m_chart_id,m_name+"ClearInputsBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_ClearInputsBtn.Text("Clear"))
+
+   if(!m_ClearInputsBtn.Text("CLR"))
+
       return(false);
    if(!Add(m_ClearInputsBtn))
       return(false);
@@ -1306,9 +1319,9 @@ bool CControlsDialog::CreateClearInputsBtn(void)
 bool CControlsDialog::CreateBreakEvenBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT;
-   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH;
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/3;
+   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_BreakEvenBtn.Create(m_chart_id,m_name+"BreakEvenBtn",m_subwin,x1,y1,x2,y2))
@@ -1329,12 +1342,12 @@ bool CControlsDialog::CreateMarketPendingBtn(void)
 //--- coordinates
    int x1=INDENT_LEFT;
    int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH;
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_MarketPendingBtn.Create(m_chart_id,m_name+"MarketPending",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_MarketPendingBtn.Text("[=M=]"))
+   if(!m_MarketPendingBtn.Text("[ M ]"))
       return(false);
    if(!Add(m_MarketPendingBtn))
       return(false);
@@ -1348,9 +1361,9 @@ bool CControlsDialog::CreateMarketPendingBtn(void)
 bool CControlsDialog::CreateShowLinesBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X)+2*BUTTON_WIDTH/3;
    int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH/2;
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_ShowLinesBtn.Create(m_chart_id,m_name+"ShowLinesBtn",m_subwin,x1,y1,x2,y2))
@@ -1369,9 +1382,9 @@ bool CControlsDialog::CreateShowLinesBtn(void)
 bool CControlsDialog::CreateSellToggleBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+(BUTTON_WIDTH/3);
    int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH/2;
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_SellToggleBtn.Create(m_chart_id,m_name+"SellToggleBtn",m_subwin,x1,y1,x2,y2))
@@ -1390,9 +1403,9 @@ bool CControlsDialog::CreateSellToggleBtn(void)
 bool CControlsDialog::CreateBuyToggleBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/2;
+   int x1=INDENT_LEFT+2*(BUTTON_WIDTH/3);
    int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH/2;
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_BuyToggleBtn.Create(m_chart_id,m_name+"BuyToggleBtn",m_subwin,x1,y1,x2,y2))
@@ -1411,14 +1424,14 @@ bool CControlsDialog::CreateBuyToggleBtn(void)
 bool CControlsDialog::CreateStopToggleBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH/2;
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_StopToggleBtn.Create(m_chart_id,m_name+"StopToggleBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_StopToggleBtn.Text("STP"))
+   if(!m_StopToggleBtn.Text("ST"))
       return(false);
    if(!Add(m_StopToggleBtn))
       return(false);
@@ -1432,14 +1445,14 @@ bool CControlsDialog::CreateStopToggleBtn(void)
 bool CControlsDialog::CreateLimitToggleBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/2;
+   int x1=INDENT_LEFT+(BUTTON_WIDTH+BUTTON_WIDTH/3+CONTROLS_GAP_X);
    int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH/2;
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_LimitToggleBtn.Create(m_chart_id,m_name+"LimitToggleBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_LimitToggleBtn.Text("LMT"))
+   if(!m_LimitToggleBtn.Text("LM"))
       return(false);
    if(!Add(m_LimitToggleBtn))
       return(false);
@@ -1453,9 +1466,9 @@ bool CControlsDialog::CreateLimitToggleBtn(void)
 bool CControlsDialog::CreateSendOrderBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/2;
-   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH/2;
+   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X) + 2*BUTTON_WIDTH/3;
+   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_SendOrderBtn.Create(m_chart_id,m_name+"SendOrderBtn",m_subwin,x1,y1,x2,y2))
@@ -1475,8 +1488,8 @@ bool CControlsDialog::CreateAutoPosMgmtToggleBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH/2;
+   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_AutoPosMgmtToggleBtn.Create(m_chart_id,m_name+"AutoPosMgmtToggleBtn",m_subwin,x1,y1,x2,y2))
@@ -1484,13 +1497,13 @@ bool CControlsDialog::CreateAutoPosMgmtToggleBtn(void)
 
    if(autoPosMgmtToggle)
      {
-      if(!m_AutoPosMgmtToggleBtn.Text("[=APM=]"))
+      if(!m_AutoPosMgmtToggleBtn.Text("[PM]"))
          return(false);
      }
    else
       if(!autoPosMgmtToggle)
         {
-         if(!m_AutoPosMgmtToggleBtn.Text("APM"))
+         if(!m_AutoPosMgmtToggleBtn.Text("PM"))
             return(false);
         }
 
@@ -1506,9 +1519,9 @@ bool CControlsDialog::CreateAutoPosMgmtToggleBtn(void)
 bool CControlsDialog::CreateDrawPositionsBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/2;
-   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH/2;
+   int x1=INDENT_LEFT+BUTTON_WIDTH+CONTROLS_GAP_X+2*BUTTON_WIDTH/3;
+   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_DrawPositionsBtn.Create(m_chart_id,m_name+"DrawPositionsBtn",m_subwin,x1,y1,x2,y2))
@@ -1529,8 +1542,8 @@ bool CControlsDialog::CreateDrawPositionsBtn(void)
 bool CControlsDialog::CreateStrategySelectorCBox(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1636,7 +1649,7 @@ bool CControlsDialog::CreateWm1AlertBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1661,7 +1674,7 @@ bool CControlsDialog::CreateWm2AlertBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1686,7 +1699,7 @@ bool CControlsDialog::CreateWm3AlertBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+2*BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1716,15 +1729,15 @@ bool CControlsDialog::CreateWm3AlertBtn(void)
 bool CControlsDialog::CreateScanChartsBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/2;
-   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH/2;
+   int x1=INDENT_LEFT+2*BUTTON_WIDTH/3;
+   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_ScanChartsBtn.Create(m_chart_id,m_name+"ScanChartsBtn",m_subwin,x1,y1,x2,y2))
       return(false);
 
-   if(!m_ScanChartsBtn.Text("SCAN"))
+   if(!m_ScanChartsBtn.Text("SCN"))
       return(false);
 
    if(!Add(m_ScanChartsBtn))
@@ -1733,6 +1746,32 @@ bool CControlsDialog::CreateScanChartsBtn(void)
 //--- succeed
    return(true);
   }
+
+
+//+------------------------------------------------------------------+
+//| Create the "AO Filter" CheckBox                                  |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateAOFilterChkBox(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/2;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_AOFilterChkBox.Create(m_chart_id,m_name+"AOFilterChkBox",m_subwin,x1,y1,x2,y2))
+      return(false);
+
+   if(!m_AOFilterChkBox.Text("AO"))
+      return(false);
+
+   if(!Add(m_AOFilterChkBox))
+      return(false);
+
+//--- succeed
+   return(true);
+  }
+
 
 
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -1958,13 +1997,13 @@ void CControlsDialog::OnClickMarketPendingBtn(void)
   {
    if(pendingToggle)
      {
-      m_MarketPendingBtn.Text("[=M=]");
+      m_MarketPendingBtn.Text("[ M ]");
       pendingToggle = false;
      }
    else
       if(!pendingToggle)
         {
-         m_MarketPendingBtn.Text("[=P=]");
+         m_MarketPendingBtn.Text("[ P ]");
          pendingToggle = true;
         }
   }
@@ -2073,8 +2112,8 @@ void CControlsDialog::OnClickShowLinesBtn(void)
          buyToggle = false;
          m_SellToggleBtn.Text("S");
          m_BuyToggleBtn.Text("B");
-         m_StopToggleBtn.Text("STP");
-         m_LimitToggleBtn.Text("LMT");
+         m_StopToggleBtn.Text("ST");
+         m_LimitToggleBtn.Text("LM");
         }
   }
 
@@ -2085,7 +2124,7 @@ void CControlsDialog::OnClickSellToggleBtn(void)
   {
    sellToggle = true;
    buyToggle = false;
-   m_SellToggleBtn.Text("[=S=]");
+   m_SellToggleBtn.Text("[ S ]");
    m_BuyToggleBtn.Text("B");
   }
 
@@ -2097,7 +2136,7 @@ void CControlsDialog::OnClickBuyToggleBtn(void)
    sellToggle = false;
    buyToggle = true;
    m_SellToggleBtn.Text("S");
-   m_BuyToggleBtn.Text("[=B=]");
+   m_BuyToggleBtn.Text("[B]");
   }
 
 //+------------------------------------------------------------------+
@@ -2107,8 +2146,8 @@ void CControlsDialog::OnClickStopToggleBtn(void)
   {
    stopToggle = true;
    limitToggle  = false;
-   m_StopToggleBtn.Text("[STP]");
-   m_LimitToggleBtn.Text("LMT");
+   m_StopToggleBtn.Text("[ST]");
+   m_LimitToggleBtn.Text("LM");
   }
 
 //+------------------------------------------------------------------+
@@ -2118,8 +2157,8 @@ void CControlsDialog::OnClickLimitToggleBtn(void)
   {
    stopToggle = false;
    limitToggle = true;
-   m_StopToggleBtn.Text("STP");
-   m_LimitToggleBtn.Text("[LMT]");
+   m_StopToggleBtn.Text("ST");
+   m_LimitToggleBtn.Text("[LM]");
   }
 
 //+------------------------------------------------------------------+
@@ -2131,15 +2170,15 @@ void CControlsDialog::OnClickAutoPosMgmtToggleBtn(void)
    if(autoPosMgmtToggle)
      {
       autoPosMgmtToggle = false;
-      m_AutoPosMgmtToggleBtn.Text("APM");
+      m_AutoPosMgmtToggleBtn.Text("PM");
      }
    else
       if(!autoPosMgmtToggle)
         {
          autoPosMgmtToggle = true;
-         m_AutoPosMgmtToggleBtn.Text("[=APM=]");
+         m_AutoPosMgmtToggleBtn.Text("[PM]");
         }
-   Print("APM = ",autoPosMgmtToggle);
+   Print("PM = ",autoPosMgmtToggle);
   }
 
 
@@ -2751,6 +2790,22 @@ void CControlsDialog::OnClickScanChartsBtn(void)
 
   }
 
+
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnChangeAOFilterChkBox(void)
+  {
+
+   Print(__FUNCTION__);
+
+  }
+
+
+//+------------------------------------------------------------------+
+//|         -------- END OF EVENT HANDLERS --------------            |
+//+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
 //| Global Variables                                                 |
