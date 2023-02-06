@@ -11,7 +11,7 @@ Author is not reponsible for the correctnes of the program. Please test before u
 
 Features:
 - Automatic position size calculator;
-- Indication of total volume at rist;
+- Indication of total volume at risk;
 - Alerts on:
   - Line crossing;
   - Price closed over the moving average;
@@ -28,18 +28,24 @@ Features:
 - Indication of free margin and margin needed in order to open the position;
 
 Description of Buttons:
-- Market/Pending = changes between market and pending orders;
-- Show Lines/Hide Lines = Shows and hides lines which can be used for placing the SL, TP and price;
-- S / B = toggles between Sell and Buy orders;
-- STP / LMT = toggles between Stop and Limit orders;
-- SELL / BUY = used for imidiate market order placements according to Lots, SLp and RRR;
-- Close = closes all active open positions on current chart;
-- Send Order = sends market or pending stop/limit sell or buy orders;
-- Send D Order = same as Send Order but it places two orders instead of 1, 50% lot size each and 1 to 1 RRR for one order and no TP for the second order;
+- M/P = changes between market and pending orders;
+- S = sets future position to Sell;
+- B = sets future position to Buy;
+- ST = sets future position to Stop order;
+- LM = sets future position to Limit order;
+- 三 = Shows and hides lines which can be used for placing the SL, TP and price;
+- CLC = calculates the lot size based on SL and Risk %;
+- ✓✓ = same as Send Order but it places two orders instead of 1, 50% lot size each and 1 to 1 RRR for one order and no TP for the second order;
+- ✔ = sends market or pending stop/limit sell or buy orders;
+- PM = turns on and off the Automatic Position Management function, parameters of which can be changed in Input window;
 - BE = moves the SL of all positions to break even wherever possible;
-- Clear = delets all inputs in Edit fields;
-- Calc = calculates the lot size based on SL and Risk %;
-- APM = turns on and off the Automatic Position Management function, parameters of which can be changed in Input window;
-- Draw = button goes through all active positions and draws a red rectangle to show the SL and green rectangle to show the TP;
-- W1, W2, W3 = switches on and off alerts for Wise Man 1, 2, 3 signals (Bill Williams Profitunity strategy).
-
+- SCN = checks the list of predefined pairs and checks if they trend on at least two timeframes at the same time;
+- SELL / BUY = used for imidiate market order placements according to Lots, SLp and RRR;
+- ✖ = closes all active open positions on current chart;
+- ❒ = draws session boxes limited by beginning and end of the sessions on x axis and max/min prices on y axis;
+- CLR = delets all inputs in Edit fields;
+- 🖉 = button goes through all active positions and draws a red rectangle to show the SL and green rectangle to show the TP;
+- W1, W2, W3 = switches on and off alerts for Wise Man 1, 2, 3 signals (Bill Williams Profitunity strategy);
+- ⼆ = shows two lines, which can be moved and used for setting alerts when the price closes above/below one of the lines;
+- ⏰ = sets alarm that goes off if the price closes above or below one of the lines which were added using ⼆ button;
+- MBE = if the price closes above one of the lines which ere added using ⼆ button, all positions on the chart are set to break even.
