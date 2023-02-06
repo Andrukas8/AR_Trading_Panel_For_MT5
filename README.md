@@ -2,7 +2,7 @@
 
 [![Support Ukraine Badge](https://bit.ly/support-ukraine-now)](https://github.com/support-ukraine/support-ukraine)
 
-![image](https://user-images.githubusercontent.com/21954163/206441625-ce8843eb-438c-4872-9c17-6c415b38fd98.png)
+![image](https://user-images.githubusercontent.com/21954163/216941119-cf7e90dc-ebce-45b3-bfa7-298daf29b202.png)
 
 A trading panel for MT5 trading platform, written in MQL5.
 WORK IN PROGRESS.
