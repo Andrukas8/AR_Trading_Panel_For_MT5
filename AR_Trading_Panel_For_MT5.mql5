@@ -288,14 +288,14 @@ string captionString = "AR TPanel ";
 #define INDENT_TOP                          (11)      // indent from top (with allowance for border width)
 #define INDENT_RIGHT                        (11)      // indent from right (with allowance for border width)
 #define INDENT_BOTTOM                       (11)      // indent from bottom (with allowance for border width)
-#define CONTROLS_GAP_X                      (3)       // gap by X coordinate
-#define CONTROLS_GAP_Y                      (3)       // gap by Y coordinate
+#define CONTROLS_GAP_X                      (5)       // gap by X coordinate // 3
+#define CONTROLS_GAP_Y                      (7)       // gap by Y coordinate // 3
 //--- for buttons
 #define BUTTON_WIDTH                        (100)     // size by X coordinate
-#define BUTTON_HEIGHT                       (20)      // size by Y coordinate
+#define BUTTON_HEIGHT                       (25)      // size by Y coordinate //20
 //--- for the indication area
-#define EDIT_HEIGHT                         (20)      // size by Y coordinate
-#define EDIT_WIDTH                          (70)      // size by X coordinate
+#define EDIT_HEIGHT                         (20)      // size by Y coordinate // 20
+#define EDIT_WIDTH                          (60)      // size by X coordinate
 #define EDIT_WIDTH_SMALL                    (40)      // size by X coordinate
 //--- for group controls
 #define GROUP_WIDTH                         (150)     // size by X coordinate
@@ -366,8 +366,6 @@ private:
 
    CComboBox         m_StrategySelectorCBox;         // Dropdown list to select the strategy for the trade comment
 
-   CCheckBox         m_AOFilterChkBox;                // Controls AO filter applciation
-
 public:
                      CControlsDialog(void);
                     ~CControlsDialog(void);
@@ -429,8 +427,6 @@ protected:
 
    bool              CreateStrategySelectorCBox(void);
 
-   bool              CreateAOFilterChkBox(void);
-
 
 
    // -- Auxilary functions
@@ -479,7 +475,6 @@ protected:
    void              OnClickWm2AlertBtn(void);
    void              OnClickWm3AlertBtn(void);
    void              OnClickScanChartsBtn(void);
-   void              OnChangeAOFilterChkBox(void);
 
   };
 //+------------------------------------------------------------------+
@@ -510,7 +505,6 @@ ON_EVENT(ON_CLICK,m_wm1AlertBtn,OnClickWm1AlertBtn)
 ON_EVENT(ON_CLICK,m_wm2AlertBtn,OnClickWm2AlertBtn)
 ON_EVENT(ON_CLICK,m_wm3AlertBtn,OnClickWm3AlertBtn)
 ON_EVENT(ON_CLICK,m_ScanChartsBtn,OnClickScanChartsBtn)
-ON_EVENT(ON_CHANGE,m_AOFilterChkBox,OnChangeAOFilterChkBox)
 
 
 //+------------------------------------------------------------------+
@@ -639,9 +633,6 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
    if(!CreateStrategySelectorCBox())
       return(false);
 
-
-   if(!CreateAOFilterChkBox())
-      return(false);
 
 //--- succeed
    return(true);
@@ -834,7 +825,7 @@ bool CControlsDialog::CreateMarginRequiredLbl(void)
 //--- coordinates
 
    int x1=INDENT_LEFT;
-   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 
@@ -858,7 +849,7 @@ bool CControlsDialog::CreateMarginRequiredDisplLbl(void)
 //--- coordinates
 
    int x1=INDENT_LEFT;
-   int y1=INDENT_TOP+6*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 
@@ -882,7 +873,7 @@ bool CControlsDialog::CreateMarginAvailableLbl(void)
 //--- coordinates
 
    int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 
@@ -907,7 +898,7 @@ bool CControlsDialog::CreateMarginAvailableDisplLbl(void)
 //--- coordinates
 
    int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+6*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 
@@ -931,7 +922,7 @@ bool CControlsDialog::CreateSpreadLbl(void)
 //--- coordinates
 
    int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 
@@ -955,7 +946,7 @@ bool CControlsDialog::CreateTimeTillCandleCloseLbl(void)
 //--- coordinates
 
    int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+6*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 
@@ -980,7 +971,7 @@ bool CControlsDialog::CreateLotsEdit(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT;
-   int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int y1= EDIT_HEIGHT+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -1005,7 +996,7 @@ bool CControlsDialog::CreateSlPipsEdit(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+EDIT_WIDTH_SMALL+CONTROLS_GAP_X;
-   int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int y1= EDIT_HEIGHT+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -1031,7 +1022,7 @@ bool CControlsDialog::CreateTpPipsEdit(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+2*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int y1= EDIT_HEIGHT+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -1053,7 +1044,7 @@ bool CControlsDialog::CreateRiskToRewardRatioEdit(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int y1= EDIT_HEIGHT+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -1079,7 +1070,7 @@ bool CControlsDialog::CreateRiskEdit(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+4*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int y1= EDIT_HEIGHT+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -1105,7 +1096,7 @@ bool CControlsDialog::CreatePriceEdit(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+5*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int y1= EDIT_HEIGHT+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -1127,7 +1118,7 @@ bool CControlsDialog::CreateSlEdit(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+ 5*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X) + (EDIT_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int y1= EDIT_HEIGHT+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -1143,13 +1134,13 @@ bool CControlsDialog::CreateSlEdit(void)
   }
 
 //+------------------------------------------------------------------+
-//| Create the Sl Edit field              #8                         |
+//| Create the Tp Edit field              #8                         |
 //+------------------------------------------------------------------+
 bool CControlsDialog::CreateTpEdit(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+ 5*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X) + 2*(EDIT_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int y1= EDIT_HEIGHT+CONTROLS_GAP_Y;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -1174,7 +1165,7 @@ bool CControlsDialog::CreateSellBtn(void)
 //--- coordinates
    int x1=INDENT_LEFT;
    int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH/2;
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_SellBtn.Create(m_chart_id,m_name+"SellBtn",m_subwin,x1,y1,x2,y2))
@@ -1192,9 +1183,9 @@ bool CControlsDialog::CreateSellBtn(void)
 bool CControlsDialog::CreateBuyBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+BUTTON_WIDTH/2;
+   int x1=INDENT_LEFT+2*BUTTON_WIDTH/3;
    int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH/2;
+   int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_BuyBtn.Create(m_chart_id,m_name+"BuyBtn",m_subwin,x1,y1,x2,y2))
@@ -1212,14 +1203,14 @@ bool CControlsDialog::CreateBuyBtn(void)
 bool CControlsDialog::CreateCloseAllBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+2*BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x1=INDENT_LEFT+BUTTON_WIDTH/3;
+   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
    if(!m_CloseAllBtn.Create(m_chart_id,m_name+"CloseAllBtn",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_CloseAllBtn.Text("X"))
+   if(!m_CloseAllBtn.Text("\x2716")) // "X"
       return(false);
    if(!Add(m_CloseAllBtn))
       return(false);
@@ -1296,8 +1287,8 @@ bool CControlsDialog::CreateCalculatePosBtn(void)
 bool CControlsDialog::CreateClearInputsBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+(BUTTON_WIDTH/3);
-   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x1=INDENT_LEFT+BUTTON_WIDTH+CONTROLS_GAP_X;
+   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1574,7 +1565,7 @@ bool CControlsDialog::CreateShowAlertLinesBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+6*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1599,7 +1590,7 @@ bool CControlsDialog::CreateAlertCloseBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+6*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1624,7 +1615,7 @@ bool CControlsDialog::CreateManualBEBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+2*BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+6*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1729,8 +1720,8 @@ bool CControlsDialog::CreateWm3AlertBtn(void)
 bool CControlsDialog::CreateScanChartsBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+2*BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+2*BUTTON_WIDTH/3;
+   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1746,32 +1737,6 @@ bool CControlsDialog::CreateScanChartsBtn(void)
 //--- succeed
    return(true);
   }
-
-
-//+------------------------------------------------------------------+
-//| Create the "AO Filter" CheckBox                                  |
-//+------------------------------------------------------------------+
-bool CControlsDialog::CreateAOFilterChkBox(void)
-  {
-//--- coordinates
-   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
-   int x2=x1+BUTTON_WIDTH/2;
-   int y2=y1+BUTTON_HEIGHT;
-//--- create
-   if(!m_AOFilterChkBox.Create(m_chart_id,m_name+"AOFilterChkBox",m_subwin,x1,y1,x2,y2))
-      return(false);
-
-   if(!m_AOFilterChkBox.Text("AO"))
-      return(false);
-
-   if(!Add(m_AOFilterChkBox))
-      return(false);
-
-//--- succeed
-   return(true);
-  }
-
 
 
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -2791,18 +2756,6 @@ void CControlsDialog::OnClickScanChartsBtn(void)
   }
 
 
-
-//+------------------------------------------------------------------+
-//|                                                                  |
-//+------------------------------------------------------------------+
-void CControlsDialog::OnChangeAOFilterChkBox(void)
-  {
-
-   Print(__FUNCTION__);
-
-  }
-
-
 //+------------------------------------------------------------------+
 //|         -------- END OF EVENT HANDLERS --------------            |
 //+------------------------------------------------------------------+
@@ -2822,7 +2775,7 @@ int OnInit()
    ObjectDelete(0,"takeProfitLine");
 
 //--- create application dialog
-   if(showEAComment)
+   if(showEAComment) // here if is used to move the panel to the right in case if the comments are engaged
      {
       if(!ExtDialog.Create(0,captionString,0,210,0,670,200))
          return(INIT_FAILED);
@@ -2994,8 +2947,8 @@ void OnTick()
       //AO_FilterBear();
       //AC_FilterBull();
       //AC_FilterBear();
-      Alligator_FilterBull();
-      Alligator_FilterBear();
+      //Alligator_FilterBull();
+      //Alligator_FilterBear();
      }
 
 
@@ -3969,10 +3922,6 @@ void OnTick()
    ObjectSetString(0,ExtDialog.Name()+"MarginAvailableDisplLbl",OBJPROP_TEXT,DoubleToString(AccountFreeMargin,2));
    ObjectSetString(0,ExtDialog.Name()+"SpreadLbl",OBJPROP_TEXT,"Spread: "+spreadStr);
    ObjectSetString(0,ExtDialog.Name()+"TimeTillCandleCloseLbl",OBJPROP_TEXT,timeTillCloseStr);
-
-
-
-
 
 //+------------------------------------------------------------------+
 //|                                                                  |
