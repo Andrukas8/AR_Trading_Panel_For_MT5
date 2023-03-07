@@ -1992,12 +1992,23 @@ void CControlsDialog::OnClickShowLinesBtn(void)
       double inputLineRRR = 0;
       inputLineRRR = StringToDouble(ObjectGetString(0,ExtDialog.Name()+"RRR",OBJPROP_TEXT));
       double lineSlPips = StringToDouble(ObjectGetString(0,ExtDialog.Name()+"SlPips",OBJPROP_TEXT));
+      double upperFractal = UpperFractalCalculation();
+      double lowerFractal = LowerFractalCalculation();
 
       if(sellToggle && !buyToggle)
         {
          // SELL
          linePrice = NormalizeDouble(ask,_Digits);
-         lineSl = NormalizeDouble(ask + lineSlPips*10*_Point,_Digits);
+
+         if(upperFractal > 0 && upperFractal > ask)
+           {
+            lineSl = upperFractal;
+           }
+         else
+           {
+            lineSl = NormalizeDouble(ask + lineSlPips*10*_Point,_Digits);
+           }
+
          lineTp = NormalizeDouble(ask - (lineSl - ask) * inputLineRRR,_Digits);
 
         }
@@ -2006,7 +2017,17 @@ void CControlsDialog::OnClickShowLinesBtn(void)
            {
             // BUY
             linePrice = NormalizeDouble(bid,_Digits);
-            lineSl = NormalizeDouble(bid - lineSlPips*10*_Point,_Digits);
+
+
+            if(lowerFractal > 0 && lowerFractal < bid)
+              {
+               lineSl = lowerFractal;
+              }
+            else
+              {
+               lineSl = NormalizeDouble(bid - lineSlPips*10*_Point,_Digits);
+              }
+
             lineTp = NormalizeDouble(bid + (bid - lineSl) * inputLineRRR,_Digits);
            }
 
@@ -2892,35 +2913,34 @@ void OnChartEvent(const int id,         // event ID
    ExtDialog.ChartEvent(id,lparam,dparam,sparam);
 
 // FEATURE UNDER CONSTRUCTION
-// recalculates position parameters automatically when the SL line is moved on the chart
-//   if(id==CHARTEVENT_OBJECT_DRAG)
-//     {
-//      if(sparam == "stopLossLine")
-//        {
-//         inputStopLoss = NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),_Digits);
-//         double inputLineRRR = StringToDouble(ObjectGetString(0,ExtDialog.Name()+"RRR",OBJPROP_TEXT));
-//         double newInputTakeProfit = 0;
-//         if(inputStopLoss < inputTakeProfit) // buy
-//           {
-//            double input_line_ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK); // buy
-//            newInputTakeProfit = (input_line_ask - inputStopLoss) * inputLineRRR + input_line_ask;
-//
-//           }
-//         else
-//            if(inputStopLoss > inputTakeProfit) // sell
-//              {
-//               double input_line_bid = SymbolInfoDouble(_Symbol,SYMBOL_BID); // sell
-//               newInputTakeProfit = input_line_bid - (inputStopLoss - input_line_bid) * inputLineRRR;
-//              }
-//
-//         ObjectSetString(0,ExtDialog.Name()+"SlEdit",OBJPROP_TEXT,DoubleToString(inputStopLoss,_Digits));
-//         ObjectSetString(0,ExtDialog.Name()+"TpEdit",OBJPROP_TEXT,DoubleToString(newInputTakeProfit,_Digits));
-//
-//         ObjectSetDouble(0,"takeProfitLine",OBJPROP_PRICE,newInputTakeProfit);
-//
-//        }
-//
-//     }
+//recalculates position parameters automatically when the SL line is moved on the chart
+   if(id==CHARTEVENT_OBJECT_DRAG)
+     {
+      if(sparam == "stopLossLine")
+        {
+         inputStopLoss = NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),_Digits);
+         double inputLineRRR = StringToDouble(ObjectGetString(0,ExtDialog.Name()+"RRR",OBJPROP_TEXT));
+         double newInputTakeProfit = 0;
+         if(inputStopLoss < inputTakeProfit) // buy
+           {
+            double input_line_ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK); // buy
+            newInputTakeProfit = (input_line_ask - inputStopLoss) * inputLineRRR + input_line_ask;
+
+           }
+         else
+            if(inputStopLoss > inputTakeProfit) // sell
+              {
+               double input_line_bid = SymbolInfoDouble(_Symbol,SYMBOL_BID); // sell
+               newInputTakeProfit = input_line_bid - (inputStopLoss - input_line_bid) * inputLineRRR;
+              }
+
+         ObjectSetString(0,ExtDialog.Name()+"SlEdit",OBJPROP_TEXT,DoubleToString(inputStopLoss,_Digits));
+         ObjectSetString(0,ExtDialog.Name()+"TpEdit",OBJPROP_TEXT,DoubleToString(newInputTakeProfit,_Digits));
+         ObjectSetDouble(0,"takeProfitLine",OBJPROP_PRICE,newInputTakeProfit);
+
+        }
+
+     }
 // END OF FEATURE UNDER CONSTRUCTION
 
   }
@@ -6288,7 +6308,7 @@ bool Alligator_FilterBull()
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
-//|                  Alligator_Filter Bear                           | qqq
+//|                  Alligator_Filter Bear                           |
 //+------------------------------------------------------------------+
 bool Alligator_FilterBear()
   {
@@ -6352,4 +6372,86 @@ bool Alligator_FilterBear()
    return Alligator_BEAR;
   }
 //+------------------------------------------------------------------+
+//+------------------------------------------------------------------+
+
+
+
+//+------------------------------------------------------------------+
+//|    Upper Fractal Calculation                                     |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+double UpperFractalCalculation()
+  {
+   double high_1 = 0;
+   double high_2 = 0;
+   double high_3 = 0;
+   double high_4 = 0;
+   double high_5 = 0;
+   double upperFractal = 0;
+
+
+   int k = 0;
+   for(int i=3; i<200; i++)
+     {
+      high_1 = iHigh(_Symbol,_Period,i+2);
+      high_2 = iHigh(_Symbol,_Period,i+1);
+      high_3 = iHigh(_Symbol,_Period,i);
+      high_4 = iHigh(_Symbol,_Period,i-1);
+      high_5 = iHigh(_Symbol,_Period,i-2);
+
+      if(high_3 > high_2 && high_3 > high_1 && high_3 > high_4 && high_3 > high_5)
+         if(k<3)
+           {
+            upperFractal = NormalizeDouble(high_3,_Digits);
+            return upperFractal;
+           }
+     }
+
+   return upperFractal;
+
+  }
+
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//|    Upper Fractal Calculation                                     |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+double LowerFractalCalculation()
+  {
+   double low_1 = 0;
+   double low_2 = 0;
+   double low_3 = 0;
+   double low_4 = 0;
+   double low_5 = 0;
+   double lowerFractal = 0;
+
+
+   int k = 0;
+   for(int i=3; i<200; i++)
+     {
+      low_1 = iLow(_Symbol,_Period,i+2);
+      low_2 = iLow(_Symbol,_Period,i+1);
+      low_3 = iLow(_Symbol,_Period,i);
+      low_4 = iLow(_Symbol,_Period,i-1);
+      low_5 = iLow(_Symbol,_Period,i-2);
+
+      if(low_3 < low_2 && low_3 < low_1 && low_3 < low_4 && low_3 < low_5)
+         if(k<3)
+           {
+            lowerFractal = NormalizeDouble(low_3,_Digits);
+            return lowerFractal;
+           }
+     }
+
+   return lowerFractal;
+
+  }
+
 //+------------------------------------------------------------------+
