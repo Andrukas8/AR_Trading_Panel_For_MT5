@@ -132,6 +132,9 @@ input bool useAOFilter = true; // USE AO FILTER
 input bool useACFilter = true; // USE AC FILTER
 
 input bool useMAFilter = true; // USE MA FILTER
+
+input bool useIchimokuFilter = true; // USE ICHIMOKU FILTER
+
 input int MaFilterPeriod = 200; // __________ MA PERIOD
 input int MaFilterShift = 0; // __________ MA SHIFT
 input ENUM_MA_METHOD MaFilterMethod = MODE_EMA; // __________ MA METHOD
@@ -2819,7 +2822,7 @@ int OnInit()
    if(movingAverageTSL)
       handleMA = iMA(_Symbol, TimeFrame, MaPeriod, MaShift, TslMaMethod, TslMaAppPrice);
 
-   if(kijunsenTSL || tenkansenTSL || ClosePosTenkansen || SignalTenkansenBreak)
+   if(kijunsenTSL || tenkansenTSL || ClosePosTenkansen || SignalTenkansenBreak || useIchimokuFilter)
       handleIchimoku = iIchimoku(_Symbol,TimeFrame,9,26,52);
 
    if(ClosePosMa)
@@ -2972,6 +2975,8 @@ void OnTick()
       //AC_FilterBear();
       //Alligator_FilterBull();
       //Alligator_FilterBear();
+      //Ichimoku_FilterBull();
+      //Ichimoku_FilterBear();
      }
 
 
@@ -3449,7 +3454,9 @@ void OnTick()
                         Alligator_FilterBull() &&
                         MA_FilterBull() &&
                         AO_FilterBull() &&
-                        AC_FilterBull())
+                        AC_FilterBull() &&
+                        Ichimoku_FilterBull()
+                       )
                        {
                         fractalBreakBull = true;
                         usedFractalWM3Upper = upperFractalWM3;
@@ -3460,11 +3467,12 @@ void OnTick()
                            Alligator_FilterBear() &&
                            MA_FilterBear() &&
                            AO_FilterBear() &&
-                           AC_FilterBear())
+                           AC_FilterBear() &&
+                           Ichimoku_FilterBear()
+                          )
                           {
                            fractalBreakBear = true;
                            usedFractalWM3Lower = lowerFractalWM3;
-
                           }
 
                if(fractalBreakBull)
@@ -6453,5 +6461,164 @@ double LowerFractalCalculation()
    return lowerFractal;
 
   }
+
+//+------------------------------------------------------------------+
+
+
+//+------------------------------------------------------------------+
+//|                  Ichimoku_Filter Bull                           |
+//+------------------------------------------------------------------+
+bool Ichimoku_FilterBull()
+  {
+   bool Ichimoku_BULL = false;
+   if(useIchimokuFilter)
+     {
+
+      double ClosePrice_1 = iClose(_Symbol,TimeFrame,1);
+
+      double TenkansenArr[];
+      double KijunsenArr[];
+      double SenkouspanAArr[];
+      double SenkouspanBArr[];
+
+      double ShiftedSenkouspanAArr[];
+      double ShiftedSenkouspanBArr[];
+
+      double ChikouspanArr[];
+
+      double Bar26High = iHigh(_Symbol,TimeFrame,26);
+      double Bar26Low = iLow(_Symbol,TimeFrame,26);
+      double CurrentHigh = iHigh(_Symbol,TimeFrame,0);
+      double CurrentLow = iLow(_Symbol,TimeFrame,0);
+
+      CopyBuffer(handleIchimoku,0,1,1,TenkansenArr);
+      CopyBuffer(handleIchimoku,1,1,1,KijunsenArr);
+      CopyBuffer(handleIchimoku,2,1,1,SenkouspanAArr);
+      CopyBuffer(handleIchimoku,3,1,1,SenkouspanBArr);
+
+      CopyBuffer(handleIchimoku,2,-26,1,ShiftedSenkouspanAArr);
+      CopyBuffer(handleIchimoku,3,-26,1,ShiftedSenkouspanBArr);
+
+      CopyBuffer(handleIchimoku,4,26,1,ChikouspanArr);
+
+
+      if(ClosePrice_1 > SenkouspanAArr[0] &&
+         ClosePrice_1 > SenkouspanBArr[0] &&
+         ClosePrice_1 > KijunsenArr[0] &&
+         TenkansenArr[0] > KijunsenArr[0] &&
+         ShiftedSenkouspanAArr[0] > ShiftedSenkouspanBArr[0] &&
+         ChikouspanArr[0] > Bar26High)
+        {
+         Ichimoku_BULL = true;
+        }
+
+
+
+      if(debuggingComments)
+        {
+         debugComment += "======== DEBUGGING Ichimoku Filter BULL ===\n";
+         debugComment += "|=> ClosePrice_1 = " + DoubleToString(ClosePrice_1,_Digits) + " \n";
+         debugComment += "|=> SenkouspanAArr[0] = " + DoubleToString(SenkouspanAArr[0],_Digits) + " \n";
+         debugComment += "|=> SenkouspanBArr[0] = " + DoubleToString(SenkouspanBArr[0],_Digits) + " \n";
+         debugComment += "|=> TenkansenArr[0] = " + DoubleToString(TenkansenArr[0],_Digits) + " \n";
+         debugComment += "|=> KijunsenArr[0] = " + DoubleToString(KijunsenArr[0],_Digits) + " \n";
+         debugComment += "|=> ShiftedSenkouspanAArr[0] = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + " \n";
+         debugComment += "|=> ShiftedSenkouspanBArr[0] = " + DoubleToString(ShiftedSenkouspanBArr[0],_Digits) + " \n";
+         debugComment += "|=> ChikouspanArr[0] = " + DoubleToString(ChikouspanArr[0],_Digits) + " \n";
+         debugComment += "|=> Bar26High = " + DoubleToString(Bar26High,_Digits) + " \n";
+         debugComment += "|=> Ichimoku_BULL = " + IntegerToString(Ichimoku_BULL) + " \n";
+        }
+
+
+
+     }
+   else
+      if(!useIchimokuFilter)
+        {
+         Ichimoku_BULL = true;
+        }
+
+   return Ichimoku_BULL;
+  }
+
+
+//+------------------------------------------------------------------+
+
+
+
+//+------------------------------------------------------------------+
+//|                  Ichimoku_Filter Bear                            |
+//+------------------------------------------------------------------+
+bool Ichimoku_FilterBear()
+  {
+   bool Ichimoku_BEAR = false;
+   if(useIchimokuFilter)
+     {
+
+      double ClosePrice_1 = iClose(_Symbol,TimeFrame,1);
+
+      double TenkansenArr[];
+      double KijunsenArr[];
+      double SenkouspanAArr[];
+      double SenkouspanBArr[];
+
+      double ShiftedSenkouspanAArr[];
+      double ShiftedSenkouspanBArr[];
+
+      double ChikouspanArr[];
+
+      double Bar26High = iHigh(_Symbol,TimeFrame,26);
+      double Bar26Low = iLow(_Symbol,TimeFrame,26);
+      double CurrentHigh = iHigh(_Symbol,TimeFrame,0);
+      double CurrentLow = iLow(_Symbol,TimeFrame,0);
+
+      CopyBuffer(handleIchimoku,0,1,1,TenkansenArr);
+      CopyBuffer(handleIchimoku,1,1,1,KijunsenArr);
+      CopyBuffer(handleIchimoku,2,1,1,SenkouspanAArr);
+      CopyBuffer(handleIchimoku,3,1,1,SenkouspanBArr);
+
+      CopyBuffer(handleIchimoku,2,-26,1,ShiftedSenkouspanAArr);
+      CopyBuffer(handleIchimoku,3,-26,1,ShiftedSenkouspanBArr);
+
+      CopyBuffer(handleIchimoku,4,26,1,ChikouspanArr);
+
+
+      if(ClosePrice_1 < SenkouspanAArr[0] &&
+         ClosePrice_1 < SenkouspanBArr[0] &&
+         ClosePrice_1 < KijunsenArr[0] &&
+         TenkansenArr[0] < KijunsenArr[0] &&
+         ShiftedSenkouspanAArr[0] < ShiftedSenkouspanBArr[0] &&
+         ChikouspanArr[0] < Bar26High)
+        {
+         Ichimoku_BEAR = true;
+        }
+
+
+      if(debuggingComments)
+        {
+         debugComment += "======== DEBUGGING Ichimoku Filter BEAR ===\n";
+         debugComment += "|=> ClosePrice_1 = " + DoubleToString(ClosePrice_1,_Digits) + " \n";
+         debugComment += "|=> SenkouspanAArr[0] = " + DoubleToString(SenkouspanAArr[0],_Digits) + " \n";
+         debugComment += "|=> SenkouspanBArr[0] = " + DoubleToString(SenkouspanBArr[0],_Digits) + " \n";
+         debugComment += "|=> TenkansenArr[0] = " + DoubleToString(TenkansenArr[0],_Digits) + " \n";
+         debugComment += "|=> KijunsenArr[0] = " + DoubleToString(KijunsenArr[0],_Digits) + " \n";
+         debugComment += "|=> ShiftedSenkouspanAArr[0] = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + " \n";
+         debugComment += "|=> ShiftedSenkouspanBArr[0] = " + DoubleToString(ShiftedSenkouspanBArr[0],_Digits) + " \n";
+         debugComment += "|=> ChikouspanArr[0] = " + DoubleToString(ChikouspanArr[0],_Digits) + " \n";
+         debugComment += "|=> Bar26High = " + DoubleToString(Bar26High,_Digits) + " \n";
+         debugComment += "|=> Ichimoku_BEAR = " + IntegerToString(Ichimoku_BEAR) + " \n";
+        }
+
+
+     }
+   else
+      if(!useIchimokuFilter)
+        {
+         Ichimoku_BEAR = true;
+        }
+
+   return Ichimoku_BEAR;
+  }
+
 
 //+------------------------------------------------------------------+
