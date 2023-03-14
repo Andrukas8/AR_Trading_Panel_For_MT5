@@ -17,6 +17,7 @@ enum ENUM_STRATEGY
   {
    NOSTRATEGY,
    KTS,
+   MACD,
    ICHI_TENKANBR,
    ICHI_KINJUNBR,
    ICHI_KUMOBR,
@@ -29,10 +30,11 @@ enum ENUM_STRATEGY
 
 string StrategySelected = "";
 
-string StrategyStr[10] =
+string StrategyStr[11] =
   {
    "NOSTRATEGY",
    "KTS",
+   "MACD",
    "ICHI_TENKANBR",
    "ICHI_KINJUNBR",
    "ICHI_KUMOBR",
@@ -56,7 +58,7 @@ input bool debuggingComments = true; // SHOW DEBUGGING COMMENTS
 input bool showProfitOnChart = false; // SHOW POSITION PROFIT ON CHART
 input bool useSymmetricalPositionFilter = false; // DO NOT SHOW SIGNALS FOR SYMMETRICAL PAIRS
 input bool useOpenPositionFilter = false; // DO NOT SHOW SIGNALS FOR INSTRUMENTS WITH OPEN POSITIONS
-input ENUM_STRATEGY StrategySelect = ICHI_TENKANBR;
+input ENUM_STRATEGY StrategySelect = MACD;
 input string posLotsDef = "0.2"; // LOT SIZE
 input string slPipsDef = "5"; // SL pips
 input string RiskToRewardDef = "2"; // RRR
@@ -70,11 +72,14 @@ input bool tenkansenTSL = false; // TSL ICHIMOKU TENKANSEN
 input bool kijunsenTSL = false; // TSL ICHIMOKU KIJUNSEN
 input bool pointsTSL = false; // TSL REGULAR IN POINTS
 input int TslPoints = 50; // _____ TSL REGULAR POINTS
-input bool movingAverageTSL = true; // TSL MA
+input bool movingAverageTSL = false; // TSL MA
 input int MaPeriod = 8; // _____ MA TSL PERIOD
 input int MaShift = 5;  // _____ MA TSL SHIFT
 input ENUM_MA_METHOD TslMaMethod = MODE_SMMA; // _____ MA TSL METHOD
 input ENUM_APPLIED_PRICE TslMaAppPrice = PRICE_MEDIAN; // _____ MA TSL PRICE
+
+input group "------------- MACD CROSSOVER ALERT --------------------------"
+input bool MACDAlert = true; // ALERT MACD SIGNAL
 
 input group "------------- TENKANSEN BREAK ALERT --------------------------"
 input bool SignalTenkansenBreak = false; // ALERT ON TK BREAK
@@ -126,14 +131,10 @@ input int rsiMA_MA_Shift = 0; // __________ MA SHIFT
 input ENUM_MA_METHOD rsiMA_MA_Method = MODE_SMA; // __________ MA METHOD
 
 input bool useAlligatorFilter = true; // USE ALLIGATOR FILTER
-
 input bool useAOFilter = true; // USE AO FILTER
-
 input bool useACFilter = true; // USE AC FILTER
-
-input bool useMAFilter = true; // USE MA FILTER
-
 input bool useIchimokuFilter = true; // USE ICHIMOKU FILTER
+input bool useMAFilter = true; // USE MA FILTER
 
 input int MaFilterPeriod = 200; // __________ MA PERIOD
 input int MaFilterShift = 0; // __________ MA SHIFT
@@ -216,6 +217,7 @@ int handleAlligatorFilter;
 int handleMAFilter;
 int handleAOFilter;
 int handleACFilter;
+int handleMACD;
 
 int barCountFractals;
 string textComment;
@@ -2884,6 +2886,13 @@ int OnInit()
       handleRSIMAFilter = iMA(_Symbol,TimeFrame,rsiMA_MA_Range,rsiMA_MA_Shift,rsiMA_MA_Method,handleRSIFilter);
      }
 
+
+   if(MACDAlert)
+     {
+      handleMACD = iMACD(_Symbol,TimeFrame,12,26,9,PRICE_CLOSE);
+     }
+
+
 //--- succeed
    return(INIT_SUCCEEDED);
   }
@@ -3755,6 +3764,66 @@ void OnTick()
          //|  ----- End of Signal If TK Break Strategy Conditions Met ------- |
          //|                                                                  |
          //+------------------------------------------------------------------+
+
+
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //|  ----- MACD Alert ---------------------------------------------- |
+         //|                                                                  |
+         //+------------------------------------------------------------------+
+
+         if(MACDAlert)
+           {
+
+            static datetime MACD_timeStamp;
+            datetime MACD_time = iTime(_Symbol,TimeFrame,0);
+
+            if(MACD_timeStamp != MACD_time)
+              {
+               MACD_timeStamp = MACD_time;
+
+               double MACD_Hist[],MADC_Signal[];
+
+               ArraySetAsSeries(MACD_Hist,true);
+               ArraySetAsSeries(MADC_Signal,true);
+
+               CopyBuffer(handleMACD,0,0,2,MACD_Hist); // for Histogram
+               CopyBuffer(handleMACD,1,0,2,MADC_Signal); // for Signal
+
+               textComment += "----- MACD Alert -----\n";
+               textComment += "MACD_Hist[0] = " + DoubleToString(MACD_Hist[0],_Digits) + " \n";
+               textComment += "MACD_Hist[1] = " + DoubleToString(MACD_Hist[1],_Digits) + " \n";
+
+               textComment += "MADC_Signal[0] = " + DoubleToString(MADC_Signal[0],_Digits) + " \n";
+               textComment += "MADC_Signal[1] = " + DoubleToString(MADC_Signal[1],_Digits) + " \n";
+
+               // Print(textComment);
+
+
+               if(MACD_Hist[0] > MADC_Signal[0] && MACD_Hist[1] < MADC_Signal[1] && MACD_Hist[0] < 0 && MA_FilterBull())
+                 {
+                  // Buy Signal
+                  Alert(_Symbol," === MACD CROSSOVER ALERT === BULLISH");
+                  //   Print(_Symbol," === MACD CROSSOVER ALERT === BULLISH");
+                 }
+               else
+                  if(MACD_Hist[0] < MADC_Signal[0] && MACD_Hist[1] > MADC_Signal[1] && MACD_Hist[0] > 0 && MA_FilterBear())
+                    {
+                     // Sell Signal
+                     Alert(_Symbol," === MACD CROSSOVER ALERT === BEARISH");
+                     //    Print(_Symbol," === MACD CROSSOVER ALERT === BEARISH");
+                    }
+
+              }
+           }
+
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //|  ----- End of MACD Alert --------------------------------------- |
+         //|                                                                  |
+         //+------------------------------------------------------------------+
+
+
 
         } // if VaRfilterGo(maxVARFiltervalue)
      } // if(Period() == TimeFrame)
