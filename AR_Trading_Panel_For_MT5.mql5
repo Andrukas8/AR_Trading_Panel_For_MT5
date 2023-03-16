@@ -23,7 +23,7 @@ enum ENUM_STRATEGY
    ICHI_KUMOBR,
    BILL_WILLIAMS,
    THREELINESTRIKE,
-   RSILMI,
+   RSIMA,
    PRICEACTION,
    ORDERBLOCK
   };
@@ -40,7 +40,7 @@ string StrategyStr[11] =
    "ICHI_KUMOBR",
    "BILL_WILLIAMS",
    "THREELINESTRIKE",
-   "RSILMI",
+   "RSIMA",
    "PRICEACTION",
    "ORDERBLOCK"
   };
@@ -58,7 +58,7 @@ input bool debuggingComments = true; // SHOW DEBUGGING COMMENTS
 input bool showProfitOnChart = false; // SHOW POSITION PROFIT ON CHART
 input bool useSymmetricalPositionFilter = false; // DO NOT SHOW SIGNALS FOR SYMMETRICAL PAIRS
 input bool useOpenPositionFilter = false; // DO NOT SHOW SIGNALS FOR INSTRUMENTS WITH OPEN POSITIONS
-input ENUM_STRATEGY StrategySelect = MACD;
+input ENUM_STRATEGY StrategySelect = RSIMA;
 input string posLotsDef = "0.2"; // LOT SIZE
 input string slPipsDef = "5"; // SL pips
 input string RiskToRewardDef = "2"; // RRR
