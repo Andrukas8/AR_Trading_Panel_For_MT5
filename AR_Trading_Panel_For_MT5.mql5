@@ -3853,15 +3853,12 @@ void OnTick()
                CopyBuffer(handleRSIFilter,0,0,2,RSIMAAlert_RSI_buffer);
                CopyBuffer(handleRSIMAFilter,0,0,2,RSIMAAlert_RSI_MA_buffer);
 
-
                textComment += "----- RSI MA Alert -----\n";
                textComment += "RSIMAAlert_RSI_buffer[0] = " + DoubleToString(RSIMAAlert_RSI_buffer[0],_Digits) + " \n";
                textComment += "RSIMAAlert_RSI_buffer[1] = " + DoubleToString(RSIMAAlert_RSI_buffer[1],_Digits) + " \n";
 
                textComment += "RSIMAAlert_RSI_MA_buffer[0] = " + DoubleToString(RSIMAAlert_RSI_MA_buffer[0],_Digits) + " \n";
                textComment += "RSIMAAlert_RSI_MA_buffer[1] = " + DoubleToString(RSIMAAlert_RSI_MA_buffer[1],_Digits) + " \n";
-
-               Print(textComment);
 
                if(RSIMAAlert_RSI_buffer[0] > RSIMAAlert_RSI_MA_buffer[0] && RSIMAAlert_RSI_buffer[1] < RSIMAAlert_RSI_MA_buffer[1] && MA_FilterBull())
 
@@ -3875,7 +3872,6 @@ void OnTick()
                      // Sell Signal
                      Alert(_Symbol," === RSI MA CROSSOVER ALERT === BEARISH");
                     }
-
               }
            }
 
