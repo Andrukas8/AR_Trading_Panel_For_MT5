@@ -79,7 +79,10 @@ input ENUM_MA_METHOD TslMaMethod = MODE_SMMA; // _____ MA TSL METHOD
 input ENUM_APPLIED_PRICE TslMaAppPrice = PRICE_MEDIAN; // _____ MA TSL PRICE
 
 input group "------------- MACD CROSSOVER ALERT --------------------------"
-input bool MACDAlert = true; // ALERT MACD SIGNAL
+input bool MACDAlert = false; // ALERT MACD SIGNAL
+
+input group "------------- RSI MA CROSSOVER ALERT --------------------------"
+input bool RSIMAAlert = true; // ALERT RSI MA SIGNAL
 
 input group "------------- TENKANSEN BREAK ALERT --------------------------"
 input bool SignalTenkansenBreak = false; // ALERT ON TK BREAK
@@ -2880,7 +2883,7 @@ int OnInit()
       handleSOFilter = iStochastic(_Symbol,TimeFrame,soKPeriod,soDPeriod,soSlowing,MODE_SMA,STO_LOWHIGH);
      }
 
-   if(rsiMAFilter)
+   if(rsiMAFilter || RSIMAAlert)
      {
       handleRSIFilter = iRSI(_Symbol,TimeFrame,rsiMA_RSI_Range,PRICE_CLOSE);
       handleRSIMAFilter = iMA(_Symbol,TimeFrame,rsiMA_MA_Range,rsiMA_MA_Shift,rsiMA_MA_Method,handleRSIFilter);
@@ -3823,6 +3826,65 @@ void OnTick()
          //|                                                                  |
          //+------------------------------------------------------------------+
 
+
+
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //|  ----- RSI MA Alert -------------------------------------------- |
+         //|                                                                  |
+         //+------------------------------------------------------------------+
+
+         if(RSIMAAlert)
+           {
+
+            static datetime RSIMA_timeStamp;
+            datetime RSIMA_time = iTime(_Symbol,TimeFrame,0);
+
+            if(RSIMA_timeStamp != RSIMA_time)
+              {
+               RSIMA_timeStamp = RSIMA_time;
+
+               double RSIMAAlert_RSI_buffer[];
+               double RSIMAAlert_RSI_MA_buffer[];
+
+               ArraySetAsSeries(RSIMAAlert_RSI_buffer,true);
+               ArraySetAsSeries(RSIMAAlert_RSI_MA_buffer,true);
+
+               CopyBuffer(handleRSIFilter,0,0,2,RSIMAAlert_RSI_buffer);
+               CopyBuffer(handleRSIMAFilter,0,0,2,RSIMAAlert_RSI_MA_buffer);
+
+
+               textComment += "----- RSI MA Alert -----\n";
+               textComment += "RSIMAAlert_RSI_buffer[0] = " + DoubleToString(RSIMAAlert_RSI_buffer[0],_Digits) + " \n";
+               textComment += "RSIMAAlert_RSI_buffer[1] = " + DoubleToString(RSIMAAlert_RSI_buffer[1],_Digits) + " \n";
+
+               textComment += "RSIMAAlert_RSI_MA_buffer[0] = " + DoubleToString(RSIMAAlert_RSI_MA_buffer[0],_Digits) + " \n";
+               textComment += "RSIMAAlert_RSI_MA_buffer[1] = " + DoubleToString(RSIMAAlert_RSI_MA_buffer[1],_Digits) + " \n";
+
+               Print(textComment);
+
+               if(RSIMAAlert_RSI_buffer[0] > RSIMAAlert_RSI_MA_buffer[0] && RSIMAAlert_RSI_buffer[1] < RSIMAAlert_RSI_MA_buffer[1] && MA_FilterBull())
+
+                 {
+                  // Buy Signal
+                  Alert(_Symbol," === RSI MA CROSSOVER ALERT === BULLISH");
+                 }
+               else
+                  if(RSIMAAlert_RSI_buffer[0] < RSIMAAlert_RSI_MA_buffer[0] && RSIMAAlert_RSI_buffer[1] > RSIMAAlert_RSI_MA_buffer[1] && MA_FilterBear())
+                    {
+                     // Sell Signal
+                     Alert(_Symbol," === RSI MA CROSSOVER ALERT === BEARISH");
+                    }
+
+              }
+           }
+
+
+         //+------------------------------------------------------------------+
+         //|                                                                  |
+         //|  ----- End of RSI LMI Alert ------------------------------------ |
+         //|                                                                  |
+         //+------------------------------------------------------------------+
 
 
         } // if VaRfilterGo(maxVARFiltervalue)
@@ -6689,5 +6751,7 @@ bool Ichimoku_FilterBear()
    return Ichimoku_BEAR;
   }
 
+
+//+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
