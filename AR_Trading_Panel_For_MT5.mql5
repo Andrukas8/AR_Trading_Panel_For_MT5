@@ -53,8 +53,8 @@ input double maxVARFiltervalue = 2; // Max VaR filter value in % (use 100% to tu
 input bool autoBreakEven = false; // AUTO BREAKEVEN
 input double breakevenRatio = 1; //  _____ BE RATIO
 input bool alertBreakEven = false; // _____ ALERT ON BE
-input bool showEAComment = true; // SHOW EA COMMENT
-input bool debuggingComments = true; // SHOW DEBUGGING COMMENTS
+input bool showEAComment = false; // SHOW EA COMMENT
+input bool debuggingComments = false; // SHOW DEBUGGING COMMENTS
 input bool showProfitOnChart = false; // SHOW POSITION PROFIT ON CHART
 input bool useSymmetricalPositionFilter = false; // DO NOT SHOW SIGNALS FOR SYMMETRICAL PAIRS
 input bool useOpenPositionFilter = false; // DO NOT SHOW SIGNALS FOR INSTRUMENTS WITH OPEN POSITIONS
@@ -82,7 +82,7 @@ input group "------------- MACD CROSSOVER ALERT --------------------------"
 input bool MACDAlert = false; // ALERT MACD SIGNAL
 
 input group "------------- RSI MA CROSSOVER ALERT --------------------------"
-input bool RSIMAAlert = true; // ALERT RSI MA SIGNAL
+input bool RSIMAAlert = false; // ALERT RSI MA SIGNAL
 
 input group "------------- TENKANSEN BREAK ALERT --------------------------"
 input bool SignalTenkansenBreak = false; // ALERT ON TK BREAK
@@ -100,7 +100,7 @@ input ENUM_MA_METHOD MABreakMethod = MODE_SMMA; // __________ BREAK MA METHOD
 input ENUM_APPLIED_PRICE MABreakPrice = PRICE_MEDIAN; // __________ BREAK MA PRICE
 
 input group "------------- STOCHASTIC OSCILATOR FILTER ---------------------"
-input bool soFilter = true; // STOCHASTIC OSCILATOR FILTER
+input bool soFilter = false; // STOCHASTIC OSCILATOR FILTER
 input double soFilterStrength = 1; // __________ DIFFERENCE BETWEEN SIGNAL AND MAIN SHOULD BE
 input int soKPeriod = 30; // __________ %K Period
 input int soDPeriod = 10; // __________ %D Period
@@ -133,11 +133,11 @@ input int rsiMA_MA_Range = 35; // __________ MA PERIOD
 input int rsiMA_MA_Shift = 0; // __________ MA SHIFT
 input ENUM_MA_METHOD rsiMA_MA_Method = MODE_SMA; // __________ MA METHOD
 
-input bool useAlligatorFilter = true; // USE ALLIGATOR FILTER
-input bool useAOFilter = true; // USE AO FILTER
-input bool useACFilter = true; // USE AC FILTER
-input bool useIchimokuFilter = true; // USE ICHIMOKU FILTER
-input bool useMAFilter = true; // USE MA FILTER
+input bool useAlligatorFilter = false; // USE ALLIGATOR FILTER
+input bool useAOFilter = false; // USE AO FILTER
+input bool useACFilter = false; // USE AC FILTER
+input bool useIchimokuFilter = false; // USE ICHIMOKU FILTER
+input bool useMAFilter = false; // USE MA FILTER
 
 input int MaFilterPeriod = 200; // __________ MA PERIOD
 input int MaFilterShift = 0; // __________ MA SHIFT
@@ -1709,11 +1709,25 @@ bool CControlsDialog::CreateWm3AlertBtn(void)
      {
       if(!m_wm3AlertBtn.Text("[W3]"))
          return(false);
-
      }
    else
       if(!m_wm3AlertBtn.Text("W3"))
          return(false);
+
+
+
+   if(wiseMan2PermanentToggle)
+     {
+      if(!m_wm2AlertBtn.Text("[W2]"))
+         return(false);
+     }
+   else
+      if(!m_wm2AlertBtn.Text("W2"))
+         return(false);
+
+
+
+
 
    if(!Add(m_wm3AlertBtn))
       return(false);
@@ -3366,7 +3380,14 @@ void OnTick()
             double awesomeOscillatorArr[];
             CopyBuffer(handleAwesomeOscillator,0,0,5,awesomeOscillatorArr);
 
-            if(awesomeOscillatorArr[3] < awesomeOscillatorArr[2] && awesomeOscillatorArr[2] < awesomeOscillatorArr[1] && awesomeOscillatorArr[1] > awesomeOscillatorArr[0])
+            if(awesomeOscillatorArr[3] < awesomeOscillatorArr[2] && //      0 > 1 < 2 < 3
+               awesomeOscillatorArr[2] < awesomeOscillatorArr[1] &&
+               awesomeOscillatorArr[1] > awesomeOscillatorArr[0] &&
+               //  awesomeOscillatorArr[1] > 0 && // zero line rule
+               Ichimoku_FilterBear() &&
+               Alligator_FilterBear() &&
+               MA_FilterBear()
+              )
               {
                Alert(_Symbol," === AWESOME OSCILLATOR ALERT WISE MAN 2 === BEARISH");
                wm2AlertToggle = false;
@@ -3374,7 +3395,14 @@ void OnTick()
               }
 
             else
-               if(awesomeOscillatorArr[3] > awesomeOscillatorArr[2] && awesomeOscillatorArr[2] > awesomeOscillatorArr[1] && awesomeOscillatorArr[1] < awesomeOscillatorArr[0])
+               if(awesomeOscillatorArr[3] > awesomeOscillatorArr[2] &&
+                  awesomeOscillatorArr[2] > awesomeOscillatorArr[1] &&
+                  awesomeOscillatorArr[1] < awesomeOscillatorArr[0] &&
+                  //  awesomeOscillatorArr[1] < 0 && // zero line rule
+                  Ichimoku_FilterBull() &&
+                  Alligator_FilterBull() &&
+                  MA_FilterBull()
+                 )
                  {
                   Alert(_Symbol," === AWESOME OSCILLATOR ALERT WISE MAN 2 === BULLISH");
                   wm2AlertToggle = false;
