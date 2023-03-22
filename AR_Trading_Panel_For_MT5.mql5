@@ -3377,37 +3377,50 @@ void OnTick()
          //+------------------------------------------------------------------+
          if(wm2AlertToggle || wiseMan2PermanentToggle)
            {
-            double awesomeOscillatorArr[];
-            CopyBuffer(handleAwesomeOscillator,0,0,5,awesomeOscillatorArr);
 
-            if(awesomeOscillatorArr[3] < awesomeOscillatorArr[2] && //      0 > 1 < 2 < 3
-               awesomeOscillatorArr[2] < awesomeOscillatorArr[1] &&
-               awesomeOscillatorArr[1] > awesomeOscillatorArr[0] &&
-               //  awesomeOscillatorArr[1] > 0 && // zero line rule
-               Ichimoku_FilterBear() &&
-               Alligator_FilterBear() &&
-               MA_FilterBear()
-              )
+
+            static datetime WM3_timeStamp;
+            datetime WM3_time = iTime(_Symbol,TimeFrame,0);
+
+            if(WM3_timeStamp != WM3_time)
               {
-               Alert(_Symbol," === AWESOME OSCILLATOR ALERT WISE MAN 2 === BEARISH");
-               wm2AlertToggle = false;
-               ObjectSetString(0,ExtDialog.Name()+"wm2AlertBtn",OBJPROP_TEXT,"W2");
-              }
+               WM3_timeStamp = WM3_time;
 
-            else
-               if(awesomeOscillatorArr[3] > awesomeOscillatorArr[2] &&
-                  awesomeOscillatorArr[2] > awesomeOscillatorArr[1] &&
-                  awesomeOscillatorArr[1] < awesomeOscillatorArr[0] &&
-                  //  awesomeOscillatorArr[1] < 0 && // zero line rule
-                  Ichimoku_FilterBull() &&
-                  Alligator_FilterBull() &&
-                  MA_FilterBull()
+               double awesomeOscillatorArr[];
+               CopyBuffer(handleAwesomeOscillator,0,0,5,awesomeOscillatorArr);
+
+               if(awesomeOscillatorArr[3] < awesomeOscillatorArr[2] && //      0 > 1 < 2 < 3
+                  awesomeOscillatorArr[2] < awesomeOscillatorArr[1] &&
+                  awesomeOscillatorArr[1] > awesomeOscillatorArr[0] &&
+                  //  awesomeOscillatorArr[1] > 0 && // zero line rule
+                  Ichimoku_FilterBear() &&
+                  Alligator_FilterBear() &&
+                  MA_FilterBear()
                  )
                  {
-                  Alert(_Symbol," === AWESOME OSCILLATOR ALERT WISE MAN 2 === BULLISH");
+                  Alert(_Symbol," === AWESOME OSCILLATOR ALERT WISE MAN 2 === BEARISH");
                   wm2AlertToggle = false;
                   ObjectSetString(0,ExtDialog.Name()+"wm2AlertBtn",OBJPROP_TEXT,"W2");
                  }
+
+               else
+                  if(awesomeOscillatorArr[3] > awesomeOscillatorArr[2] &&
+                     awesomeOscillatorArr[2] > awesomeOscillatorArr[1] &&
+                     awesomeOscillatorArr[1] < awesomeOscillatorArr[0] &&
+                     //  awesomeOscillatorArr[1] < 0 && // zero line rule
+                     Ichimoku_FilterBull() &&
+                     Alligator_FilterBull() &&
+                     MA_FilterBull()
+                    )
+                    {
+                     Alert(_Symbol," === AWESOME OSCILLATOR ALERT WISE MAN 2 === BULLISH");
+                     wm2AlertToggle = false;
+                     ObjectSetString(0,ExtDialog.Name()+"wm2AlertBtn",OBJPROP_TEXT,"W2");
+                    }
+
+
+              } //  if(WM3_timeStamp != WM3_time)
+
            }
 
          //+------------------------------------------------------------------+
