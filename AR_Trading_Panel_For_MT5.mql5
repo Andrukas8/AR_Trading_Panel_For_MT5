@@ -3389,9 +3389,9 @@ void OnTick()
                double awesomeOscillatorArr[];
                CopyBuffer(handleAwesomeOscillator,0,0,5,awesomeOscillatorArr);
 
-               if(awesomeOscillatorArr[3] < awesomeOscillatorArr[2] && //      0 > 1 < 2 < 3
-                  awesomeOscillatorArr[2] < awesomeOscillatorArr[1] &&
-                  awesomeOscillatorArr[1] > awesomeOscillatorArr[0] &&
+               if(awesomeOscillatorArr[4] < awesomeOscillatorArr[3] && //      0 > 1 < 2 < 3
+                  awesomeOscillatorArr[3] < awesomeOscillatorArr[2] &&
+                  awesomeOscillatorArr[2] > awesomeOscillatorArr[1] &&
                   //  awesomeOscillatorArr[1] > 0 && // zero line rule
                   Ichimoku_FilterBear() &&
                   Alligator_FilterBear() &&
@@ -3404,9 +3404,9 @@ void OnTick()
                  }
 
                else
-                  if(awesomeOscillatorArr[3] > awesomeOscillatorArr[2] &&
-                     awesomeOscillatorArr[2] > awesomeOscillatorArr[1] &&
-                     awesomeOscillatorArr[1] < awesomeOscillatorArr[0] &&
+                  if(awesomeOscillatorArr[4] > awesomeOscillatorArr[3] &&  //      1 < 2 > 3 > 4
+                     awesomeOscillatorArr[3] > awesomeOscillatorArr[2] &&
+                     awesomeOscillatorArr[2] < awesomeOscillatorArr[1] &&
                      //  awesomeOscillatorArr[1] < 0 && // zero line rule
                      Ichimoku_FilterBull() &&
                      Alligator_FilterBull() &&
