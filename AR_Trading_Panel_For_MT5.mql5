@@ -25,12 +25,13 @@ enum ENUM_STRATEGY
    THREELINESTRIKE,
    RSIMA,
    PRICEACTION,
-   ORDERBLOCK
+   ORDERBLOCK,
+   PINBAR
   };
 
 string StrategySelected = "";
 
-string StrategyStr[11] =
+string StrategyStr[12] =
   {
    "NOSTRATEGY",
    "KTS",
@@ -42,7 +43,8 @@ string StrategyStr[11] =
    "THREELINESTRIKE",
    "RSIMA",
    "PRICEACTION",
-   "ORDERBLOCK"
+   "ORDERBLOCK",
+   "PINBAR"
   };
 
 input group "------------- POSITIONS MANAGEMENT SETTINGS -------------"
@@ -58,7 +60,7 @@ input bool debuggingComments = false; // SHOW DEBUGGING COMMENTS
 input bool showProfitOnChart = false; // SHOW POSITION PROFIT ON CHART
 input bool useSymmetricalPositionFilter = false; // DO NOT SHOW SIGNALS FOR SYMMETRICAL PAIRS
 input bool useOpenPositionFilter = false; // DO NOT SHOW SIGNALS FOR INSTRUMENTS WITH OPEN POSITIONS
-input ENUM_STRATEGY StrategySelect = RSIMA;
+input ENUM_STRATEGY StrategySelect = NOSTRATEGY;
 input string posLotsDef = "0.2"; // LOT SIZE
 input string slPipsDef = "5"; // SL pips
 input string RiskToRewardDef = "2"; // RRR
@@ -117,6 +119,7 @@ input int fractalBufferWM3 = 20; // _____ FRACTAL BUFFER for WM3 in points
 input int alligatorMultiplier = 1; // _____ Alligator multiplier for filtering WM signals
 
 input group "------------- ALERTS ------------"
+input bool pinbarAlert = true; // PINBAR
 input bool threeLinesStrikeActivate = false; // 3 LINES STRIKE
 input double ToleranceOpenPercent = 50; // _____ Engulfing Range Tolerance Open %
 input double ToleranceClosePercent = 50; // _____ Engulfing Range Tolerance Close %
@@ -3287,6 +3290,7 @@ void OnTick()
          //|                                                                  |
          //+------------------------------------------------------------------+
 
+
          //+------------------------------------------------------------------+
          //|                                                                  |
          //|  ----- Handling Divergent Bar Alert WM1 ------------------------ |
@@ -4866,6 +4870,65 @@ void OnTick()
       textComment="";
      }
 
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//|  ----- Handling PINBAR Alert ----------------------------------- |
+//|                                                                  |
+//+------------------------------------------------------------------+
+   if(pinbarAlert)
+     {
+
+      int bars = iBars(_Symbol, TimeFrame);
+      if(barsTotal != bars) // New bar appeared on the chart
+        {
+         barsTotal = bars;
+
+         //getting previous bar Close Open Low High values
+         double closePrevBar = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits);
+         double openPrevBar = NormalizeDouble(iOpen(_Symbol,TimeFrame,1),_Digits);
+         double lowPrevBar = NormalizeDouble(iLow(_Symbol,TimeFrame,1),_Digits);
+         double highPrevBar = NormalizeDouble(iHigh(_Symbol,TimeFrame,1),_Digits);
+
+         double upperWickPrevBar = 0;
+         double lowerWickPrevBar = 0;
+         double bodyPrevBar = 0;
+
+         if(closePrevBar > openPrevBar)  // Bullish bar
+           {
+            upperWickPrevBar = NormalizeDouble(highPrevBar - closePrevBar,_Digits);
+            lowerWickPrevBar = NormalizeDouble(openPrevBar - lowPrevBar,_Digits);
+            bodyPrevBar = NormalizeDouble(closePrevBar - openPrevBar,_Digits);
+
+           }
+         else
+            if(closePrevBar < openPrevBar) // Bearish bar
+              {
+               upperWickPrevBar = NormalizeDouble(highPrevBar - openPrevBar,_Digits);
+               lowerWickPrevBar = NormalizeDouble(closePrevBar - lowPrevBar,_Digits);
+               bodyPrevBar = NormalizeDouble(openPrevBar - closePrevBar,_Digits);
+              }
+
+
+         if(lowerWickPrevBar > 2 * bodyPrevBar && upperWickPrevBar < 0.3 * lowerWickPrevBar)
+           {
+            Alert(_Symbol," === PINBAR ALERT === BULLISH");
+           }
+
+         else
+            if(upperWickPrevBar > 2 * bodyPrevBar && lowerWickPrevBar < 0.5 * upperWickPrevBar)
+              {
+               Alert(_Symbol," === PINBAR ALERT === BEARISH");
+              }
+
+        }
+     }
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//|  ----- End of Handling PINBAR Alert ---------------------------- |
+//|                                                                  |
+//+------------------------------------------------------------------+
 
 
 
@@ -6789,6 +6852,8 @@ bool Ichimoku_FilterBear()
   }
 
 
+
+//+------------------------------------------------------------------+
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
