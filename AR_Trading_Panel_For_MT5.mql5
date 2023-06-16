@@ -18,6 +18,7 @@ enum ENUM_STRATEGY
    NOSTRATEGY,
    KTS,
    MACD,
+   ICHIMOKU,
    ICHI_TENKANBR,
    ICHI_KINJUNBR,
    ICHI_KUMOBR,
@@ -31,11 +32,12 @@ enum ENUM_STRATEGY
 
 string StrategySelected = "";
 
-string StrategyStr[12] =
+string StrategyStr[13] =
   {
    "NOSTRATEGY",
    "KTS",
    "MACD",
+   "ICHIMOKU",
    "ICHI_TENKANBR",
    "ICHI_KINJUNBR",
    "ICHI_KUMOBR",
