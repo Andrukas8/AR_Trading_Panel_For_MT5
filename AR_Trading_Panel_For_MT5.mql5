@@ -142,12 +142,24 @@ input bool useAlligatorFilter = false; // USE ALLIGATOR FILTER
 input bool useAOFilter = false; // USE AO FILTER
 input bool useACFilter = false; // USE AC FILTER
 input bool useIchimokuFilter = false; // USE ICHIMOKU FILTER
-input bool useMAFilter = false; // USE MA FILTER
 
+input bool useMAFilter = false; // USE MA FILTER
 input int MaFilterPeriod = 200; // __________ MA PERIOD
 input int MaFilterShift = 0; // __________ MA SHIFT
 input ENUM_MA_METHOD MaFilterMethod = MODE_EMA; // __________ MA METHOD
 input ENUM_APPLIED_PRICE MaFilterAppPrice = PRICE_CLOSE; // __________ MA PRICE
+
+input bool use3xMAFilter = false; // USE MAx3 FILTER for WM3
+input int Ma1FilterPeriod = 200; // __________ 1 MA PERIOD
+input int Ma2FilterPeriod = 50; // __________ 2 MA PERIOD
+input int Ma3FilterPeriod = 20; // __________ 3 MA PERIOD
+
+input int Ma1FilterShift = 0; // __________ 1 MA SHIFT
+input int Ma2FilterShift = 0; // __________ 2 MA SHIFT
+input int Ma3FilterShift = 0; // __________ 3 MA SHIFT
+
+input ENUM_MA_METHOD Ma3xFilterMethod = MODE_EMA; // __________ 3x MAs METHOD
+input ENUM_APPLIED_PRICE Ma3xFilterAppPrice = PRICE_CLOSE; // __________ 3x MAs PRICE
 
 input bool useMAFilter3LS = false; // USE MA FILTER FOR 3LS SIGNALS
 input int FastMaPeriod3LS = 21; // __________ 3 LS FAST MA PERIOD
@@ -223,6 +235,11 @@ int handleRSIFilter;
 int handleRSIMAFilter;
 int handleAlligatorFilter;
 int handleMAFilter;
+
+int handleMA1Filter;
+int handleMA2Filter;
+int handleMA3Filter;
+
 int handleAOFilter;
 int handleACFilter;
 int handleMACD;
@@ -2896,6 +2913,13 @@ int OnInit()
       handleMAFilter = iMA(_Symbol,TimeFrame,MaFilterPeriod,MaFilterShift,MaFilterMethod,MaFilterAppPrice);
      }
 
+   if(use3xMAFilter)
+     {
+      handleMA1Filter = iMA(_Symbol,TimeFrame,Ma1FilterPeriod,Ma1FilterShift,Ma3xFilterMethod,Ma3xFilterAppPrice);
+      handleMA2Filter = iMA(_Symbol,TimeFrame,Ma2FilterPeriod,Ma2FilterShift,Ma3xFilterMethod,Ma3xFilterAppPrice);
+      handleMA3Filter = iMA(_Symbol,TimeFrame,Ma3FilterPeriod,Ma3FilterShift,Ma3xFilterMethod,Ma3xFilterAppPrice);
+     }
+
 
    if(soFilter)
      {
@@ -3514,7 +3538,8 @@ void OnTick()
                         MA_FilterBull() &&
                         AO_FilterBull() &&
                         AC_FilterBull() &&
-                        Ichimoku_FilterBull()
+                        Ichimoku_FilterBull()&&
+                        MAx3_FilterBull()
                        )
                        {
                         fractalBreakBull = true;
@@ -3527,7 +3552,8 @@ void OnTick()
                            MA_FilterBear() &&
                            AO_FilterBear() &&
                            AC_FilterBear() &&
-                           Ichimoku_FilterBear()
+                           Ichimoku_FilterBear()&&
+                           MAx3_FilterBear()
                           )
                           {
                            fractalBreakBear = true;
@@ -6302,6 +6328,96 @@ bool MA_FilterBear()
 
    return MA_BEAR;
   }
+  
+  
+//+------------------------------------------------------------------+
+//|                  3xMA_Filter Bull                                |
+//+------------------------------------------------------------------+
+bool MAx3_FilterBull()
+  {
+   bool MAx3_BULL = false;
+   if(use3xMAFilter)
+     {
+      double MA1_buffer[];
+      double MA2_buffer[];
+      double MA3_buffer[];
+      double LastClosePrice = iClose(_Symbol,TimeFrame,1);
+
+      if(CopyBuffer(handleMA1Filter,0,0,3,MA1_buffer)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+        
+        if(CopyBuffer(handleMA2Filter,0,0,3,MA2_buffer)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+        
+         if(CopyBuffer(handleMA3Filter,0,0,3,MA3_buffer)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+
+      if((LastClosePrice > MA3_buffer[1]) && (MA3_buffer[1] > MA2_buffer[1]) && (MA2_buffer[1] > MA1_buffer[1]))
+         MAx3_BULL = true;
+     
+     }
+   else
+      if(!use3xMAFilter)
+        {
+         MAx3_BULL = true;
+        }
+
+   return MAx3_BULL;
+  }
+
+//+------------------------------------------------------------------+
+//|                  3xMA_Filter BEAR                                |
+//+------------------------------------------------------------------+
+bool MAx3_FilterBear()
+  {
+   bool MAx3_BEAR = false;
+   if(use3xMAFilter)
+     {
+      double MA1_buffer[];
+      double MA2_buffer[];
+      double MA3_buffer[];
+      double LastClosePrice = iClose(_Symbol,TimeFrame,1);
+
+       if(CopyBuffer(handleMA1Filter,0,0,3,MA1_buffer)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+        
+        if(CopyBuffer(handleMA2Filter,0,0,3,MA2_buffer)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+        
+         if(CopyBuffer(handleMA3Filter,0,0,3,MA3_buffer)<0)
+        {
+         PrintFormat("Failed to copy data, error code %d",GetLastError());
+         return false;
+        }
+            
+      if((LastClosePrice < MA3_buffer[1]) && (MA3_buffer[1] < MA2_buffer[1]) && (MA2_buffer[1] < MA1_buffer[1]))
+         MAx3_BEAR = true;
+    
+     }
+   else
+      if(!use3xMAFilter)
+        {
+         MAx3_BEAR = true;
+        }
+
+   return MAx3_BEAR;
+  }
+  
 //+------------------------------------------------------------------+
 //+------------------------------------------------------------------+
 
@@ -6658,7 +6774,7 @@ double UpperFractalCalculation()
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
-//|    Upper Fractal Calculation                                     |
+//|    Lower Fractal Calculation                                     |
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
