@@ -3578,12 +3578,12 @@ void OnTick()
 
                if(fractalBreakBull)
                  {
-                  Alert(_Symbol," === FRACTAL BREAK ALERT WISE MAN 3 === BULLISH");
+                  Alert(_Symbol," === FRACTAL BREAK ALERT WISE MAN 3 === BULLISH ",upperFractalWM3); // qqq
                   fractalBreakBull = false;
                  }
                if(fractalBreakBear)
                  {
-                  Alert(_Symbol," === FRACTAL BREAK ALERT WISE MAN 3 === BEARISH");
+                  Alert(_Symbol," === FRACTAL BREAK ALERT WISE MAN 3 === BEARISH ",lowerFractalWM3); // qqq
                   fractalBreakBear = false;
                  }
               }
@@ -5849,7 +5849,7 @@ bool CControlsDialog::DrawPositionRectangles()
                if(price2 > 0)
                  {
                   ObjectCreate(0, "AR_SL_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price2);
-                  ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrOrangeRed);
+                  ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrIndianRed);
                   ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
                   ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
                   ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_BACK,true);
@@ -5861,11 +5861,11 @@ bool CControlsDialog::DrawPositionRectangles()
                   alertCloseLine = true;
 
                   ObjectCreate(0, "AR_TP_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price3);
-                  ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_COLOR, clrMediumSeaGreen);
+                  ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_COLOR, clrForestGreen);
                   ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
                   ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
                   ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_BACK,true);
-                 
+
 
                  }
               }
