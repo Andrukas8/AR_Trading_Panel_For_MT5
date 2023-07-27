@@ -111,13 +111,14 @@ input int soDPeriod = 10; // __________ %D Period
 input int soSlowing = 10; // __________ SLOWING
 
 input group "------------- BILL WILLIAMS PROFITUNITY BUTTONS ---------------------"
-input bool wiseMenAlertsToggle = false; // ACTIVATE BW PROFITUNITY 3 WISE MEN ALERT BUTTONS
+input bool wiseMenAlertsToggle = false;     // ACTIVATE BW PROFITUNITY 3 WISE MEN ALERT BUTTONS
 input bool wiseMan1PermanentToggle = false; // _____ activeate WM1 permanently
 input bool wiseMan2PermanentToggle = false; // _____ activeate WM2 permanently
 input bool wiseMan3PermanentToggle = false; // _____ activeate WM3 permanently
+input int inp_fractalShoulder = 2;          // __________ WM3 Fractal Shoulder
+input int fractalBufferWM3 = 20;            // __________ WM3 Fractal Buffer in points
 input double atrMultiplier = 1; // _____ ATR multiplier for filtering WM1 signals
 input int atrPeriod = 14; // _____ ATR PERIOD
-input int fractalBufferWM3 = 20; // _____ FRACTAL BUFFER for WM3 in points
 input int alligatorMultiplier = 1; // _____ Alligator multiplier for filtering WM signals
 
 input group "------------- ALERTS ------------"
@@ -3464,11 +3465,7 @@ void OnTick()
          //|  ----- Handling Fractal Break Alert WM3 ------------------------ |
          //|                                                                  |
          //+------------------------------------------------------------------+
-
-         //+------------------------------------------------------------------+
-         //|                                                                  |
-         //+------------------------------------------------------------------+
-
+      
          if(wiseMan3PermanentToggle)
            {
             wm3AlertToggle = true;
@@ -3484,53 +3481,68 @@ void OnTick()
 
             if(timeStamp != time)
               {
-               timeStamp = time;
-
-               double high_1 = 0;
-               double high_2 = 0;
-               double high_3 = 0;
-               double high_4 = 0;
-               double high_5 = 0;
-
-               double low_1 = 0;
-               double low_2 = 0;
-               double low_3 = 0;
-               double low_4 = 0;
-               double low_5 = 0;
+               timeStamp = time;              
 
                double fractalBufferWM3Double = NormalizeDouble(fractalBufferWM3*_Point,_Digits);
 
-               for(int i=3; i<200; i++)
-                 {
-                  high_1 = iHigh(_Symbol,PERIOD_CURRENT,i+2);
-                  high_2 = iHigh(_Symbol,PERIOD_CURRENT,i+1);
-                  high_3 = iHigh(_Symbol,PERIOD_CURRENT,i);
-                  high_4 = iHigh(_Symbol,PERIOD_CURRENT,i-1);
-                  high_5 = iHigh(_Symbol,PERIOD_CURRENT,i-2);
+               // --- Checking if Fractal Shoulder integer is valid
 
-                  if(high_3 > high_2 && high_3 > high_1 && high_3 > high_4 && high_3 > high_5)
+               int fractalShoulder;
+
+               if(inp_fractalShoulder <= 0)
+                 {
+                  fractalShoulder = 1;
+                 }
+               else
+                 {
+                  fractalShoulder = inp_fractalShoulder;
+                 }
+
+               for(int i=fractalShoulder+1; i<200; i++)
+                 {
+                  double highs[];
+                  double max_high;
+                  double current_high = iHigh(_Symbol,TimeFrame,i);
+                  
+                  for(int j=1; j<=fractalShoulder; j++)
                     {
-                     upperFractalWM3 = high_3 + fractalBufferWM3Double;
+                     highs.Push(iHigh(_Symbol,TimeFrame,i+j));
+                     highs.Push(iHigh(_Symbol,TimeFrame,i-j));
+                    }
+                  
+                  max_high = highs[ArrayMaximum(highs)];
+                 
+                  if(current_high > max_high)
+                    {
+                     upperFractalWM3 = current_high + fractalBufferWM3Double;                    
                      break;
                     }
                  }
 
-               for(int i=3; i<200; i++)
+               for(int i=fractalShoulder+1; i<200; i++)
                  {
-                  low_1 = iLow(_Symbol,PERIOD_CURRENT,i+2);
-                  low_2 = iLow(_Symbol,PERIOD_CURRENT,i+1);
-                  low_3 = iLow(_Symbol,PERIOD_CURRENT,i);
-                  low_4 = iLow(_Symbol,PERIOD_CURRENT,i-1);
-                  low_5 = iLow(_Symbol,PERIOD_CURRENT,i-2);
-
-                  if(low_3 < low_2 && low_3 < low_1 && low_3 < low_4 && low_3 < low_5)
+                  double lows[];
+                  double min_low;
+                  double current_low = iLow(_Symbol,TimeFrame,i);
+                  
+                  for(int j=1; j<=fractalShoulder; j++)
                     {
-                     lowerFractalWM3 = low_3  - fractalBufferWM3Double;
+                     lows.Push(iLow(_Symbol,TimeFrame,i+j));
+                     lows.Push(iLow(_Symbol,TimeFrame,i-j));
+                    }
+
+                  min_low = lows[ArrayMinimum(lows)];
+
+                  if(current_low < min_low)
+                    {
+                     lowerFractalWM3 = current_low  - fractalBufferWM3Double;
                      break;
                     }
                  }
 
-
+            //   Print("Upper Fractal = ", upperFractalWM3);
+            //   Print("Lower Fractal = ", lowerFractalWM3);
+                              
                if(upperFractalWM3 !=0 && lowerFractalWM3 !=0)
                   if(usedFractalWM3Upper != upperFractalWM3 && usedFractalWM3Lower != lowerFractalWM3)
                      if(alertClosePrevBar1 > upperFractalWM3 &&
@@ -3583,7 +3595,7 @@ void OnTick()
             debugComment += "----------------------------------------------\n";
             debugComment += "|=> fractalBreakBull = " + IntegerToString(fractalBreakBull) + " \n";
             debugComment += "|=> fractalBreakBear = " + IntegerToString(fractalBreakBear) + " \n";
-            // End of debugging
+            // End of debugging           
 
            }
 
@@ -6328,8 +6340,8 @@ bool MA_FilterBear()
 
    return MA_BEAR;
   }
-  
-  
+
+
 //+------------------------------------------------------------------+
 //|                  3xMA_Filter Bull                                |
 //+------------------------------------------------------------------+
@@ -6348,14 +6360,14 @@ bool MAx3_FilterBull()
          PrintFormat("Failed to copy data, error code %d",GetLastError());
          return false;
         }
-        
-        if(CopyBuffer(handleMA2Filter,0,0,3,MA2_buffer)<0)
+
+      if(CopyBuffer(handleMA2Filter,0,0,3,MA2_buffer)<0)
         {
          PrintFormat("Failed to copy data, error code %d",GetLastError());
          return false;
         }
-        
-         if(CopyBuffer(handleMA3Filter,0,0,3,MA3_buffer)<0)
+
+      if(CopyBuffer(handleMA3Filter,0,0,3,MA3_buffer)<0)
         {
          PrintFormat("Failed to copy data, error code %d",GetLastError());
          return false;
@@ -6363,7 +6375,7 @@ bool MAx3_FilterBull()
 
       if((LastClosePrice > MA3_buffer[1]) && (MA3_buffer[1] > MA2_buffer[1]) && (MA2_buffer[1] > MA1_buffer[1]))
          MAx3_BULL = true;
-     
+
      }
    else
       if(!use3xMAFilter)
@@ -6387,27 +6399,27 @@ bool MAx3_FilterBear()
       double MA3_buffer[];
       double LastClosePrice = iClose(_Symbol,TimeFrame,1);
 
-       if(CopyBuffer(handleMA1Filter,0,0,3,MA1_buffer)<0)
+      if(CopyBuffer(handleMA1Filter,0,0,3,MA1_buffer)<0)
         {
          PrintFormat("Failed to copy data, error code %d",GetLastError());
          return false;
         }
-        
-        if(CopyBuffer(handleMA2Filter,0,0,3,MA2_buffer)<0)
+
+      if(CopyBuffer(handleMA2Filter,0,0,3,MA2_buffer)<0)
         {
          PrintFormat("Failed to copy data, error code %d",GetLastError());
          return false;
         }
-        
-         if(CopyBuffer(handleMA3Filter,0,0,3,MA3_buffer)<0)
+
+      if(CopyBuffer(handleMA3Filter,0,0,3,MA3_buffer)<0)
         {
          PrintFormat("Failed to copy data, error code %d",GetLastError());
          return false;
         }
-            
+
       if((LastClosePrice < MA3_buffer[1]) && (MA3_buffer[1] < MA2_buffer[1]) && (MA2_buffer[1] < MA1_buffer[1]))
          MAx3_BEAR = true;
-    
+
      }
    else
       if(!use3xMAFilter)
@@ -6417,7 +6429,7 @@ bool MAx3_FilterBear()
 
    return MAx3_BEAR;
   }
-  
+
 //+------------------------------------------------------------------+
 //+------------------------------------------------------------------+
 
