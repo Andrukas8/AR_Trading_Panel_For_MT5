@@ -64,7 +64,7 @@ input bool useSymmetricalPositionFilter = false; // DO NOT SHOW SIGNALS FOR SYMM
 input bool useOpenPositionFilter = false; // DO NOT SHOW SIGNALS FOR INSTRUMENTS WITH OPEN POSITIONS
 input ENUM_STRATEGY StrategySelect = NOSTRATEGY;
 input string posLotsDef = "0.2"; // LOT SIZE
-input string slPipsDef = "5"; // SL pips
+input string slPipsDef = "10"; // SL pips
 input string RiskToRewardDef = "2"; // RRR
 input string RiskLevelDef = "0.1"; // RISK % OF DEPOSIT
 input double marginToBallancePercent = 90; // MARGIN TO DEPOSIT %
@@ -122,7 +122,7 @@ input int atrPeriod = 14; // _____ ATR PERIOD
 input int alligatorMultiplier = 1; // _____ Alligator multiplier for filtering WM signals
 
 input group "------------- ALERTS ------------"
-input bool pinbarAlert = true; // PINBAR
+input bool pinbarAlert = false; // PINBAR
 input bool threeLinesStrikeActivate = false; // 3 LINES STRIKE
 input double ToleranceOpenPercent = 50; // _____ Engulfing Range Tolerance Open %
 input double ToleranceClosePercent = 50; // _____ Engulfing Range Tolerance Close %
@@ -3465,7 +3465,7 @@ void OnTick()
          //|  ----- Handling Fractal Break Alert WM3 ------------------------ |
          //|                                                                  |
          //+------------------------------------------------------------------+
-      
+
          if(wiseMan3PermanentToggle)
            {
             wm3AlertToggle = true;
@@ -3481,7 +3481,7 @@ void OnTick()
 
             if(timeStamp != time)
               {
-               timeStamp = time;              
+               timeStamp = time;
 
                double fractalBufferWM3Double = NormalizeDouble(fractalBufferWM3*_Point,_Digits);
 
@@ -3503,18 +3503,18 @@ void OnTick()
                   double highs[];
                   double max_high;
                   double current_high = iHigh(_Symbol,TimeFrame,i);
-                  
+
                   for(int j=1; j<=fractalShoulder; j++)
                     {
                      highs.Push(iHigh(_Symbol,TimeFrame,i+j));
                      highs.Push(iHigh(_Symbol,TimeFrame,i-j));
                     }
-                  
+
                   max_high = highs[ArrayMaximum(highs)];
-                 
+
                   if(current_high > max_high)
                     {
-                     upperFractalWM3 = current_high + fractalBufferWM3Double;                    
+                     upperFractalWM3 = current_high + fractalBufferWM3Double;
                      break;
                     }
                  }
@@ -3524,7 +3524,7 @@ void OnTick()
                   double lows[];
                   double min_low;
                   double current_low = iLow(_Symbol,TimeFrame,i);
-                  
+
                   for(int j=1; j<=fractalShoulder; j++)
                     {
                      lows.Push(iLow(_Symbol,TimeFrame,i+j));
@@ -3540,9 +3540,9 @@ void OnTick()
                     }
                  }
 
-            //   Print("Upper Fractal = ", upperFractalWM3);
-            //   Print("Lower Fractal = ", lowerFractalWM3);
-                              
+               //   Print("Upper Fractal = ", upperFractalWM3);
+               //   Print("Lower Fractal = ", lowerFractalWM3);
+
                if(upperFractalWM3 !=0 && lowerFractalWM3 !=0)
                   if(usedFractalWM3Upper != upperFractalWM3 && usedFractalWM3Lower != lowerFractalWM3)
                      if(alertClosePrevBar1 > upperFractalWM3 &&
@@ -3595,7 +3595,7 @@ void OnTick()
             debugComment += "----------------------------------------------\n";
             debugComment += "|=> fractalBreakBull = " + IntegerToString(fractalBreakBull) + " \n";
             debugComment += "|=> fractalBreakBear = " + IntegerToString(fractalBreakBear) + " \n";
-            // End of debugging           
+            // End of debugging
 
            }
 
@@ -5845,9 +5845,10 @@ bool CControlsDialog::DrawPositionRectangles()
                if(price2 > 0)
                  {
                   ObjectCreate(0, "AR_SL_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price2);
-                  ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrDarkRed);
+                  ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrOrangeRed);
                   ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
                   ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
+                  ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_BACK,true);
                  }
 
                if(price3 > 0)
@@ -5856,9 +5857,11 @@ bool CControlsDialog::DrawPositionRectangles()
                   alertCloseLine = true;
 
                   ObjectCreate(0, "AR_TP_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price3);
-                  ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrDarkGreen);
+                  ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_COLOR, clrMediumSeaGreen);
                   ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
                   ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
+                  ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_BACK,true);
+                 
 
                  }
               }
