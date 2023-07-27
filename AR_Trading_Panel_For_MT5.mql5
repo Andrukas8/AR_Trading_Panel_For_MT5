@@ -1,8 +1,12 @@
-//+------------------------------------------------------------------+
-//|      AR TPanel - a universal Expert Adviser for MT5              |
-//+------------------------------------------------------------------+
+//+---------------------------------------------------------------------+
+//|  AR TPanel - a universal Expert Adviser for MT5 / Trading_Panel.mq5 |
+//+---------------------------------------------------------------------+
 
 #property description "AR TPanel"
+
+#property copyright "Andrukas8"
+#property link      "https://github.com/Andrukas8/AR_Trading_Panel_For_MT5"
+#property version   "2.01"
 
 #include <Trade/Trade.mqh>
 #include <Controls\Dialog.mqh>
