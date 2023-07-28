@@ -3478,7 +3478,8 @@ void OnTick()
          if(wm3AlertToggle)
            {
 
-            alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price, use "2" for previous previous
+            alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,TimeFrame,1),_Digits); // previous close price, use "2" for previous previous eee
+            alertClosePrevBar2 = NormalizeDouble(iClose(_Symbol,TimeFrame,2),_Digits);
 
             static datetime timeStamp;
             datetime time = iTime(_Symbol,TimeFrame,0);
@@ -3550,6 +3551,7 @@ void OnTick()
                if(upperFractalWM3 !=0 && lowerFractalWM3 !=0)
                   if(usedFractalWM3Upper != upperFractalWM3 && usedFractalWM3Lower != lowerFractalWM3)
                      if(alertClosePrevBar1 > upperFractalWM3 &&
+                        alertClosePrevBar2 <= upperFractalWM3 &&
                         Alligator_FilterBull() &&
                         MA_FilterBull() &&
                         AO_FilterBull() &&
@@ -3564,6 +3566,7 @@ void OnTick()
 
                      else
                         if(alertClosePrevBar1 < lowerFractalWM3 &&
+                           alertClosePrevBar2 >= lowerFractalWM3 &&
                            Alligator_FilterBear() &&
                            MA_FilterBear() &&
                            AO_FilterBear() &&
