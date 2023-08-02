@@ -1878,8 +1878,6 @@ void CControlsDialog::OnClickBoxBtn(void)
             if(StringSubstr(Name, 0, 4) == "Box_")
                ObjectDelete(0,Name);
            }
-
-
         }
   }
 
@@ -3157,9 +3155,7 @@ void OnTick()
                // --------------------
                if(ClosePrPrevBarMABreak < MABreakPrPrevBar && ClosePrevBarMABreak > MABreakPrevBar && MABreakAlligatorUp)
                  {
-                  Alert(_Symbol," === MOVING AVERAGE BREAK ALERT === BULLISH");
-                  //Print("ClosePrPrevBarMABreak < MABreakPrPrevBar && ClosePrevBarMABreak > MABreakPrevBar");
-                  //Print(DoubleToString(ClosePrPrevBarMABreak,_Digits)," < ",DoubleToString(MABreakPrPrevBar,_Digits)," && ",DoubleToString(ClosePrevBarMABreak,_Digits)," > ",DoubleToString(MABreakPrevBar,_Digits));
+                  Alert(_Symbol," === MOVING AVERAGE BREAK ALERT === BULLISH");                 
                  }
 
                // --------------------
@@ -3168,9 +3164,7 @@ void OnTick()
                else
                   if(ClosePrPrevBarMABreak > MABreakPrPrevBar && ClosePrevBarMABreak < MABreakPrevBar && MABreakAlligatorDn)
                     {
-                     Alert(_Symbol," === MOVING AVERAGE BREAK ALERT === BEARISH");
-                     //Print("ClosePrPrevBarMABreak > MABreakPrPrevBar && ClosePrevBarMABreak < MABreakPrevBar");
-                     //Print(DoubleToString(ClosePrPrevBarMABreak,_Digits)," > ",DoubleToString(MABreakPrPrevBar,_Digits)," && ",DoubleToString(ClosePrevBarMABreak,_Digits)," < ",DoubleToString(MABreakPrevBar,_Digits));
+                     Alert(_Symbol," === MOVING AVERAGE BREAK ALERT === BEARISH");                     
                     }
               }
 
@@ -3543,10 +3537,7 @@ void OnTick()
                      lowerFractalWM3 = current_low  - fractalBufferWM3Double;
                      break;
                     }
-                 }
-
-               //   Print("Upper Fractal = ", upperFractalWM3);
-               //   Print("Lower Fractal = ", lowerFractalWM3);
+                 }              
 
                if(upperFractalWM3 !=0 && lowerFractalWM3 !=0)
                   if(usedFractalWM3Upper != upperFractalWM3 && usedFractalWM3Lower != lowerFractalWM3)
@@ -3581,12 +3572,12 @@ void OnTick()
 
                if(fractalBreakBull)
                  {
-                  Alert(_Symbol," === FRACTAL BREAK ALERT WISE MAN 3 === BULLISH ",upperFractalWM3); // qqq
+                  Alert(_Symbol," === FRACTAL BREAK ALERT WISE MAN 3 === BULLISH");
                   fractalBreakBull = false;
                  }
                if(fractalBreakBear)
                  {
-                  Alert(_Symbol," === FRACTAL BREAK ALERT WISE MAN 3 === BEARISH ",lowerFractalWM3); // qqq
+                  Alert(_Symbol," === FRACTAL BREAK ALERT WISE MAN 3 === BEARISH");
                   fractalBreakBear = false;
                  }
               }
