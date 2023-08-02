@@ -360,6 +360,7 @@ private:
    CLabel            m_MarginAvailableDisplLbl;       // Label for Margin Required Display
    CLabel            m_SpreadLbl;                     // Label for Margin Required Display
    CLabel            m_TimeTillCandleCloseLbl;        // Label for Margin Required Display
+   CLabel            m_ProfitLbl;                     // Label for Profit Display
 
    // Edits
    CEdit             m_LotsEdit;                      // Edit field for the lots
@@ -459,6 +460,7 @@ protected:
    bool              CreateMarginAvailableDisplLbl(void);
    bool              CreateSpreadLbl(void);
    bool              CreateTimeTillCandleCloseLbl(void);
+   bool              CreateProfitLbl(void);
 
    bool              CreateStrategySelectorCBox(void);
 
@@ -595,6 +597,8 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
    if(!CreateSpreadLbl())
       return(false);
    if(!CreateTimeTillCandleCloseLbl())
+      return(false);
+   if(!CreateProfitLbl())
       return(false);
 
 // --- Create Edit fields
@@ -991,6 +995,29 @@ bool CControlsDialog::CreateTimeTillCandleCloseLbl(void)
    if(!m_TimeTillCandleCloseLbl.Text(""))
       return(false);
    if(!Add(m_TimeTillCandleCloseLbl))
+      return(false);
+//--- succeed
+   return(true);
+  }
+
+//+------------------------------------------------------------------+
+//| Create the Profit label #15                                      |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateProfitLbl(void)
+  {
+//--- coordinates
+
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH;
+   int y2=y1+BUTTON_HEIGHT;
+
+//--- create
+   if(!m_ProfitLbl.Create(m_chart_id,m_name+"ProfitLbl",m_subwin,x1,y1,x2,y2))
+      return(false);
+   if(!m_ProfitLbl.Text(""))
+      return(false);
+   if(!Add(m_ProfitLbl))
       return(false);
 //--- succeed
    return(true);
@@ -3155,7 +3182,7 @@ void OnTick()
                // --------------------
                if(ClosePrPrevBarMABreak < MABreakPrPrevBar && ClosePrevBarMABreak > MABreakPrevBar && MABreakAlligatorUp)
                  {
-                  Alert(_Symbol," === MOVING AVERAGE BREAK ALERT === BULLISH");                 
+                  Alert(_Symbol," === MOVING AVERAGE BREAK ALERT === BULLISH");
                  }
 
                // --------------------
@@ -3164,7 +3191,7 @@ void OnTick()
                else
                   if(ClosePrPrevBarMABreak > MABreakPrPrevBar && ClosePrevBarMABreak < MABreakPrevBar && MABreakAlligatorDn)
                     {
-                     Alert(_Symbol," === MOVING AVERAGE BREAK ALERT === BEARISH");                     
+                     Alert(_Symbol," === MOVING AVERAGE BREAK ALERT === BEARISH");
                     }
               }
 
@@ -3537,7 +3564,7 @@ void OnTick()
                      lowerFractalWM3 = current_low  - fractalBufferWM3Double;
                      break;
                     }
-                 }              
+                 }
 
                if(upperFractalWM3 !=0 && lowerFractalWM3 !=0)
                   if(usedFractalWM3Upper != upperFractalWM3 && usedFractalWM3Lower != lowerFractalWM3)
@@ -4094,7 +4121,6 @@ void OnTick()
 //|                                                                  |
 //+------------------------------------------------------------------+
 
-
 //+------------------------------------------------------------------+
 //|                                                                  |
 //|  ----- Display Position Profit on the Chart -------------------- |
@@ -4157,13 +4183,27 @@ void OnTick()
    string timeTillCloseStr = TimeToString(CandleCountDown_counting, TIME_MINUTES|TIME_SECONDS);
    AccountFreeMargin = NormalizeDouble(AccountInfoDouble(ACCOUNT_MARGIN_FREE) * marginToBallancePercent / 100,2);
 
+// for calculating ProfitLbl
+   double profitDouble = Profit_Calculation();
+   string profitStr = DoubleToString(profitDouble,2);
+
+   if(profitDouble > 0)
+     {
+      ObjectSetInteger(0,ExtDialog.Name()+"ProfitLbl",OBJPROP_COLOR,clrForestGreen);
+     }
+   else
+      if(profitDouble < 0)
+        {
+         ObjectSetInteger(0,ExtDialog.Name()+"ProfitLbl",OBJPROP_COLOR,clrRed);
+        }
+
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
    ObjectSetString(0,ExtDialog.Name()+"MarginAvailableDisplLbl",OBJPROP_TEXT,DoubleToString(AccountFreeMargin,2));
    ObjectSetString(0,ExtDialog.Name()+"SpreadLbl",OBJPROP_TEXT,"Spread: "+spreadStr);
    ObjectSetString(0,ExtDialog.Name()+"TimeTillCandleCloseLbl",OBJPROP_TEXT,timeTillCloseStr);
-
+   ObjectSetString(0,ExtDialog.Name()+"ProfitLbl",OBJPROP_TEXT,profitStr);
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -6987,4 +7027,33 @@ bool Ichimoku_FilterBear()
 //+------------------------------------------------------------------+
 //+------------------------------------------------------------------+
 
+//+------------------------------------------------------------------+
+
+
+//+------------------------------------------------------------------+
+//|                  Calc Profit                                     |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+double Profit_Calculation()
+  {
+   int totalPos = PositionsTotal();
+   double posProfit = 0;
+   for(int i = 0; i < totalPos; i++)
+     {
+      ulong posTicket = PositionGetTicket(i);
+
+      if(PositionSelectByTicket(posTicket))
+        {
+         if(PositionGetString(POSITION_SYMBOL) == _Symbol)
+           {
+            posProfit += PositionGetDouble(POSITION_PROFIT);
+           }
+        }
+     }
+   posProfit = NormalizeDouble(posProfit,2);
+   return posProfit;
+  }
 //+------------------------------------------------------------------+
