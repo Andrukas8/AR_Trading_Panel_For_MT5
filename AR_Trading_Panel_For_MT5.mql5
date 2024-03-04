@@ -1997,6 +1997,18 @@ void CControlsDialog::OnClickClearInputsBtn(void)
    m_SlEdit.Text(NULL);
    m_TpEdit.Text(NULL);
    m_TpPipsEdit.Text(NULL);
+
+   stopToggle = false;
+   limitToggle  = false;
+   pendingToggle = false;
+
+   sellToggle = false;
+   buyToggle = false;
+   m_MarketPendingBtn.Text("P");
+   m_StopToggleBtn.Text("ST");
+   m_LimitToggleBtn.Text("LM");
+   m_BuyToggleBtn.Text("B");
+   m_SellToggleBtn.Text("S");
   }
 
 //+------------------------------------------------------------------+
@@ -2038,12 +2050,18 @@ void CControlsDialog::OnClickMarketPendingBtn(void)
      {
       m_MarketPendingBtn.Text("[ M ]");
       pendingToggle = false;
+      stopToggle = false;
+      limitToggle = false;
+      m_StopToggleBtn.Text("ST");
+      m_LimitToggleBtn.Text("LM");
      }
    else
       if(!pendingToggle)
         {
          m_MarketPendingBtn.Text("[ P ]");
          pendingToggle = true;
+         stopToggle = true;
+         limitToggle = true;
         }
   }
 
@@ -2206,6 +2224,8 @@ void CControlsDialog::OnClickStopToggleBtn(void)
   {
    stopToggle = true;
    limitToggle  = false;
+   pendingToggle = true;
+   m_MarketPendingBtn.Text("[ P ]");
    m_StopToggleBtn.Text("[ST]");
    m_LimitToggleBtn.Text("LM");
   }
@@ -2216,7 +2236,9 @@ void CControlsDialog::OnClickStopToggleBtn(void)
 void CControlsDialog::OnClickLimitToggleBtn(void)
   {
    stopToggle = false;
-   limitToggle = true;
+   limitToggle  = true;
+   pendingToggle = true;
+   m_MarketPendingBtn.Text("[ P ]");
    m_StopToggleBtn.Text("ST");
    m_LimitToggleBtn.Text("[LM]");
   }
@@ -2330,7 +2352,7 @@ void CControlsDialog::OnClickShowAlertLinesBtn(void)
 
    if(alertCloseLine)
      {
-      m_ShowAlertLinesBtn.Text("[\x2F06]");
+      m_ShowAlertLinesBtn.Color(clrBlue);
 
       ObjectCreate(0,"alertCloseLine_1",OBJ_HLINE,0,0,NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_ASK)+100*_Point,_Digits));
       ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrSilver);
