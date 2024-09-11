@@ -563,9 +563,11 @@ CControlsDialog::~CControlsDialog(void)
 //+------------------------------------------------------------------+
 //| Create                                                           |
 //+------------------------------------------------------------------+
+
 bool CControlsDialog::Create(const long chart,const string name,const int subwin,const int x1,const int y1,const int x2,const int y2)
-  {
-   if(!CAppDialog::Create(chart,name,subwin,x1,y1,x2,y2))
+  {  
+   ObjectsDeleteAll(0,-1,OBJ_LABEL); // patch to remove residual labels
+   if(!CAppDialog::Create(chart,name,subwin,x1,y1,x2,y2))      
       return(false);
 //--- create dependent controls
 
@@ -3004,11 +3006,11 @@ void OnDeinit(const int reason)
    ObjectDelete(0,"priceLine");
    ObjectDelete(0,"stopLossLine");
    ObjectDelete(0,"takeProfitLine");
-
+   
 //--- destroy dialog
-
    ExtDialog.Destroy(reason);
    ObjectsDeleteAll(0,-1,OBJ_LABEL); // patch to remove residual labels
+   
 
   }
 
