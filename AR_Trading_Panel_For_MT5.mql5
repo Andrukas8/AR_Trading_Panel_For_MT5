@@ -564,10 +564,13 @@ CControlsDialog::~CControlsDialog(void)
 //| Create                                                           |
 //+------------------------------------------------------------------+
 
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
 bool CControlsDialog::Create(const long chart,const string name,const int subwin,const int x1,const int y1,const int x2,const int y2)
-  {  
+  {
    ObjectsDeleteAll(0,-1,OBJ_LABEL); // patch to remove residual labels
-   if(!CAppDialog::Create(chart,name,subwin,x1,y1,x2,y2))      
+   if(!CAppDialog::Create(chart,name,subwin,x1,y1,x2,y2))
       return(false);
 //--- create dependent controls
 
@@ -2516,44 +2519,22 @@ void CControlsDialog::OnClickWm3AlertBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickScanChartsBtn(void)
   {
-   Print("Scanning Started...");
+   const int n = SymbolsTotal(true);
+   Print("Scanning ", n, " pairs from Market Watch List...");
 
-   string symbolList[] =
-     {
-      "EURUSD", // USD
-      "GBPUSD",
-      "AUDUSD",
-      "USDJPY",
-      "USDCAD",
-      "USDCHF",
-      "EURAUD", // EUR
-      "EURCAD",
-      "EURCHF",
-      "EURJPY",
-      "GBPAUD", // GBP
-      "GBPCAD",
-      "GBPJPY",
-      "CADJPY", // CAD
-      "UK100",
-      "GER40",  // Indices
-      "NAS100",
-      "US30",
-      "XAUUSD",
-      "XAUAUD",
-      "JPN225"
-     };
 
-   int symbolListSize = (int)ArrayRange(symbolList,0);
-   for(int i=0; i<=symbolListSize-1; i++)
+   for(int i = 0; i < n; ++i)
      {
       // D1 && H1
       // D1
 
-      int symbolDigits = (int)SymbolInfoInteger(symbolList[i],SYMBOL_DIGITS);
-      int handleIchimoku_D1 = iIchimoku(symbolList[i],PERIOD_D1,9,26,52);
-      double ClosePrice_D1 = iClose(symbolList[i],PERIOD_D1,1);
-      double Bar26High_D1 = iHigh(symbolList[i],PERIOD_D1,26);
-      double Bar26Low_D1 = iLow(symbolList[i],PERIOD_D1,26);
+      Print(SymbolName(i, true));
+
+      int symbolDigits = (int)SymbolInfoInteger(SymbolName(i, true),SYMBOL_DIGITS);
+      int handleIchimoku_D1 = iIchimoku(SymbolName(i, true),PERIOD_D1,9,26,52);
+      double ClosePrice_D1 = iClose(SymbolName(i, true),PERIOD_D1,1);
+      double Bar26High_D1 = iHigh(SymbolName(i, true),PERIOD_D1,26);
+      double Bar26Low_D1 = iLow(SymbolName(i, true),PERIOD_D1,26);
       double TenkansenArr_D1[];
       double KijunsenArr_D1[];
       double SenkouspanAArr_D1[];
@@ -2576,10 +2557,10 @@ void CControlsDialog::OnClickScanChartsBtn(void)
       double KumoDeltaPrevious_D1 = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr_D1[0] - ShiftedSenkouspanBArr_D1[0]),symbolDigits);
 
       // H1
-      int handleIchimoku_H1 = iIchimoku(symbolList[i],PERIOD_H1,9,26,52);
-      double ClosePrice_H1 = iClose(symbolList[i],PERIOD_H1,1); // previous close
-      double Bar26High_H1 = iHigh(symbolList[i],PERIOD_H1,26);
-      double Bar26Low_H1 = iLow(symbolList[i],PERIOD_H1,26);
+      int handleIchimoku_H1 = iIchimoku(SymbolName(i, true),PERIOD_H1,9,26,52);
+      double ClosePrice_H1 = iClose(SymbolName(i, true),PERIOD_H1,1); // previous close
+      double Bar26High_H1 = iHigh(SymbolName(i, true),PERIOD_H1,26);
+      double Bar26Low_H1 = iLow(SymbolName(i, true),PERIOD_H1,26);
       double TenkansenArr_H1[];
       double KijunsenArr_H1[];
       double SenkouspanAArr_H1[];
@@ -2628,7 +2609,7 @@ void CControlsDialog::OnClickScanChartsBtn(void)
          )
       )
         {
-         Print(symbolList[i]," is Bullish on D1 and H1");
+         Print(SymbolName(i, true)," is Bullish on D1 and H1");
         }
       else
          if(
@@ -2658,17 +2639,17 @@ void CControlsDialog::OnClickScanChartsBtn(void)
             )
          )
            {
-            Print(symbolList[i]," is Bearish on D1 and H1");
+            Print(SymbolName(i, true)," is Bearish on D1 and H1");
            }
 
 
 
       // H4 && M30
       // H4
-      int handleIchimoku_H4 = iIchimoku(symbolList[i],PERIOD_H4,9,26,52);
-      double ClosePrice_H4 = iClose(symbolList[i],PERIOD_H4,1);
-      double Bar26High_H4 = iHigh(symbolList[i],PERIOD_H4,26);
-      double Bar26Low_H4 = iLow(symbolList[i],PERIOD_H4,26);
+      int handleIchimoku_H4 = iIchimoku(SymbolName(i, true),PERIOD_H4,9,26,52);
+      double ClosePrice_H4 = iClose(SymbolName(i, true),PERIOD_H4,1);
+      double Bar26High_H4 = iHigh(SymbolName(i, true),PERIOD_H4,26);
+      double Bar26Low_H4 = iLow(SymbolName(i, true),PERIOD_H4,26);
       double TenkansenArr_H4[];
       double KijunsenArr_H4[];
       double SenkouspanAArr_H4[];
@@ -2691,10 +2672,10 @@ void CControlsDialog::OnClickScanChartsBtn(void)
       double KumoDeltaPrevious_H4 = NormalizeDouble(MathAbs(ShiftedSenkouspanAArr_H4[0] - ShiftedSenkouspanBArr_H4[0]),symbolDigits);
 
       // M30
-      int handleIchimoku_M30 = iIchimoku(symbolList[i],PERIOD_M30,9,26,52);
-      double ClosePrice_M30 = iClose(symbolList[i],PERIOD_M30,1);
-      double Bar26High_M30 = iHigh(symbolList[i],PERIOD_M30,26);
-      double Bar26Low_M30 = iLow(symbolList[i],PERIOD_M30,26);
+      int handleIchimoku_M30 = iIchimoku(SymbolName(i, true),PERIOD_M30,9,26,52);
+      double ClosePrice_M30 = iClose(SymbolName(i, true),PERIOD_M30,1);
+      double Bar26High_M30 = iHigh(SymbolName(i, true),PERIOD_M30,26);
+      double Bar26Low_M30 = iLow(SymbolName(i, true),PERIOD_M30,26);
       double TenkansenArr_M30[];
       double KijunsenArr_M30[];
       double SenkouspanAArr_M30[];
@@ -2743,7 +2724,7 @@ void CControlsDialog::OnClickScanChartsBtn(void)
          )
       )
         {
-         Print(symbolList[i]," is Bullish on H4 and M30");
+         Print(SymbolName(i, true)," is Bullish on H4 and M30");
         }
       else
          if(
@@ -2773,7 +2754,7 @@ void CControlsDialog::OnClickScanChartsBtn(void)
             )
          )
            {
-            Print(symbolList[i]," is Bearish on H4 and M30");
+            Print(SymbolName(i, true)," is Bearish on H4 and M30");
            }
 
 
@@ -2782,10 +2763,10 @@ void CControlsDialog::OnClickScanChartsBtn(void)
       // H1 : All parameters for H1 have already been defined for D1 - H1 conditions
 
       // M30
-      int handleIchimoku_M15 = iIchimoku(symbolList[i],PERIOD_M15,9,26,52);
-      double ClosePrice_M15 = iClose(symbolList[i],PERIOD_M15,1);
-      double Bar26High_M15 = iHigh(symbolList[i],PERIOD_M15,26);
-      double Bar26Low_M15 = iLow(symbolList[i],PERIOD_M15,26);
+      int handleIchimoku_M15 = iIchimoku(SymbolName(i, true),PERIOD_M15,9,26,52);
+      double ClosePrice_M15 = iClose(SymbolName(i, true),PERIOD_M15,1);
+      double Bar26High_M15 = iHigh(SymbolName(i, true),PERIOD_M15,26);
+      double Bar26Low_M15 = iLow(SymbolName(i, true),PERIOD_M15,26);
       double TenkansenArr_M15[];
       double KijunsenArr_M15[];
       double SenkouspanAArr_M15[];
@@ -2834,7 +2815,7 @@ void CControlsDialog::OnClickScanChartsBtn(void)
          )
       )
         {
-         Print(symbolList[i]," is Bullish on H1 and M15");
+         Print(SymbolName(i, true)," is Bullish on H1 and M15");
         }
       else
          if(
@@ -2864,7 +2845,7 @@ void CControlsDialog::OnClickScanChartsBtn(void)
             )
          )
            {
-            Print(symbolList[i]," is Bearish on H1 and M15");
+            Print(SymbolName(i, true)," is Bearish on H1 and M15");
            }
 
 
@@ -3006,11 +2987,11 @@ void OnDeinit(const int reason)
    ObjectDelete(0,"priceLine");
    ObjectDelete(0,"stopLossLine");
    ObjectDelete(0,"takeProfitLine");
-   
+
 //--- destroy dialog
    ExtDialog.Destroy(reason);
    ObjectsDeleteAll(0,-1,OBJ_LABEL); // patch to remove residual labels
-   
+
 
   }
 
