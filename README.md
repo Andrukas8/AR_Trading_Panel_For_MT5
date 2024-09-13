@@ -39,7 +39,7 @@ The author is not responsible for the correctness of the program. Please test be
 - **✔** = sends market or pending stop/limit sell or buy orders;
 - **PM** = turns on and off the Automatic Position Management function, the parameters of which can be changed in the Input window;
 - **BE** = moves the SL of all positions to break even wherever possible;
-- **SCN** = checks the list of predefined pairs and checks if they trend on at least two timeframes at the same time;
+- **SCN** = the "Ichimoku Scanner", scans the list of pairs in "Market Watch" list and checks if they are trending on at least two timeframes at the same time according to Ichimoku Kinko Hyo;
 - **SELL** / **BUY** = used for immediate market order placements according to Lots, SLp, and RRR;
 - **✖** = closes all active open positions on current chart;
 - **❒** = draws session boxes limited by the beginning and end of the sessions on the x-axis and max/min prices on the y-axis;
