@@ -8,7 +8,7 @@
 A trading panel for MT5 trading platform, written in MQL5.
 WORK IN PROGRESS.
 
-The author is not responsible for the correctness of the program. Please test before using and use at your own risk.
+The author is not responsible for the program's correctness. Please test before using and use at your own risk.
 
 ## Features:
 - Automatic position size calculator;
