@@ -2,7 +2,8 @@
 
 [![Support Ukraine Badge](https://bit.ly/support-ukraine-now)](https://github.com/support-ukraine/support-ukraine)
 
-![image](https://user-images.githubusercontent.com/21954163/216941119-cf7e90dc-ebce-45b3-bfa7-298daf29b202.png)
+![image](https://github.com/user-attachments/assets/ddbf2628-3c95-4135-ab3a-299de95b6bc1)
+
 
 A trading panel for MT5 trading platform, written in MQL5.
 WORK IN PROGRESS.
@@ -39,7 +40,7 @@ The author is not responsible for the correctness of the program. Please test be
 - **✔** = sends market or pending stop/limit sell or buy orders;
 - **PM** = turns on and off the Automatic Position Management function, the parameters of which can be changed in the Input window;
 - **BE** = moves the SL of all positions to break even wherever possible;
-- **SCN** = the "Ichimoku Scanner", scans the list of pairs in "Market Watch" list and checks if they are trending on at least two timeframes at the same time according to Ichimoku Kinko Hyo;
+- **SCN** = the "Ichimoku Scanner", scans the list of pairs in the "Market Watch" list and checks if they are trending on at least two timeframes at the same time according to Ichimoku Kinko Hyo;
 - **SELL** / **BUY** = used for immediate market order placements according to Lots, SLp, and RRR;
 - **✖** = closes all active open positions on current chart;
 - **❒** = draws session boxes limited by the beginning and end of the sessions on the x-axis and max/min prices on the y-axis;
@@ -48,4 +49,5 @@ The author is not responsible for the correctness of the program. Please test be
 - **W1**, **W2**, **W3** = switches on and off alerts for Wise Man 1, 2, 3 signals (Bill Williams Profitunity strategy);
 - **⼆** = shows two lines, which can be moved and used for setting alerts when the price closes above/below one of the lines;
 - **⏰** = sets an alarm that goes off if the price closes above or below one of the lines that were added using ⼆ button;
-- **MBE** = If the price closes above one of the lines that ere added using ⼆ button, all positions on the chart are set to break even.
+- **MBE** = If the price closes above one of the lines that were added using ⼆ button, all positions on the chart are set to break even;
+- **OC** = Open Chart button: opens all charts from the "Market Watch" list.
