@@ -401,6 +401,7 @@ private:
    CButton           m_ScanChartsBtn;                // Scanner button to scan if any of the aisigned instruments meets partibular conditions
 
    CComboBox         m_StrategySelectorCBox;         // Dropdown list to select the strategy for the trade comment
+   CButton           m_OpenChartsBtn;                // Open all charts from the Market Watch List
 
 public:
                      CControlsDialog(void);
@@ -436,6 +437,7 @@ protected:
    bool              CreateWm2AlertBtn(void);
    bool              CreateWm3AlertBtn(void);
    bool              CreateScanChartsBtn(void);
+   bool              CreateOpenChartsBtn(void);
 
    bool              CreateLotsEdit(void);
    bool              CreateSlPipsEdit(void);
@@ -461,7 +463,6 @@ protected:
    bool              CreateSpreadLbl(void);
    bool              CreateTimeTillCandleCloseLbl(void);
    bool              CreateProfitLbl(void);
-
    bool              CreateStrategySelectorCBox(void);
 
 
@@ -512,6 +513,7 @@ protected:
    void              OnClickWm2AlertBtn(void);
    void              OnClickWm3AlertBtn(void);
    void              OnClickScanChartsBtn(void);
+   void              OnClickOpenChartsBtn(void);
 
   };
 //+------------------------------------------------------------------+
@@ -542,6 +544,7 @@ ON_EVENT(ON_CLICK,m_wm1AlertBtn,OnClickWm1AlertBtn)
 ON_EVENT(ON_CLICK,m_wm2AlertBtn,OnClickWm2AlertBtn)
 ON_EVENT(ON_CLICK,m_wm3AlertBtn,OnClickWm3AlertBtn)
 ON_EVENT(ON_CLICK,m_ScanChartsBtn,OnClickScanChartsBtn)
+ON_EVENT(ON_CLICK,m_OpenChartsBtn,OnClickOpenChartsBtn)
 
 
 //+------------------------------------------------------------------+
@@ -673,9 +676,13 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
       return(false);
    if(!CreateScanChartsBtn())
       return(false);
-
    if(!CreateStrategySelectorCBox())
       return(false);
+   if(!CreateOpenChartsBtn())
+      return(false);
+
+
+
 
 
 //--- succeed
@@ -1700,6 +1707,32 @@ bool CControlsDialog::CreateManualBEBtn(void)
   }
 
 
+
+//+------------------------------------------------------------------+
+//| Create the "Open Charts" button                                  |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateOpenChartsBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+2*BUTTON_WIDTH/3;
+   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/3;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_OpenChartsBtn.Create(m_chart_id,m_name+"OpenChartsBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+
+   if(!m_OpenChartsBtn.Text("OC"))
+      return(false);
+
+   if(!Add(m_OpenChartsBtn))
+      return(false);
+
+//--- succeed
+   return(true);
+  }
+
+
 //+------------------------------------------------------------------+
 //| Create the "WM1 Alert" button                                    |
 //+------------------------------------------------------------------+
@@ -1774,7 +1807,6 @@ bool CControlsDialog::CreateWm3AlertBtn(void)
          return(false);
 
 
-
    if(wiseMan2PermanentToggle)
      {
       if(!m_wm2AlertBtn.Text("[W2]"))
@@ -1783,9 +1815,6 @@ bool CControlsDialog::CreateWm3AlertBtn(void)
    else
       if(!m_wm2AlertBtn.Text("W2"))
          return(false);
-
-
-
 
 
    if(!Add(m_wm3AlertBtn))
@@ -2854,6 +2883,35 @@ void CControlsDialog::OnClickScanChartsBtn(void)
    Print("Scanning Finished...");
 
   }
+
+
+
+
+//+------------------------------------------------------------------+
+//| Event handler for "Open Charts" Button                           |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickOpenChartsBtn(void)
+  {
+   CChart chart;
+
+   string currentChartSymbol = _Symbol;
+   const int n = SymbolsTotal(true);
+
+   for(int i = 0; i < n; ++i)
+      if(SymbolName(i, true) != currentChartSymbol)
+         chart.Open(SymbolName(i, true),PERIOD_CURRENT);
+   Print(n, " Charts Opened...");
+  }
+
+
+
+
+
+
+
+
+
+
 
 
 //+------------------------------------------------------------------+
