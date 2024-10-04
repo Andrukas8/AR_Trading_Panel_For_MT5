@@ -402,6 +402,8 @@ private:
 
    CComboBox         m_StrategySelectorCBox;         // Dropdown list to select the strategy for the trade comment
    CButton           m_OpenChartsBtn;                // Open all charts from the Market Watch List
+   CButton           m_CloseChartsBtn;               // Close all charts
+   CButton           m_OpenActiveChartsBtn;          // Open all charts which have open positions
 
 public:
                      CControlsDialog(void);
@@ -438,6 +440,8 @@ protected:
    bool              CreateWm3AlertBtn(void);
    bool              CreateScanChartsBtn(void);
    bool              CreateOpenChartsBtn(void);
+   bool              CreateCloseChartsBtn(void);
+   bool              CreateOpenActiveChartsBtn(void);
 
    bool              CreateLotsEdit(void);
    bool              CreateSlPipsEdit(void);
@@ -514,6 +518,8 @@ protected:
    void              OnClickWm3AlertBtn(void);
    void              OnClickScanChartsBtn(void);
    void              OnClickOpenChartsBtn(void);
+   void              OnClickCloseChartsBtn(void);
+   void              OnClickOpenActiveChartsBtn(void);
 
   };
 //+------------------------------------------------------------------+
@@ -545,6 +551,8 @@ ON_EVENT(ON_CLICK,m_wm2AlertBtn,OnClickWm2AlertBtn)
 ON_EVENT(ON_CLICK,m_wm3AlertBtn,OnClickWm3AlertBtn)
 ON_EVENT(ON_CLICK,m_ScanChartsBtn,OnClickScanChartsBtn)
 ON_EVENT(ON_CLICK,m_OpenChartsBtn,OnClickOpenChartsBtn)
+ON_EVENT(ON_CLICK,m_CloseChartsBtn,OnClickCloseChartsBtn)
+ON_EVENT(ON_CLICK,m_OpenActiveChartsBtn,OnClickOpenActiveChartsBtn)
 
 
 //+------------------------------------------------------------------+
@@ -680,9 +688,10 @@ bool CControlsDialog::Create(const long chart,const string name,const int subwin
       return(false);
    if(!CreateOpenChartsBtn())
       return(false);
-
-
-
+   if(!CreateCloseChartsBtn())
+      return(false);
+   if(!CreateOpenActiveChartsBtn())
+      return(false);
 
 
 //--- succeed
@@ -1019,7 +1028,7 @@ bool CControlsDialog::CreateProfitLbl(void)
   {
 //--- coordinates
 
-   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT;//+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
@@ -1028,7 +1037,7 @@ bool CControlsDialog::CreateProfitLbl(void)
    if(!m_ProfitLbl.Create(m_chart_id,m_name+"ProfitLbl",m_subwin,x1,y1,x2,y2))
       return(false);
    if(!m_ProfitLbl.Text(""))
-      return(false);
+      return(false);  
    if(!Add(m_ProfitLbl))
       return(false);
 //--- succeed
@@ -1714,7 +1723,7 @@ bool CControlsDialog::CreateManualBEBtn(void)
 bool CControlsDialog::CreateOpenChartsBtn(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+2*BUTTON_WIDTH/3;
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
@@ -1731,6 +1740,57 @@ bool CControlsDialog::CreateOpenChartsBtn(void)
 //--- succeed
    return(true);
   }
+
+
+//+------------------------------------------------------------------+
+//| Create the "Open Active Charts" button                           |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateOpenActiveChartsBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/3;
+   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/3;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_OpenActiveChartsBtn.Create(m_chart_id,m_name+"OpenActiveChartsBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+
+   if(!m_OpenActiveChartsBtn.Text("AC"))
+      return(false);
+
+   if(!Add(m_OpenActiveChartsBtn))
+      return(false);
+
+//--- succeed
+   return(true);
+  }
+
+//+------------------------------------------------------------------+
+//| Create the "Close Charts" button                                 |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateCloseChartsBtn(void)
+  {
+//--- coordinates
+   int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+2*BUTTON_WIDTH/3;
+   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x2=x1+BUTTON_WIDTH/3;
+   int y2=y1+BUTTON_HEIGHT;
+//--- create
+   if(!m_CloseChartsBtn.Create(m_chart_id,m_name+"CloseChartsBtn",m_subwin,x1,y1,x2,y2))
+      return(false);
+
+   if(!m_CloseChartsBtn.Text("CC"))
+      return(false);
+
+   if(!Add(m_CloseChartsBtn))
+      return(false);
+
+//--- succeed
+   return(true);
+  }
+
+
 
 
 //+------------------------------------------------------------------+
@@ -2904,6 +2964,62 @@ void CControlsDialog::OnClickOpenChartsBtn(void)
   }
 
 
+//+------------------------------------------------------------------+
+//| Event handler for "Open Active Charts" Button                    |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickOpenActiveChartsBtn(void)
+  {
+   CChart chart;
+
+   int totalPos = PositionsTotal();
+
+   string sym;
+
+   for(int i = 0; i < totalPos; i++)
+     {
+      ulong posTicket = PositionGetTicket(i);
+      sym = PositionGetString(POSITION_SYMBOL);
+
+      bool   found = false;
+      long   ID    = ChartFirst();
+      while(ID>=0)
+        {
+         if(ChartSymbol(ID)==sym)
+           {
+            found=true;
+            break;
+           }
+         ID=ChartNext(ID);
+        }
+      if(!found)
+        {
+         ChartOpen(sym,PERIOD_CURRENT);
+        }
+
+     }
+
+  }
+
+
+
+
+//+------------------------------------------------------------------+
+//| Event handler for "Open Charts" Button                           |
+//+------------------------------------------------------------------+
+void CControlsDialog::OnClickCloseChartsBtn(void)
+  {
+   string cs = ChartSymbol();
+   long chid=ChartFirst();
+
+   while(chid >= 0)
+     {
+      long nextID = ChartNext(chid);
+      if(ChartSymbol(chid)!=cs)
+         ChartClose(chid);
+      chid = nextID;
+     }
+   Print(" Charts Closed...");
+  }
 
 
 
