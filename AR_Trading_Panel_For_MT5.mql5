@@ -491,6 +491,7 @@ protected:
    bool              DisplayInfo(void);
    bool              DrawPositionRectangles(void);
    bool              SetManualBE(void);
+   bool              CreateAlertCloseLines(void);
 
    //--- handlers of the dependent controls events
    void              OnClickSellBtn(void);
@@ -1037,7 +1038,7 @@ bool CControlsDialog::CreateProfitLbl(void)
    if(!m_ProfitLbl.Create(m_chart_id,m_name+"ProfitLbl",m_subwin,x1,y1,x2,y2))
       return(false);
    if(!m_ProfitLbl.Text(""))
-      return(false);  
+      return(false);
    if(!Add(m_ProfitLbl))
       return(false);
 //--- succeed
@@ -2427,6 +2428,7 @@ void CControlsDialog::OnClickSendOrderBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickDrawPositionsBtn(void)
   {
+   Print(__FUNCTION__);
    if(!DrawPositionRectangles())
       Print(__FUNCTION__," Failed...");
   }
@@ -2448,25 +2450,9 @@ void CControlsDialog::OnClickShowAlertLinesBtn(void)
      {
       m_ShowAlertLinesBtn.Color(clrBlue);
 
-      ObjectCreate(0,"alertCloseLine_1",OBJ_HLINE,0,0,NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_ASK)+100*_Point,_Digits));
-      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrSilver);
-      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_STYLE, STYLE_DASH);
-      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_WIDTH, 2);
-      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_BACK, true);
-      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTABLE, true);
-      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTED, true);
-      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_HIDDEN, false);
-      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_ZORDER, 0);
+      if(!CreateAlertCloseLines())
+         Print(__FUNCTION__, " Failed...");
 
-      ObjectCreate(0,"alertCloseLine_2",OBJ_HLINE,0,0,NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_BID)-100*_Point,_Digits));
-      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
-      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_STYLE, STYLE_DASH);
-      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_WIDTH, 2);
-      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_BACK, true);
-      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTABLE, true);
-      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, true);
-      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_HIDDEN, false);
-      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_ZORDER, 0);
      }
    else
       if(!alertCloseLine)
@@ -7234,5 +7220,37 @@ double Profit_Calculation()
      }
    posProfit = NormalizeDouble(posProfit,2);
    return posProfit;
+  }
+//+------------------------------------------------------------------+
+
+
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+bool CControlsDialog::CreateAlertCloseLines()
+  {
+   ObjectCreate(0,"alertCloseLine_1",OBJ_HLINE,0,0,NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_ASK)+100*_Point,_Digits));
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrSilver);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_STYLE, STYLE_DASH);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_WIDTH, 2);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_BACK, true);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTABLE, true);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTED, true);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_HIDDEN, false);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_ZORDER, 0);
+
+   ObjectCreate(0,"alertCloseLine_2",OBJ_HLINE,0,0,NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_BID)-100*_Point,_Digits));
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_STYLE, STYLE_DASH);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_WIDTH, 2);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_BACK, true);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTABLE, true);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, true);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_HIDDEN, false);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_ZORDER, 0);
+
+   return true;
   }
 //+------------------------------------------------------------------+
