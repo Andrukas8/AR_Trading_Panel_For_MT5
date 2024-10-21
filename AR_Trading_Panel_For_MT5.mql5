@@ -1858,13 +1858,15 @@ bool CControlsDialog::CreateWm3AlertBtn(void)
    if(!m_wm3AlertBtn.Create(m_chart_id,m_name+"wm3AlertBtn",m_subwin,x1,y1,x2,y2))
       return(false);
 
-   if(wiseMan3PermanentToggle)
+
+
+   if(wiseMan1PermanentToggle)
      {
-      if(!m_wm3AlertBtn.Text("[W3]"))
+      if(!m_wm1AlertBtn.Text("[W1]"))
          return(false);
      }
    else
-      if(!m_wm3AlertBtn.Text("W3"))
+      if(!m_wm1AlertBtn.Text("W1"))
          return(false);
 
 
@@ -1876,6 +1878,20 @@ bool CControlsDialog::CreateWm3AlertBtn(void)
    else
       if(!m_wm2AlertBtn.Text("W2"))
          return(false);
+
+
+
+   if(wiseMan3PermanentToggle)
+     {
+      if(!m_wm3AlertBtn.Text("[W3]"))
+         return(false);
+     }
+   else
+      if(!m_wm3AlertBtn.Text("W3"))
+         return(false);
+
+
+
 
 
    if(!Add(m_wm3AlertBtn))
