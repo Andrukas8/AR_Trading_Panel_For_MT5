@@ -1,6 +1,6 @@
-//+--------------------------------------------------------------------------------+
-//|  AR TPanel - a universal Expert Adviser for MT5 / AR_Trading_Panel_For_MT5.mq5 |
-//+--------------------------------------------------------------------------------+
+//+---------------------------------------------------------------------+
+//|  AR TPanel - a universal Expert Adviser for MT5 / Trading_Panel.mq5 |
+//+---------------------------------------------------------------------+
 
 #property description "AR TPanel"
 
@@ -2120,6 +2120,12 @@ void CControlsDialog::OnClickClearInputsBtn(void)
    m_LimitToggleBtn.Text("LM");
    m_BuyToggleBtn.Text("B");
    m_SellToggleBtn.Text("S");
+
+   lineInput = false;
+   ObjectDelete(0,"priceLine");
+   ObjectDelete(0,"stopLossLine");
+   ObjectDelete(0,"takeProfitLine");
+
   }
 
 //+------------------------------------------------------------------+
@@ -2232,6 +2238,7 @@ void CControlsDialog::OnClickShowLinesBtn(void)
               }
 
             lineTp = NormalizeDouble(bid + (bid - lineSl) * inputLineRRR,_Digits);
+
            }
 
       if(sellToggle || buyToggle)
@@ -3167,8 +3174,6 @@ void OnDeinit(const int reason)
 //--- destroy dialog
    ExtDialog.Destroy(reason);
    ObjectsDeleteAll(0,-1,OBJ_LABEL); // patch to remove residual labels
-
-
   }
 
 //-------------------------------------------------------------------+
@@ -3182,34 +3187,36 @@ void OnChartEvent(const int id,         // event ID
    ExtDialog.ChartEvent(id,lparam,dparam,sparam);
 
 // FEATURE UNDER CONSTRUCTION
-//recalculates position parameters automatically when the SL line is moved on the chart
-   if(id==CHARTEVENT_OBJECT_DRAG)
-     {
-      if(sparam == "stopLossLine")
-        {
-         inputStopLoss = NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),_Digits);
-         double inputLineRRR = StringToDouble(ObjectGetString(0,ExtDialog.Name()+"RRR",OBJPROP_TEXT));
-         double newInputTakeProfit = 0;
-         if(inputStopLoss < inputTakeProfit) // buy
-           {
-            double input_line_ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK); // buy
-            newInputTakeProfit = (input_line_ask - inputStopLoss) * inputLineRRR + input_line_ask;
-
-           }
-         else
-            if(inputStopLoss > inputTakeProfit) // sell
-              {
-               double input_line_bid = SymbolInfoDouble(_Symbol,SYMBOL_BID); // sell
-               newInputTakeProfit = input_line_bid - (inputStopLoss - input_line_bid) * inputLineRRR;
-              }
-
-         ObjectSetString(0,ExtDialog.Name()+"SlEdit",OBJPROP_TEXT,DoubleToString(inputStopLoss,_Digits));
-         ObjectSetString(0,ExtDialog.Name()+"TpEdit",OBJPROP_TEXT,DoubleToString(newInputTakeProfit,_Digits));
-         ObjectSetDouble(0,"takeProfitLine",OBJPROP_PRICE,newInputTakeProfit);
-
-        }
-
-     }
+// recalculates position parameters automatically when the SL line is moved on the chart
+// (uncomment the velow code to try it)
+//
+//   if(id==CHARTEVENT_OBJECT_DRAG)
+//     {
+//      if(sparam == "stopLossLine")
+//        {
+//         inputStopLoss = NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),_Digits);
+//         double inputLineRRR = StringToDouble(ObjectGetString(0,ExtDialog.Name()+"RRR",OBJPROP_TEXT));
+//         double newInputTakeProfit = 0;
+//         if(inputStopLoss < inputTakeProfit) // buy
+//           {
+//            double input_line_ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK); // buy
+//            newInputTakeProfit = (input_line_ask - inputStopLoss) * inputLineRRR + input_line_ask;
+//
+//           }
+//         else
+//            if(inputStopLoss > inputTakeProfit) // sell
+//              {
+//               double input_line_bid = SymbolInfoDouble(_Symbol,SYMBOL_BID); // sell
+//               newInputTakeProfit = input_line_bid - (inputStopLoss - input_line_bid) * inputLineRRR;
+//              }
+//
+//         ObjectSetString(0,ExtDialog.Name()+"SlEdit",OBJPROP_TEXT,DoubleToString(inputStopLoss,_Digits));
+//         ObjectSetString(0,ExtDialog.Name()+"TpEdit",OBJPROP_TEXT,DoubleToString(newInputTakeProfit,_Digits));
+//         ObjectSetDouble(0,"takeProfitLine",OBJPROP_PRICE,newInputTakeProfit);
+//
+//        }
+//
+//     }
 // END OF FEATURE UNDER CONSTRUCTION
 
   }
