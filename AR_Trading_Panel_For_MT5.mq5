@@ -19,38 +19,30 @@
 
 enum ENUM_STRATEGY
   {
-   NOSTRATEGY,
-   KTS,
+   NOSTRATEGY,   
    MACD,
-   ICHIMOKU,
-   ICHI_TENKANBR,
-   ICHI_KINJUNBR,
-   ICHI_KUMOBR,
+   ICHIMOKU,   
    BILL_WILLIAMS,
    THREELINESTRIKE,
    RSIMA,
    PRICEACTION,
    ORDERBLOCK,
-   PINBAR
+   SUPPLY_DEMAND,   
   };
 
 string StrategySelected = "";
 
-string StrategyStr[13] =
+string StrategyStr[9] =
   {
    "NOSTRATEGY",
-   "KTS",
    "MACD",
-   "ICHIMOKU",
-   "ICHI_TENKANBR",
-   "ICHI_KINJUNBR",
-   "ICHI_KUMOBR",
+   "ICHIMOKU", 
    "BILL_WILLIAMS",
    "THREELINESTRIKE",
    "RSIMA",
-   "PRICEACTION",
+   "PRICEACTION",   
    "ORDERBLOCK",
-   "PINBAR"
+   "SUPPLY_DEMAND"
   };
 
 input group "------------- POSITIONS MANAGEMENT SETTINGS -------------"
@@ -1625,7 +1617,7 @@ bool CControlsDialog::CreateStrategySelectorCBox(void)
    if(!m_StrategySelectorCBox.Create(m_chart_id,m_name+"StrategySelectorCBox",m_subwin,x1,y1,x2,y2))
       return(false);
 
-   for(int i=0; i<10; i++)
+   for(int i=0; i<ArraySize(StrategyStr); i++)
      {
       if(!m_StrategySelectorCBox.ItemAdd(StrategyStr[i]))
          return(false);
