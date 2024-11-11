@@ -2,7 +2,8 @@
 
 [![Support Ukraine Badge](https://bit.ly/support-ukraine-now)](https://github.com/support-ukraine/support-ukraine)
 
-![image](https://github.com/user-attachments/assets/ddbf2628-3c95-4135-ab3a-299de95b6bc1)
+![image](https://github.com/user-attachments/assets/573b495f-f519-431f-b955-8b6be68d89c8)
+
 
 
 A trading panel for MT5 trading platform, written in MQL5.
@@ -46,8 +47,11 @@ The author is not responsible for the program's correctness. Please test before 
 - **❒** = draws session boxes limited by the beginning and end of the sessions on the x-axis and max/min prices on the y-axis;
 - **CLR** = deletes all inputs in Edit fields;
 - **🖉** = button goes through all active positions and draws a red rectangle to show the SL and a green rectangle to show the TP;
+- **ICHIMOKU ▼** = Strategy Selector - adds the selected strategy to the note of the deal, together with the timeframe and order type;
 - **W1**, **W2**, **W3** = switches on and off alerts for Wise Man 1, 2, 3 signals (Bill Williams Profitunity strategy);
 - **⼆** = shows two lines, which can be moved and used for setting alerts when the price closes above/below one of the lines;
-- **⏰** = sets an alarm that goes off if the price closes above or below one of the lines that were added using ⼆ button;
-- **MBE** = If the price closes above one of the lines that were added using ⼆ button, all positions on the chart are set to break even;
-- **OC** = Open Chart button: opens all charts from the "Market Watch" list.
+- **⏰** = sets an alarm that goes off if the price closes above or below one of the lines that were added using the ⼆ button;
+- **MBE** = If the price closes above one of the lines that were added using the ⼆ button, all positions on the chart are set to break even;
+- **OC** = Open Chart button: opens all charts from the "Market Watch" list;
+- **AC** = Open Charts with Active Positions Only;
+- **CC** = Close Charts.
