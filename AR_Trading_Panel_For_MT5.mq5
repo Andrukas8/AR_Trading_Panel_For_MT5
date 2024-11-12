@@ -19,15 +19,15 @@
 
 enum ENUM_STRATEGY
   {
-   NOSTRATEGY,   
+   NOSTRATEGY,
    MACD,
-   ICHIMOKU,   
+   ICHIMOKU,
    BILL_WILLIAMS,
    THREELINESTRIKE,
    RSIMA,
    PRICEACTION,
    ORDERBLOCK,
-   SUPPLY_DEMAND,   
+   SUPPLY_DEMAND,
   };
 
 string StrategySelected = "";
@@ -36,11 +36,11 @@ string StrategyStr[9] =
   {
    "NOSTRATEGY",
    "MACD",
-   "ICHIMOKU", 
+   "ICHIMOKU",
    "BILL_WILLIAMS",
    "THREELINESTRIKE",
    "RSIMA",
-   "PRICEACTION",   
+   "PRICEACTION",
    "ORDERBLOCK",
    "SUPPLY_DEMAND"
   };
@@ -5240,7 +5240,9 @@ bool CControlsDialog::MarketSellOrder()
    CTrade trade;
    if(m_LotsEdit.Text() != "" && m_SlPipsEdit.Text() != "" && m_RiskToRewardRatioEdit.Text() != "")
      {
-      GetOrderData();
+
+      if(!GetOrderData())
+         Print(__FUNCTION__,"failed...");
 
       Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",bid," Ask - SL Buy = ",NormalizeDouble(bid-slBuy,_Digits),
             " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - bid,_Digits));
@@ -5275,7 +5277,8 @@ bool  CControlsDialog::MarketBuyOrder()
 
    if(m_LotsEdit.Text() != "" && m_SlPipsEdit.Text() != "" && m_RiskToRewardRatioEdit.Text() != "")
      {
-      GetOrderData();
+      if(!GetOrderData())
+         Print(__FUNCTION__,"failed...");
 
       Print("Lots = ",posLots," SL pips = ",slPips," RRR = ",RiskToReward, " SL Buy = ",slBuy, " Ask = ",ask," Ask - SL Buy = ",NormalizeDouble(ask-slBuy,_Digits),
             " TP = ", tpBuy, " TP - ask = ",NormalizeDouble(tpBuy - ask,_Digits));
@@ -5307,8 +5310,12 @@ bool  CControlsDialog::MarketBuyOrder()
 bool CControlsDialog::PendingSellStopOrder()
   {
    CTrade trade;
-   GetOrderData();
-   GetDataFromLines();
+
+   if(!GetOrderData())
+      Print(__FUNCTION__,"failed...");
+
+   if(!GetDataFromLines())
+      Print(__FUNCTION__,"failed...");
 
    if(lineSlNew > linePriceNew && (linePriceNew >= lineTpNew) && linePriceNew < ask)
      {
@@ -5331,8 +5338,11 @@ bool CControlsDialog::PendingSellStopOrder()
 bool CControlsDialog::PendingSellLimitOrder()
   {
    CTrade trade;
-   GetOrderData();
-   GetDataFromLines();
+   if(!GetOrderData())
+      Print(__FUNCTION__,"failed...");
+
+   if(!GetDataFromLines())
+      Print(__FUNCTION__,"failed...");
 
    if(lineSlNew > linePriceNew && (linePriceNew >= lineTpNew) && linePriceNew > ask)
      {
@@ -5354,8 +5364,11 @@ bool CControlsDialog::PendingSellLimitOrder()
 bool CControlsDialog::PendingBuyStopOrder()
   {
    CTrade trade;
-   GetOrderData();
-   GetDataFromLines();
+   if(!GetOrderData())
+      Print(__FUNCTION__,"failed...");
+
+   if(!GetDataFromLines())
+      Print(__FUNCTION__,"failed...");
 
    if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew > bid)
      {
@@ -5377,8 +5390,11 @@ bool CControlsDialog::PendingBuyStopOrder()
 bool CControlsDialog::PendingBuyLimitOrder()
   {
    CTrade trade;
-   GetOrderData();
-   GetDataFromLines();
+   if(!GetOrderData())
+      Print(__FUNCTION__,"failed...");
+
+   if(!GetDataFromLines())
+      Print(__FUNCTION__,"failed...");
 
    if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew < bid)
      {
@@ -5409,7 +5425,8 @@ bool CControlsDialog::MarketSellDoubleOrder()
    double beLevelLine = 0;
    if(m_LotsEdit.Text() != "" && m_SlPipsEdit.Text() != "" && m_RiskToRewardRatioEdit.Text() != "")
      {
-      GetOrderData();
+      if(!GetOrderData())
+         Print(__FUNCTION__,"failed...");
 
       tpSell =  slSell - 2*(slSell - bid);
       posLots = CheckPositionVolume(NormalizeDouble(0.5 * posLots,2));
@@ -5457,8 +5474,6 @@ bool CControlsDialog::MarketSellDoubleOrder()
    ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_HIDDEN, false);
    ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_ZORDER, 0);
 
-
-
    return(true);
   }
 
@@ -5471,7 +5486,8 @@ bool  CControlsDialog::MarketBuyDoubleOrder()
    double beLevelLine = 0;
    if(m_LotsEdit.Text() != "" && m_SlPipsEdit.Text() != "" && m_RiskToRewardRatioEdit.Text() != "")
      {
-      GetOrderData();
+      if(!GetOrderData())
+         Print(__FUNCTION__,"failed...");
 
       tpBuy =  ask + ask - slBuy;
       posLots = CheckPositionVolume(NormalizeDouble(0.5 * posLots,2));
@@ -5519,8 +5535,6 @@ bool  CControlsDialog::MarketBuyDoubleOrder()
    ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_HIDDEN, false);
    ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_ZORDER, 0);
 
-
-
    return(true);
   }
 
@@ -5530,8 +5544,11 @@ bool  CControlsDialog::MarketBuyDoubleOrder()
 bool CControlsDialog::PendingSellStopDoubleOrder()
   {
    CTrade trade;
-   GetOrderData();
-   GetDataFromLines();
+   if(!GetOrderData())
+      Print(__FUNCTION__,"failed...");
+
+   if(!GetDataFromLines())
+      Print(__FUNCTION__,"failed...");
 
    lineTpNew = lineSlNew - 2*(lineSlNew - linePriceNew);
    posLots = CheckPositionVolume(NormalizeDouble(0.5 * posLots,2));
@@ -5563,8 +5580,11 @@ bool CControlsDialog::PendingSellStopDoubleOrder()
 bool CControlsDialog::PendingSellLimitDoubleOrder()
   {
    CTrade trade;
-   GetOrderData();
-   GetDataFromLines();
+   if(!GetOrderData())
+      Print(__FUNCTION__,"failed...");
+
+   if(!GetDataFromLines())
+      Print(__FUNCTION__,"failed...");
 
    lineTpNew = lineSlNew - 2*(lineSlNew - linePriceNew);
    posLots = CheckPositionVolume(NormalizeDouble(0.5 * posLots,2));
@@ -5596,8 +5616,11 @@ bool CControlsDialog::PendingSellLimitDoubleOrder()
 bool CControlsDialog::PendingBuyStopDoubleOrder()
   {
    CTrade trade;
-   GetOrderData();
-   GetDataFromLines();
+   if(!GetOrderData())
+      Print(__FUNCTION__,"failed...");
+
+   if(!GetDataFromLines())
+      Print(__FUNCTION__,"failed...");
 
    lineTpNew = linePriceNew + linePriceNew - lineSlNew;
    posLots = CheckPositionVolume(NormalizeDouble(0.5 * posLots,2));
@@ -5628,8 +5651,11 @@ bool CControlsDialog::PendingBuyStopDoubleOrder()
 bool CControlsDialog::PendingBuyLimitDoubleOrder()
   {
    CTrade trade;
-   GetOrderData();
-   GetDataFromLines();
+   if(!GetOrderData())
+      Print(__FUNCTION__,"failed...");
+
+   if(!GetDataFromLines())
+      Print(__FUNCTION__,"failed...");
 
    lineTpNew = linePriceNew + linePriceNew - lineSlNew;
    posLots = CheckPositionVolume(NormalizeDouble(0.5 * posLots,2));
@@ -5693,6 +5719,7 @@ bool CControlsDialog::CalculatePosition()
         {
          calcTpPips = 0.1*MathAbs(inputTakeProfit - inputPrice)/_Point;
          calcSlPips = 0.1*MathAbs(inputStopLoss - inputPrice)/_Point;
+         calcRRR = NormalizeDouble(calcTpPips/calcSlPips,2);
         }
       else
          if(!pendingToggle)
