@@ -482,6 +482,8 @@ protected:
    double            CheckPositionVolume(double lotSize);
    bool              DisplayInfo(void);
    bool              DrawPositionRectangles(void);
+   bool              ResetPanel(void);
+   bool              AddBreakEvenLine(double beLevelLine);
    bool              SetManualBE(void);
    bool              CreateAlertCloseLines(void);
 
@@ -2386,12 +2388,15 @@ void CControlsDialog::OnClickSendOrderBtn(void)
 
    if(!pendingToggle && sellToggle && !buyToggle) // if market sell order
      {
-      MarketSellOrder();
+      if(!MarketSellOrder())
+         Print(__FUNCTION__," Failed...");
      }
    else
       if(!pendingToggle && !sellToggle && buyToggle) // if market buy order
         {
-         MarketBuyOrder();
+
+         if(!MarketBuyOrder())
+            Print(__FUNCTION__," Failed...");
         }
       else
          if(pendingToggle && sellToggle && !buyToggle)
@@ -2402,12 +2407,14 @@ void CControlsDialog::OnClickSendOrderBtn(void)
 
             if(limitToggle && !stopToggle)
               {
-               PendingSellLimitOrder();
+               if(!PendingSellLimitOrder())
+                  Print(__FUNCTION__," Failed...");
               }
             else
                if(!limitToggle && stopToggle)
                  {
-                  PendingSellStopOrder();
+                  if(!PendingSellStopOrder())
+                     Print(__FUNCTION__," Failed...");
                  }
 
            }
@@ -2419,18 +2426,19 @@ void CControlsDialog::OnClickSendOrderBtn(void)
                //+------------------------------------------------------------------+
                if(limitToggle && !stopToggle)
                  {
-                  PendingBuyLimitOrder();
+                  if(!PendingBuyLimitOrder())
+                     Print(__FUNCTION__," Failed...");
                  }
                else
                   if(!limitToggle && stopToggle)
                     {
-                     PendingBuyStopOrder();
+                     if(!PendingBuyStopOrder())
+                        Print(__FUNCTION__," Failed...");
                     }
               }
 
-   ObjectDelete(0,"priceLine");
-   ObjectDelete(0,"stopLossLine");
-   ObjectDelete(0,"takeProfitLine");
+   if(!ResetPanel())
+      Print(__FUNCTION__," Failed...");
 
    if(!DrawPositionRectangles())
       Print(__FUNCTION__," Failed...");
@@ -5464,15 +5472,12 @@ bool CControlsDialog::MarketSellDoubleOrder()
      }
 
 // add breakeven line
-   ObjectCreate(0,"alertCloseLine_2",OBJ_HLINE,0,0,beLevelLine);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_STYLE, STYLE_DASH);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_WIDTH, 2);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_BACK, true);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTABLE, true);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, false);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_HIDDEN, false);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_ZORDER, 0);
+
+   if(!AddBreakEvenLine(beLevelLine))
+      Print(__FUNCTION__," Failed...");
+
+   if(!ResetPanel())
+      Print(__FUNCTION__," Failed...");
 
    return(true);
   }
@@ -5524,16 +5529,11 @@ bool  CControlsDialog::MarketBuyDoubleOrder()
      }
 
 // add breakeven line
-   Print("beLevelLine = ",beLevelLine);
-   ObjectCreate(0,"alertCloseLine_1",OBJ_HLINE,0,0,beLevelLine);
-   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrSilver);
-   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_STYLE, STYLE_DASH);
-   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_WIDTH, 2);
-   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_BACK, true);
-   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTABLE, true);
-   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTED, false);
-   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_HIDDEN, false);
-   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_ZORDER, 0);
+   if(!AddBreakEvenLine(beLevelLine))
+      Print(__FUNCTION__," Failed...");
+
+   if(!ResetPanel())
+      Print(__FUNCTION__," Failed...");
 
    return(true);
   }
@@ -5571,6 +5571,10 @@ bool CControlsDialog::PendingSellStopDoubleOrder()
      {
       Print("Incorrect input parameters for SellStop Double Order operation");
      }
+
+   if(!ResetPanel())
+      Print(__FUNCTION__," Failed...");
+
    return(true);
   }
 
@@ -5607,6 +5611,10 @@ bool CControlsDialog::PendingSellLimitDoubleOrder()
      {
       Print("Incorrect input parameters for SellLimit Double operation");
      }
+
+   if(!ResetPanel())
+      Print(__FUNCTION__," Failed...");
+
    return(true);
   }
 
@@ -5642,6 +5650,10 @@ bool CControlsDialog::PendingBuyStopDoubleOrder()
      {
       Print("Incorrect input parameters for BuyStop operation");
      }
+
+   if(!ResetPanel())
+      Print(__FUNCTION__," Failed...");
+
    return(true);
   }
 
@@ -5677,6 +5689,10 @@ bool CControlsDialog::PendingBuyLimitDoubleOrder()
      {
       Print("Incorrect input parameters for BuyLimit Double operation");
      }
+
+   if(!ResetPanel())
+      Print(__FUNCTION__," Failed...");
+
    return(true);
   }
 
@@ -7290,6 +7306,56 @@ bool CControlsDialog::CreateAlertCloseLines()
    ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_BACK, true);
    ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTABLE, true);
    ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, true);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_HIDDEN, false);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_ZORDER, 0);
+
+   return true;
+  }
+//+------------------------------------------------------------------+
+
+
+
+
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+bool CControlsDialog::ResetPanel()
+  {
+   ObjectDelete(0,"priceLine");
+   ObjectDelete(0,"stopLossLine");
+   ObjectDelete(0,"takeProfitLine");
+
+   pendingToggle = false;
+   lineInput = false;
+   sellToggle = false;
+   buyToggle = false;
+   limitToggle = false;
+   stopToggle = false;
+
+   m_MarketPendingBtn.Text("[ M ]");
+   m_SellToggleBtn.Text("S");
+   m_BuyToggleBtn.Text("B");
+   m_StopToggleBtn.Text("ST");
+   m_LimitToggleBtn.Text("LM");
+
+   return true;
+  }
+//+------------------------------------------------------------------+
+
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+bool CControlsDialog::AddBreakEvenLine(double beLevelLine)
+  {
+   ObjectCreate(0,"alertCloseLine_2",OBJ_HLINE,0,0,beLevelLine);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_STYLE, STYLE_DASH);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_WIDTH, 2);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_BACK, true);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTABLE, true);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, false);
    ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_HIDDEN, false);
    ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_ZORDER, 0);
 
