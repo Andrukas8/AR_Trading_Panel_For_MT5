@@ -6127,7 +6127,7 @@ bool CControlsDialog::DrawPositionRectangles()
          for(int i = ObjectsTotal(0,0) -1 ; i >= 0; i--)
            {
             Name = ObjectName(0,i);
-            if(StringSubstr(Name, 0, 3) == "AR_AP_")
+            if(StringSubstr(Name, 0, 6) == "AR_AP_")
                ObjectDelete(0,Name);
             if(StringSubstr(Name, 0, 10) == "alertClose")
                ObjectDelete(0,Name);
