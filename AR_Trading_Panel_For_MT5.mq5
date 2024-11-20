@@ -2094,31 +2094,18 @@ void CControlsDialog::OnClickCalculatePosBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickClearInputsBtn(void)
   {
-   m_LotsEdit.Text(NULL);
-   m_SlPipsEdit.Text(NULL);
-   m_RiskToRewardRatioEdit.Text(NULL);
-   m_RiskEdit.Text(NULL);
+   m_LotsEdit.Text(posLotsDef);
+   m_SlPipsEdit.Text(slPipsDef);
+   m_RiskToRewardRatioEdit.Text(RiskToRewardDef);
+   m_RiskEdit.Text(RiskLevelDef);
    m_PriceEdit.Text(NULL);
    m_SlEdit.Text(NULL);
+   m_SlPipsEdit.Text(slPipsDef);
    m_TpEdit.Text(NULL);
    m_TpPipsEdit.Text(NULL);
 
-   stopToggle = false;
-   limitToggle  = false;
-   pendingToggle = false;
-
-   sellToggle = false;
-   buyToggle = false;
-   m_MarketPendingBtn.Text("P");
-   m_StopToggleBtn.Text("ST");
-   m_LimitToggleBtn.Text("LM");
-   m_BuyToggleBtn.Text("B");
-   m_SellToggleBtn.Text("S");
-
-   lineInput = false;
-   ObjectDelete(0,"priceLine");
-   ObjectDelete(0,"stopLossLine");
-   ObjectDelete(0,"takeProfitLine");
+   if(!ResetPanel())
+      Print(__FUNCTION__," Failed...");
 
   }
 
