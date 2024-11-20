@@ -6045,6 +6045,8 @@ bool VaRfilterGo(double riskLimit)
 //+------------------------------------------------------------------+
 bool CControlsDialog::DrawPositionRectangles()
   {
+
+// Open Positions:
    int totalPos = PositionsTotal();
 
 // Find number of open positions on current chart
@@ -6092,11 +6094,11 @@ bool CControlsDialog::DrawPositionRectangles()
 
                if(price2 > 0)
                  {
-                  ObjectCreate(0, "AR_SL_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price2);
-                  ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrIndianRed);
-                  ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
-                  ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
-                  ObjectSetInteger(0,"AR_SL_Rectangle_"+IntegerToString(i),OBJPROP_BACK,true);
+                  ObjectCreate(0, "AR_AP_SL_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price2);
+                  ObjectSetInteger(0,"AR_AP_SL_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrIndianRed);
+                  ObjectSetInteger(0,"AR_AP_SL_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
+                  ObjectSetInteger(0,"AR_AP_SL_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
+                  ObjectSetInteger(0,"AR_AP_SL_Rectangle_"+IntegerToString(i),OBJPROP_BACK,true);
                  }
 
                if(price3 > 0)
@@ -6104,11 +6106,11 @@ bool CControlsDialog::DrawPositionRectangles()
 
                   alertCloseLine = true;
 
-                  ObjectCreate(0, "AR_TP_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price3);
-                  ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_COLOR, clrForestGreen);
-                  ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
-                  ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
-                  ObjectSetInteger(0,"AR_TP_Rectangle_"+IntegerToString(i),OBJPROP_BACK,true);
+                  ObjectCreate(0, "AR_AP_TP_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price3);
+                  ObjectSetInteger(0,"AR_AP_TP_Rectangle_"+IntegerToString(i),OBJPROP_COLOR, clrForestGreen);
+                  ObjectSetInteger(0,"AR_AP_TP_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
+                  ObjectSetInteger(0,"AR_AP_TP_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
+                  ObjectSetInteger(0,"AR_AP_TP_Rectangle_"+IntegerToString(i),OBJPROP_BACK,true);
 
 
                  }
@@ -6125,12 +6127,95 @@ bool CControlsDialog::DrawPositionRectangles()
          for(int i = ObjectsTotal(0,0) -1 ; i >= 0; i--)
            {
             Name = ObjectName(0,i);
-            if(StringSubstr(Name, 0, 3) == "AR_")
+            if(StringSubstr(Name, 0, 3) == "AR_AP_")
                ObjectDelete(0,Name);
             if(StringSubstr(Name, 0, 10) == "alertClose")
                ObjectDelete(0,Name);
            }
         }
+
+
+// End of Active Positions
+
+
+// Pending Orders:
+   int totalPendOrders = OrdersTotal();
+
+// Find number of pending orders s on current chart
+   int totalPendOrdersCurrentChart = 0;
+   for(int i=0; i<totalPendOrders; i++)
+     {
+      ulong ordTicket = OrderGetTicket(i);
+      if(OrderSelect(ordTicket))
+        {
+         if(OrderGetString(ORDER_SYMBOL) == _Symbol)
+           {
+            totalPendOrdersCurrentChart += 1;
+           }
+        }
+     }
+// End Find number of pending orders on current chart
+
+   if(totalPendOrdersCurrentChart>0)
+     {
+      for(int i = 0; i < totalPendOrders; i++)
+        {
+         ulong pendOrderTicket = OrderGetTicket(i);
+
+         if(OrderSelect(pendOrderTicket))
+           {
+            if(OrderGetString(ORDER_SYMBOL) == _Symbol)
+              {
+               long time1 = OrderGetInteger(ORDER_TIME_SETUP);
+               long time2 = time1+(PeriodSeconds(_Period)*15);
+               double price1 = OrderGetDouble(ORDER_PRICE_OPEN);
+
+               double price2 = OrderGetDouble(ORDER_SL);
+               double price3 = OrderGetDouble(ORDER_TP);
+
+               if(price2 > 0)
+                 {
+                  ObjectCreate(0, "AR_PO_SL_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price2);
+                  ObjectSetInteger(0,"AR_PO_SL_Rectangle_"+IntegerToString(i),OBJPROP_COLOR,clrGoldenrod);
+                  ObjectSetInteger(0,"AR_PO_SL_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
+                  ObjectSetInteger(0,"AR_PO_SL_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
+                  ObjectSetInteger(0,"AR_PO_SL_Rectangle_"+IntegerToString(i),OBJPROP_BACK,true);
+                 }
+
+               if(price3 > 0)
+                 {
+
+                  alertCloseLine = true;
+
+                  ObjectCreate(0, "AR_PO_TP_Rectangle_"+IntegerToString(i), OBJ_RECTANGLE, 0, time1, price1, time2, price3);
+                  ObjectSetInteger(0,"AR_PO_TP_Rectangle_"+IntegerToString(i),OBJPROP_COLOR, clrRoyalBlue);
+                  ObjectSetInteger(0,"AR_PO_TP_Rectangle_"+IntegerToString(i),OBJPROP_FILL,false);
+                  ObjectSetInteger(0,"AR_PO_TP_Rectangle_"+IntegerToString(i),OBJPROP_SELECTABLE,true);
+                  ObjectSetInteger(0,"AR_PO_TP_Rectangle_"+IntegerToString(i),OBJPROP_BACK,true);
+
+
+                 }
+              }
+           }
+        }
+     }
+   else
+      if(totalPendOrdersCurrentChart == 0)
+        {
+         alertCloseLine = false;
+         m_ManualBEBtn.Color(clrBlack);
+         string Name;
+         for(int i = ObjectsTotal(0,0) -1 ; i >= 0; i--)
+           {
+            Name = ObjectName(0,i);
+            if(StringSubstr(Name, 0, 6) == "AR_PO_")
+               ObjectDelete(0,Name);
+            if(StringSubstr(Name, 0, 10) == "alertClose")
+               ObjectDelete(0,Name);
+           }
+        }
+// End of Pending Orders
+
    return(true);
   }
 
