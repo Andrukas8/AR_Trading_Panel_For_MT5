@@ -483,9 +483,7 @@ protected:
    bool              DisplayInfo(void);
    bool              DrawPositionRectangles(void);
    bool              ResetPanel(void);
-   bool              AddBreakEvenLine(double beLevelLine);
    bool              SetManualBE(void);
-   bool              CreateAlertCloseLines(void);
 
    //--- handlers of the dependent controls events
    void              OnClickSellBtn(void);
@@ -1884,10 +1882,6 @@ bool CControlsDialog::CreateWm3AlertBtn(void)
       if(!m_wm3AlertBtn.Text("W3"))
          return(false);
 
-
-
-
-
    if(!Add(m_wm3AlertBtn))
       return(false);
 
@@ -1931,14 +1925,16 @@ bool CControlsDialog::CreateScanChartsBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickSellBtn(void)
   {
-   MarketSellOrder();
+   if(!MarketSellOrder())
+      Print(__FUNCTION__," Failed...");
   }
 //+------------------------------------------------------------------+
 //| Event handler for Buy Button                                     |
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickBuyBtn(void)
   {
-   MarketBuyOrder();
+   if(!MarketBuyOrder())
+      Print(__FUNCTION__," Failed...");
   }
 
 
@@ -1987,12 +1983,9 @@ void CControlsDialog::OnClickBoxBtn(void)
          if(!drawBox("Box_Tokyo", timeFromTokyo, timeTillTokyo, colorTokyo))
             Print("Failed to draw box...");
 
-
-
       if(LondonSession)
          if(!drawBox("Box_London", timeFromLondon, timeTillLondon, colorLondon))
             Print("Failed to draw box...");
-
 
       if(NewYorkSession)
          if(!drawBox("Box_NewYork", timeFromNewYork, timeTillNewYork, colorNewYork))
@@ -2025,12 +2018,14 @@ void CControlsDialog::OnClickDoubleOrderBtn(void)
 
    if(!pendingToggle && sellToggle && !buyToggle) // if market sell order
      {
-      MarketSellDoubleOrder();
+      if(!MarketSellDoubleOrder())
+         Print(__FUNCTION__," Failed...");
      }
    else
       if(!pendingToggle && !sellToggle && buyToggle) // if market buy order
         {
-         MarketBuyDoubleOrder();
+         if(!MarketBuyDoubleOrder())
+            Print(__FUNCTION__," Failed...");
         }
       else
          if(pendingToggle && sellToggle && !buyToggle)
@@ -2041,12 +2036,14 @@ void CControlsDialog::OnClickDoubleOrderBtn(void)
 
             if(limitToggle && !stopToggle)
               {
-               PendingSellLimitDoubleOrder();
+               if(!PendingSellLimitDoubleOrder())
+                  Print(__FUNCTION__," Failed...");
               }
             else
                if(!limitToggle && stopToggle)
                  {
-                  PendingSellStopDoubleOrder();
+                  if(!PendingSellStopDoubleOrder())
+                     Print(__FUNCTION__," Failed...");
                  }
 
            }
@@ -2058,13 +2055,15 @@ void CControlsDialog::OnClickDoubleOrderBtn(void)
                //+------------------------------------------------------------------+
                if(limitToggle && !stopToggle)
                  {
-                  PendingBuyLimitDoubleOrder();
+                  if(!PendingBuyLimitDoubleOrder())
+                     Print(__FUNCTION__," Failed...");
                  }
                else
                   if(!limitToggle && stopToggle)
-                    {
-                     PendingBuyStopDoubleOrder();
-                    }
+                     if(!PendingBuyStopDoubleOrder())
+                        Print(__FUNCTION__," Failed...");
+
+
               }
 
    ObjectDelete(0,"priceLine");
@@ -2460,8 +2459,25 @@ void CControlsDialog::OnClickShowAlertLinesBtn(void)
      {
       m_ShowAlertLinesBtn.Color(clrBlue);
 
-      if(!CreateAlertCloseLines())
-         Print(__FUNCTION__, " Failed...");
+      ObjectCreate(0,"alertCloseLine_1",OBJ_HLINE,0,0,NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_ASK)+100*_Point,_Digits));
+      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrSilver);
+      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_STYLE, STYLE_DASH);
+      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_WIDTH, 2);
+      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_BACK, true);
+      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTABLE, true);
+      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTED, true);
+      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_HIDDEN, false);
+      ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_ZORDER, 0);
+
+      ObjectCreate(0,"alertCloseLine_2",OBJ_HLINE,0,0,NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_BID)-100*_Point,_Digits));
+      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
+      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_STYLE, STYLE_DASH);
+      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_WIDTH, 2);
+      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_BACK, true);
+      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTABLE, true);
+      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, true);
+      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_HIDDEN, false);
+      ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_ZORDER, 0);
 
      }
    else
@@ -5420,8 +5436,7 @@ bool CControlsDialog::MarketSellDoubleOrder()
    double beLevelLine = 0;
    if(m_LotsEdit.Text() != "" && m_SlPipsEdit.Text() != "" && m_RiskToRewardRatioEdit.Text() != "")
      {
-      if(!GetOrderData())
-         Print(__FUNCTION__,"failed...");
+      GetOrderData();
 
       tpSell =  slSell - 2*(slSell - bid);
       posLots = CheckPositionVolume(NormalizeDouble(0.5 * posLots,2));
@@ -5459,12 +5474,19 @@ bool CControlsDialog::MarketSellDoubleOrder()
      }
 
 // add breakeven line
+   ObjectCreate(0,"alertCloseLine_2",OBJ_HLINE,0,0,beLevelLine);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_STYLE, STYLE_DASH);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_WIDTH, 2);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_BACK, true);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTABLE, true);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, false);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_HIDDEN, false);
+   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_ZORDER, 0);
 
-   if(!AddBreakEvenLine(beLevelLine))
-      Print(__FUNCTION__," Failed...");
 
    if(!ResetPanel())
-      Print(__FUNCTION__," Failed...");
+      Print(__FUNCTION__," failed...");
 
    return(true);
   }
@@ -5478,8 +5500,7 @@ bool  CControlsDialog::MarketBuyDoubleOrder()
    double beLevelLine = 0;
    if(m_LotsEdit.Text() != "" && m_SlPipsEdit.Text() != "" && m_RiskToRewardRatioEdit.Text() != "")
      {
-      if(!GetOrderData())
-         Print(__FUNCTION__,"failed...");
+      GetOrderData();
 
       tpBuy =  ask + ask - slBuy;
       posLots = CheckPositionVolume(NormalizeDouble(0.5 * posLots,2));
@@ -5516,11 +5537,18 @@ bool  CControlsDialog::MarketBuyDoubleOrder()
      }
 
 // add breakeven line
-   if(!AddBreakEvenLine(beLevelLine))
-      Print(__FUNCTION__," Failed...");
+   ObjectCreate(0,"alertCloseLine_1",OBJ_HLINE,0,0,beLevelLine);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrSilver);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_STYLE, STYLE_DASH);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_WIDTH, 2);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_BACK, true);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTABLE, true);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTED, false);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_HIDDEN, false);
+   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_ZORDER, 0);
 
    if(!ResetPanel())
-      Print(__FUNCTION__," Failed...");
+      Print(__FUNCTION__," failed...");
 
    return(true);
   }
@@ -6155,7 +6183,6 @@ bool CControlsDialog::DrawPositionRectangles()
         }
      }
 // End Find number of pending orders on current chart
-
    if(totalPendOrdersCurrentChart>0)
      {
       for(int i = 0; i < totalPendOrders; i++)
@@ -6202,15 +6229,11 @@ bool CControlsDialog::DrawPositionRectangles()
    else
       if(totalPendOrdersCurrentChart == 0)
         {
-         alertCloseLine = false;
-         m_ManualBEBtn.Color(clrBlack);
          string Name;
          for(int i = ObjectsTotal(0,0) -1 ; i >= 0; i--)
            {
             Name = ObjectName(0,i);
             if(StringSubstr(Name, 0, 6) == "AR_PO_")
-               ObjectDelete(0,Name);
-            if(StringSubstr(Name, 0, 10) == "alertClose")
                ObjectDelete(0,Name);
            }
         }
@@ -6257,7 +6280,6 @@ bool CControlsDialog::SetManualBE()
      }
    return(true);
   }
-
 
 //+------------------------------------------------------------------+
 //|      Function that draws boxes used for drawing sessions         |
@@ -7339,14 +7361,9 @@ double Profit_Calculation()
    for(int i = 0; i < totalPos; i++)
      {
       ulong posTicket = PositionGetTicket(i);
-
       if(PositionSelectByTicket(posTicket))
-        {
          if(PositionGetString(POSITION_SYMBOL) == _Symbol)
-           {
             posProfit += PositionGetDouble(POSITION_PROFIT);
-           }
-        }
      }
    posProfit = NormalizeDouble(posProfit,2);
    return posProfit;
@@ -7355,39 +7372,6 @@ double Profit_Calculation()
 
 
 //+------------------------------------------------------------------+
-
-//+------------------------------------------------------------------+
-//|                                                                  |
-//+------------------------------------------------------------------+
-bool CControlsDialog::CreateAlertCloseLines()
-  {
-   ObjectCreate(0,"alertCloseLine_1",OBJ_HLINE,0,0,NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_ASK)+100*_Point,_Digits));
-   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_COLOR, clrSilver);
-   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_STYLE, STYLE_DASH);
-   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_WIDTH, 2);
-   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_BACK, true);
-   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTABLE, true);
-   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_SELECTED, true);
-   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_HIDDEN, false);
-   ObjectSetInteger(0, "alertCloseLine_1", OBJPROP_ZORDER, 0);
-
-   ObjectCreate(0,"alertCloseLine_2",OBJ_HLINE,0,0,NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_BID)-100*_Point,_Digits));
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_STYLE, STYLE_DASH);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_WIDTH, 2);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_BACK, true);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTABLE, true);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, true);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_HIDDEN, false);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_ZORDER, 0);
-
-   return true;
-  }
-//+------------------------------------------------------------------+
-
-
-
-
 
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -7415,22 +7399,4 @@ bool CControlsDialog::ResetPanel()
   }
 //+------------------------------------------------------------------+
 
-
-//+------------------------------------------------------------------+
-//|                                                                  |
-//+------------------------------------------------------------------+
-bool CControlsDialog::AddBreakEvenLine(double beLevelLine)
-  {
-   ObjectCreate(0,"alertCloseLine_2",OBJ_HLINE,0,0,beLevelLine);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_COLOR, clrSilver);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_STYLE, STYLE_DASH);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_WIDTH, 2);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_BACK, true);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTABLE, true);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_SELECTED, false);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_HIDDEN, false);
-   ObjectSetInteger(0, "alertCloseLine_2", OBJPROP_ZORDER, 0);
-
-   return true;
-  }
 //+------------------------------------------------------------------+
