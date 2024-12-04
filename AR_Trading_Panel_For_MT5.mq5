@@ -5409,7 +5409,7 @@ bool CControlsDialog::PendingBuyLimitOrder()
 
    if(lineSlNew < linePriceNew && (linePriceNew <= lineTpNew) && linePriceNew < bid)
      {
-      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + StrategyStr[m_StrategySelectorCBox.Value()] + " " + IntegerToString(PeriodSeconds(PERIOD_CURRENT)/60) + " BUY LIMIT";
+      string tradeComment = StrategyStr[m_StrategySelectorCBox.Value()] + " " + IntegerToString(PeriodSeconds(PERIOD_CURRENT)/60) + " BUY LIMIT";
       if(trade.BuyLimit(posLots,linePriceNew,_Symbol,lineSlNew,lineTpNew,ORDER_TIME_GTC,0,tradeComment))
         {
          Print("BuyLimit Placed ",posLots," Lots of ",_Symbol," @ ",linePriceNew," SL = ",lineSlNew, " TP = ",lineTpNew);
