@@ -2084,7 +2084,8 @@ void CControlsDialog::OnClickDoubleOrderBtn(void)
 //+------------------------------------------------------------------+
 void CControlsDialog::OnClickCalculatePosBtn(void)
   {
-   CalculatePosition();
+   if(!CalculatePosition())
+      Print(__FUNCTION__, " Failed...");
   }
 
 
@@ -2260,19 +2261,14 @@ void CControlsDialog::OnClickShowLinesBtn(void)
          ObjectSetInteger(0, "takeProfitLine", OBJPROP_ZORDER, 0);
 
          if(!GetDataFromLines())
-           {
-            Print("Get Data From Lines Failed...");
-           }
+            Print(__FUNCTION__, " Failed...");
 
          if(!CalculatePosition())
-           {
-            Print("Position Calculation Failed...");
-           }
+            Print(__FUNCTION__, " Failed...");
 
          if(pendingToggle)
-           {
             m_PriceEdit.Text("M");
-           }
+
         }
 
       // Line Sl
@@ -3189,38 +3185,30 @@ void OnChartEvent(const int id,         // event ID
   {
    ExtDialog.ChartEvent(id,lparam,dparam,sparam);
 
-// FEATURE UNDER CONSTRUCTION
-// recalculates position parameters automatically when the SL line is moved on the chart
-// (uncomment the velow code to try it)
-//
-//   if(id==CHARTEVENT_OBJECT_DRAG)
-//     {
-//      if(sparam == "stopLossLine")
-//        {
-//         inputStopLoss = NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),_Digits);
-//         double inputLineRRR = StringToDouble(ObjectGetString(0,ExtDialog.Name()+"RRR",OBJPROP_TEXT));
-//         double newInputTakeProfit = 0;
-//         if(inputStopLoss < inputTakeProfit) // buy
-//           {
-//            double input_line_ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK); // buy
-//            newInputTakeProfit = (input_line_ask - inputStopLoss) * inputLineRRR + input_line_ask;
-//
-//           }
-//         else
-//            if(inputStopLoss > inputTakeProfit) // sell
-//              {
-//               double input_line_bid = SymbolInfoDouble(_Symbol,SYMBOL_BID); // sell
-//               newInputTakeProfit = input_line_bid - (inputStopLoss - input_line_bid) * inputLineRRR;
-//              }
-//
-//         ObjectSetString(0,ExtDialog.Name()+"SlEdit",OBJPROP_TEXT,DoubleToString(inputStopLoss,_Digits));
-//         ObjectSetString(0,ExtDialog.Name()+"TpEdit",OBJPROP_TEXT,DoubleToString(newInputTakeProfit,_Digits));
-//         ObjectSetDouble(0,"takeProfitLine",OBJPROP_PRICE,newInputTakeProfit);
-//
-//        }
-//
-//     }
-// END OF FEATURE UNDER CONSTRUCTION
+// Automatically place TP line according to SL and RRR (defined)
+   if(id==CHARTEVENT_OBJECT_DRAG)
+     {
+      if(sparam == "stopLossLine")
+        {
+         inputStopLoss = NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),_Digits);
+         double inputLineRRR = NormalizeDouble(StringToDouble(RiskToRewardDef),2);
+         double newInputTakeProfit = 0;
+         double input_line_ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
+         double input_line_bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);
+
+         if(inputStopLoss < inputTakeProfit) // buy
+            newInputTakeProfit = NormalizeDouble((input_line_bid - inputStopLoss) * inputLineRRR + input_line_ask, _Digits);
+         else
+            if(inputStopLoss > inputTakeProfit) // sell
+               newInputTakeProfit = NormalizeDouble(input_line_ask - (inputStopLoss - input_line_ask) * inputLineRRR, _Digits);
+
+         ObjectSetString(0,ExtDialog.Name()+"SlEdit",OBJPROP_TEXT,DoubleToString(inputStopLoss,_Digits));
+         ObjectSetString(0,ExtDialog.Name()+"TpEdit",OBJPROP_TEXT,DoubleToString(newInputTakeProfit,_Digits));
+         ObjectSetDouble(0,"takeProfitLine",OBJPROP_PRICE,newInputTakeProfit);
+         ChartRedraw();
+        }
+     }
+// End of automatically place TP line according to SL and RRR (defined)
 
   }
 
@@ -7397,6 +7385,8 @@ bool CControlsDialog::ResetPanel()
 
    return true;
   }
+//+------------------------------------------------------------------+
+
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
