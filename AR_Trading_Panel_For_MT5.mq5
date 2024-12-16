@@ -373,18 +373,18 @@ private:
    CButton           m_BreakEvenBtn;                  // button to break even all traded on the current chart
    CButton           m_MarketPendingBtn;              // Button to toggle between market and pending orders
    CButton           m_ShowLinesBtn;                  // Button to show price sl and tp prices for order placing
-   CButton           m_SellToggleBtn;
-   CButton           m_BuyToggleBtn;
-   CButton           m_SendOrderBtn;
-   CButton           m_StopToggleBtn;
-   CButton           m_LimitToggleBtn;
-   CButton           m_AutoPosMgmtToggleBtn;
-   CButton           m_DoubleOrderBtn;
-   CButton           m_DrawPositionsBtn;
-   CButton           m_Box;
-   CButton           m_ShowAlertLinesBtn;            // Shows two alert lines to set price close alerts
-   CButton           m_AlertCloseBtn;                // Sets a line, closing over which price triggers alarm
-   CButton           m_ManualBEBtn;
+   CButton           m_SellToggleBtn;                 // Button to toggle Sell flag
+   CButton           m_BuyToggleBtn;                  // Button to toggle Buy flag
+   CButton           m_SendOrderBtn;                  // Button to place Single Order
+   CButton           m_StopToggleBtn;                 // Button to togle stop order flag
+   CButton           m_LimitToggleBtn;                // Button to togle limit order flag
+   CButton           m_AutoPosMgmtToggleBtn;          // Automatic Position Management Button
+   CButton           m_DoubleOrderBtn;                // Button to place doubple orders
+   CButton           m_DrawPositionsBtn;              // Button to draw SL and TP rectangles of the position
+   CButton           m_Box;                           // Button to draw Session Boxes
+   CButton           m_ShowAlertLinesBtn;             // Shows two alert lines to set price close alerts
+   CButton           m_AlertCloseBtn;                 // Sets a line, closing over which price triggers alarm
+   CButton           m_ManualBEBtn;                   // Manual Breakeven button
 
    CButton           m_wm1AlertBtn;                  // Bill Williams Wise Man 1 (divergent bar) alert toggle button
    CButton           m_wm2AlertBtn;                  // Bill Williams Wise Man 2 (AO 3 bars of same color) alert toggle button
@@ -3188,25 +3188,41 @@ void OnChartEvent(const int id,         // event ID
 // Automatically place TP line according to SL and RRR (defined)
    if(id==CHARTEVENT_OBJECT_DRAG)
      {
-      if(sparam == "stopLossLine")
+      if(sparam == "stopLossLine" || sparam == "priceLine")
         {
          inputStopLoss = NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),_Digits);
          double inputLineRRR = NormalizeDouble(StringToDouble(RiskToRewardDef),2);
          double newInputTakeProfit = 0;
-         double input_line_ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
-         double input_line_bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);
 
-         if(inputStopLoss < inputTakeProfit) // buy
-            newInputTakeProfit = NormalizeDouble((input_line_bid - inputStopLoss) * inputLineRRR + input_line_ask, _Digits);
-         else
-            if(inputStopLoss > inputTakeProfit) // sell
-               newInputTakeProfit = NormalizeDouble(input_line_ask - (inputStopLoss - input_line_ask) * inputLineRRR, _Digits);
+         if(!pendingToggle) // Pending Toggle is off, that's why taking actual ask and bid prices for calculation
+           {
+            double input_line_ask = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
+            double input_line_bid = SymbolInfoDouble(_Symbol,SYMBOL_BID);
+
+            if(inputStopLoss < inputTakeProfit) // buy
+               newInputTakeProfit = NormalizeDouble((input_line_bid - inputStopLoss) * inputLineRRR + input_line_ask, _Digits);
+            else
+               if(inputStopLoss > inputTakeProfit) // sell
+                  newInputTakeProfit = NormalizeDouble(input_line_ask - (inputStopLoss - input_line_ask) * inputLineRRR, _Digits);
+           }
+
+         if(pendingToggle) // Pending Toggle is on, that is why taking position of price line for calculation (because spread is unknown for future)
+           {
+            linePriceNew = NormalizeDouble(ObjectGetDouble(0,"priceLine",OBJPROP_PRICE),_Digits);
+            if(inputStopLoss < inputTakeProfit) // buy
+               newInputTakeProfit = NormalizeDouble((linePriceNew - inputStopLoss) * inputLineRRR + linePriceNew, _Digits);
+            else
+               if(inputStopLoss > inputTakeProfit) // sell
+                  newInputTakeProfit = NormalizeDouble(linePriceNew - (inputStopLoss - linePriceNew) * inputLineRRR, _Digits);
+
+           }
 
          ObjectSetString(0,ExtDialog.Name()+"SlEdit",OBJPROP_TEXT,DoubleToString(inputStopLoss,_Digits));
          ObjectSetString(0,ExtDialog.Name()+"TpEdit",OBJPROP_TEXT,DoubleToString(newInputTakeProfit,_Digits));
          ObjectSetDouble(0,"takeProfitLine",OBJPROP_PRICE,newInputTakeProfit);
          ChartRedraw();
         }
+
      }
 // End of automatically place TP line according to SL and RRR (defined)
 
@@ -5187,9 +5203,6 @@ void OnTick()
 //|                                                                  |
 //+------------------------------------------------------------------+
 
-
-
-
   }// OnTick
 
 //+---------------------------------------------------------------------------------------+
@@ -5224,7 +5237,6 @@ bool CControlsDialog::GetDataFromLines()
    linePriceNew = NormalizeDouble(ObjectGetDouble(0,"priceLine",OBJPROP_PRICE),_Digits);
    lineSlNew =  NormalizeDouble(ObjectGetDouble(0,"stopLossLine",OBJPROP_PRICE),_Digits);
    lineTpNew =  NormalizeDouble(ObjectGetDouble(0,"takeProfitLine",OBJPROP_PRICE),_Digits);
-
    m_PriceEdit.Text(DoubleToString(linePriceNew,_Digits));
    m_SlEdit.Text(DoubleToString(lineSlNew,_Digits));
    m_TpEdit.Text(DoubleToString(lineTpNew,_Digits));
