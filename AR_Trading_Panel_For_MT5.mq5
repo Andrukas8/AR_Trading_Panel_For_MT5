@@ -58,6 +58,7 @@ input bool debuggingComments = false; // SHOW DEBUGGING COMMENTS
 input bool showProfitOnChart = false; // SHOW POSITION PROFIT ON CHART
 input bool useSymmetricalPositionFilter = false; // DO NOT SHOW SIGNALS FOR SYMMETRICAL PAIRS
 input bool useOpenPositionFilter = false; // DO NOT SHOW SIGNALS FOR INSTRUMENTS WITH OPEN POSITIONS
+input bool alarmLinesOnTouch = true;      // ALARM LINES: SET ON TOUCH(true) / CLOSE(false)
 input ENUM_STRATEGY StrategySelect = NOSTRATEGY;
 input string posLotsDef = "0.2"; // LOT SIZE
 input string slPipsDef = "10"; // SL pips
@@ -4294,18 +4295,36 @@ void OnTick()
      {
       alertLinePrice1 = NormalizeDouble(ObjectGetDouble(0,"alertCloseLine_1",OBJPROP_PRICE),_Digits);
       alertLinePrice2 = NormalizeDouble(ObjectGetDouble(0,"alertCloseLine_2",OBJPROP_PRICE),_Digits);
-      alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits); // previous close price
-      alertClosePrevBar2 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,2),_Digits); // previous close price
 
-      if(
-         (alertClosePrevBar1 > alertLinePrice1 && alertClosePrevBar2 < alertLinePrice1) || (alertClosePrevBar1 < alertLinePrice1 && alertClosePrevBar2 > alertLinePrice1)
-         ||
-         (alertClosePrevBar1 > alertLinePrice2 && alertClosePrevBar2 < alertLinePrice2) || (alertClosePrevBar1 < alertLinePrice2 && alertClosePrevBar2 > alertLinePrice2)
-      )
+      if(alarmLinesOnTouch) // if set on touching the alarm line
         {
-         Alert("=== ALERT: PRICE OVER THE LINE ON ",_Symbol," ===");
-         setAlarmCloseLine = false;
-         ObjectSetString(0,ExtDialog.Name()+"AlertCloseBtn",OBJPROP_TEXT,"\x23F0");
+         double ask_price = SymbolInfoDouble(_Symbol,SYMBOL_ASK);
+         double bid_price = SymbolInfoDouble(_Symbol,SYMBOL_BID);
+
+         if(
+            (ask_price > alertLinePrice1 || bid_price > alertLinePrice1) || (ask_price < alertLinePrice2 || bid_price < alertLinePrice2)
+         )
+           {
+            Alert("=== ALERT: PRICE TOUCHED THE LINE ON ",_Symbol," ===");
+            setAlarmCloseLine = false;
+            ObjectSetString(0,ExtDialog.Name()+"AlertCloseBtn",OBJPROP_TEXT,"\x23F0");
+           }
+        }
+      else // if set on closing after crossing the alarm line
+        {
+         alertClosePrevBar1 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,1),_Digits); // previous close price
+         alertClosePrevBar2 = NormalizeDouble(iClose(_Symbol,PERIOD_CURRENT,2),_Digits); // previous close price
+
+         if(
+            (alertClosePrevBar1 > alertLinePrice1 && alertClosePrevBar2 < alertLinePrice1) || (alertClosePrevBar1 < alertLinePrice1 && alertClosePrevBar2 > alertLinePrice1)
+            ||
+            (alertClosePrevBar1 > alertLinePrice2 && alertClosePrevBar2 < alertLinePrice2) || (alertClosePrevBar1 < alertLinePrice2 && alertClosePrevBar2 > alertLinePrice2)
+         )
+           {
+            Alert("=== ALERT: PRICE CLOSED OVER THE LINE ON ",_Symbol," ===");
+            setAlarmCloseLine = false;
+            ObjectSetString(0,ExtDialog.Name()+"AlertCloseBtn",OBJPROP_TEXT,"\x23F0");
+           }
         }
 
      }
