@@ -44,7 +44,10 @@ string StrategyStr[9] =
    "ORDERBLOCK",
    "SUPPLY_DEMAND"
   };
-
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+input double screenScaleFactor = 1.5; // Screen Scale Factor (use 1.2 - 1.5 for Small Screen)
 input group "------------- POSITIONS MANAGEMENT SETTINGS -------------"
 input int TslOffsetPoints = 0; // TSL BUFFER POINTS FOR MA/TKS/KJS
 input ENUM_TIMEFRAMES TimeFrame = 2; // EA TIMEFRAME
@@ -308,28 +311,30 @@ string StrSellSignal_4;
 
 string captionString = "AR TPanel ";
 
+
+
 //+------------------------------------------------------------------+
 //| defines                                                          |
 //+------------------------------------------------------------------+
 //--- indents and gaps
-#define INDENT_LEFT                         (11)      // indent from left (with allowance for border width)
-#define INDENT_TOP                          (11)      // indent from top (with allowance for border width)
-#define INDENT_RIGHT                        (11)      // indent from right (with allowance for border width)
-#define INDENT_BOTTOM                       (11)      // indent from bottom (with allowance for border width)
-#define CONTROLS_GAP_X                      (5)       // gap by X coordinate // 3
-#define CONTROLS_GAP_Y                      (7)       // gap by Y coordinate // 3
+#define INDENT_LEFT                         ((int)(5*screenScaleFactor))      // indent from left (with allowance for border width) // old value 11
+#define INDENT_TOP                          ((int)(5*screenScaleFactor))      // indent from top (with allowance for border width)
+#define INDENT_RIGHT                        ((int)(5*screenScaleFactor))      // indent from right (with allowance for border width)
+#define INDENT_BOTTOM                       ((int)(5*screenScaleFactor))      // indent from bottom (with allowance for border width)
+#define CONTROLS_GAP_X                      ((int)(5*screenScaleFactor))       // gap by X coordinate // 3
+#define CONTROLS_GAP_Y                      ((int)(5*screenScaleFactor))       // gap by Y coordinate // 3
 //--- for buttons
-#define BUTTON_WIDTH                        (100)     // size by X coordinate
-#define BUTTON_HEIGHT                       (25)      // size by Y coordinate //20
+#define BUTTON_WIDTH                        ((int)(105*screenScaleFactor))     // size by X coordinate
+#define BUTTON_HEIGHT                       ((int)(25*screenScaleFactor))      // size by Y coordinate //20
 //--- for the indication area
-#define EDIT_HEIGHT                         (20)      // size by Y coordinate // 20
-#define EDIT_WIDTH                          (60)      // size by X coordinate
-#define EDIT_WIDTH_SMALL                    (40)      // size by X coordinate
+#define EDIT_HEIGHT                         ((int)(25*screenScaleFactor))      // size by Y coordinate // 20
+#define EDIT_WIDTH                          ((int)(60*screenScaleFactor))      // size by X coordinate
+#define EDIT_WIDTH_SMALL                    ((int)(40*screenScaleFactor))      // size by X coordinate
 //--- for group controls
-#define GROUP_WIDTH                         (150)     // size by X coordinate
-#define LIST_HEIGHT                         (179)     // size by Y coordinate
-#define RADIO_HEIGHT                        (56)      // size by Y coordinate
-#define CHECK_HEIGHT                        (93)      // size by Y coordinate
+//#define GROUP_WIDTH                         ((int)(150*screenScaleFactor))     // size by X coordinate
+//#define LIST_HEIGHT                         ((int)(180*screenScaleFactor))     // size by Y coordinate
+//#define RADIO_HEIGHT                        ((int)(56*screenScaleFactor))      // size by Y coordinate
+//#define CHECK_HEIGHT                        ((int)(93*screenScaleFactor))      // size by Y coordinate
 
 //+------------------------------------------------------------------+
 //| Class CControlsDialog                                            |
@@ -568,6 +573,7 @@ CControlsDialog::~CControlsDialog(void)
 //+------------------------------------------------------------------+
 //| Create                                                           |
 //+------------------------------------------------------------------+
+
 
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -834,7 +840,7 @@ bool CControlsDialog::CreatePriceLbl(void)
 bool CControlsDialog::CreateSlLbl(void)
   {
 //--- coordinates
-   int x1=INDENT_LEFT+ 5*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X) + (EDIT_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+5*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X) + (EDIT_WIDTH+CONTROLS_GAP_X);
    int y1=INDENT_TOP;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
@@ -879,14 +885,14 @@ bool CControlsDialog::CreateMarginRequiredLbl(void)
 //--- coordinates
 
    int x1=INDENT_LEFT;
-   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=4*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 
 //--- create
    if(!m_MarginRequiredLbl.Create(m_chart_id,m_name+"MarginRequiredLbl",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_MarginRequiredLbl.Text("Margin Needed"))
+   if(!m_MarginRequiredLbl.Text("Mrgn Req:"))
       return(false);
    if(!Add(m_MarginRequiredLbl))
       return(false);
@@ -903,7 +909,7 @@ bool CControlsDialog::CreateMarginRequiredDisplLbl(void)
 //--- coordinates
 
    int x1=INDENT_LEFT;
-   int y1=5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=5*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 
@@ -927,14 +933,14 @@ bool CControlsDialog::CreateMarginAvailableLbl(void)
 //--- coordinates
 
    int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=4*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 
 //--- create
    if(!m_MarginAvailableLbl.Create(m_chart_id,m_name+"MarginAvailableLbl",m_subwin,x1,y1,x2,y2))
       return(false);
-   if(!m_MarginAvailableLbl.Text("Margin Available"))
+   if(!m_MarginAvailableLbl.Text("Free Mrgn:"))
       return(false);
    if(!Add(m_MarginAvailableLbl))
       return(false);
@@ -952,7 +958,7 @@ bool CControlsDialog::CreateMarginAvailableDisplLbl(void)
 //--- coordinates
 
    int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=5*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 
@@ -976,7 +982,7 @@ bool CControlsDialog::CreateSpreadLbl(void)
 //--- coordinates
 
    int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=4*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 
@@ -1000,7 +1006,7 @@ bool CControlsDialog::CreateTimeTillCandleCloseLbl(void)
 //--- coordinates
 
    int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=5*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 
@@ -1022,8 +1028,8 @@ bool CControlsDialog::CreateProfitLbl(void)
   {
 //--- coordinates
 
-   int x1=INDENT_LEFT;//+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int x1=INDENT_LEFT+2*BUTTON_WIDTH/3+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int y1=4*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 
@@ -1048,7 +1054,7 @@ bool CControlsDialog::CreateLotsEdit(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT;
-   int y1= EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int y1= EDIT_HEIGHT;
    int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -1073,7 +1079,7 @@ bool CControlsDialog::CreateSlPipsEdit(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+EDIT_WIDTH_SMALL+CONTROLS_GAP_X;
-   int y1= EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int y1= EDIT_HEIGHT;
    int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -1099,7 +1105,7 @@ bool CControlsDialog::CreateTpPipsEdit(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+2*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X);
-   int y1= EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int y1= EDIT_HEIGHT;
    int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -1121,7 +1127,7 @@ bool CControlsDialog::CreateRiskToRewardRatioEdit(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X);
-   int y1= EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int y1= EDIT_HEIGHT;
    int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -1147,7 +1153,7 @@ bool CControlsDialog::CreateRiskEdit(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+4*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X);
-   int y1= EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int y1= EDIT_HEIGHT;
    int x2=x1+EDIT_WIDTH_SMALL;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -1173,7 +1179,7 @@ bool CControlsDialog::CreatePriceEdit(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+5*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X);
-   int y1= EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int y1= EDIT_HEIGHT;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -1195,7 +1201,7 @@ bool CControlsDialog::CreateSlEdit(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+ 5*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X) + (EDIT_WIDTH+CONTROLS_GAP_X);
-   int y1= EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int y1= EDIT_HEIGHT;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -1217,7 +1223,7 @@ bool CControlsDialog::CreateTpEdit(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+ 5*(EDIT_WIDTH_SMALL+CONTROLS_GAP_X) + 2*(EDIT_WIDTH+CONTROLS_GAP_X);
-   int y1= EDIT_HEIGHT+CONTROLS_GAP_Y;
+   int y1= EDIT_HEIGHT;
    int x2=x1+EDIT_WIDTH;
    int y2=y1+EDIT_HEIGHT;
 //--- create
@@ -1241,7 +1247,7 @@ bool CControlsDialog::CreateSellBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT;
-   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=3*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1261,7 +1267,7 @@ bool CControlsDialog::CreateBuyBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+2*BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=3*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1281,7 +1287,7 @@ bool CControlsDialog::CreateCloseAllBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=3*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1302,7 +1308,7 @@ bool CControlsDialog::CreateBoxBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+BUTTON_WIDTH+CONTROLS_GAP_X+BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=3*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1323,7 +1329,7 @@ bool CControlsDialog::CreateDoubleOrderBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X) + BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1344,7 +1350,7 @@ bool CControlsDialog::CreateCalculatePosBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1365,7 +1371,7 @@ bool CControlsDialog::CreateClearInputsBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+BUTTON_WIDTH+CONTROLS_GAP_X;
-   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=3*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1388,7 +1394,7 @@ bool CControlsDialog::CreateBreakEvenBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1409,7 +1415,7 @@ bool CControlsDialog::CreateMarketPendingBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT;
-   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1430,7 +1436,7 @@ bool CControlsDialog::CreateShowLinesBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X)+2*BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1451,7 +1457,7 @@ bool CControlsDialog::CreateSellToggleBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+(BUTTON_WIDTH/3);
-   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1472,7 +1478,7 @@ bool CControlsDialog::CreateBuyToggleBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+2*(BUTTON_WIDTH/3);
-   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1493,7 +1499,7 @@ bool CControlsDialog::CreateStopToggleBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1514,7 +1520,7 @@ bool CControlsDialog::CreateLimitToggleBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+(BUTTON_WIDTH+BUTTON_WIDTH/3+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1535,7 +1541,7 @@ bool CControlsDialog::CreateSendOrderBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X) + 2*BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1556,7 +1562,7 @@ bool CControlsDialog::CreateAutoPosMgmtToggleBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1588,7 +1594,7 @@ bool CControlsDialog::CreateDrawPositionsBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+BUTTON_WIDTH+CONTROLS_GAP_X+2*BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=3*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1611,7 +1617,7 @@ bool CControlsDialog::CreateStrategySelectorCBox(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=3*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1642,7 +1648,7 @@ bool CControlsDialog::CreateShowAlertLinesBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=4*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1667,7 +1673,7 @@ bool CControlsDialog::CreateAlertCloseBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=4*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1692,7 +1698,7 @@ bool CControlsDialog::CreateManualBEBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+2*BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+4*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=4*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1718,7 +1724,7 @@ bool CControlsDialog::CreateOpenChartsBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=5*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1743,7 +1749,7 @@ bool CControlsDialog::CreateOpenActiveChartsBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=5*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1767,7 +1773,7 @@ bool CControlsDialog::CreateCloseChartsBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+2*BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+5*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=5*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1794,7 +1800,7 @@ bool CControlsDialog::CreateWm1AlertBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X);
-   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=3*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1819,7 +1825,7 @@ bool CControlsDialog::CreateWm2AlertBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=3*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1844,7 +1850,7 @@ bool CControlsDialog::CreateWm3AlertBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+2*BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+3*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=3*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -1897,7 +1903,7 @@ bool CControlsDialog::CreateScanChartsBtn(void)
   {
 //--- coordinates
    int x1=INDENT_LEFT+3*(BUTTON_WIDTH+CONTROLS_GAP_X)+2*BUTTON_WIDTH/3;
-   int y1=INDENT_TOP+2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
+   int y1=2*(EDIT_HEIGHT+CONTROLS_GAP_Y);
    int x2=x1+BUTTON_WIDTH/3;
    int y2=y1+BUTTON_HEIGHT;
 //--- create
@@ -3030,15 +3036,6 @@ void CControlsDialog::OnClickCloseChartsBtn(void)
    Print(" Charts Closed...");
   }
 
-
-
-
-
-
-
-
-
-
 //+------------------------------------------------------------------+
 //|         -------- END OF EVENT HANDLERS --------------            |
 //+------------------------------------------------------------------+
@@ -3057,15 +3054,17 @@ int OnInit()
    ObjectDelete(0,"stopLossLine");
    ObjectDelete(0,"takeProfitLine");
 
+
 //--- create application dialog
+
    if(showEAComment) // here if is used to move the panel to the right in case if the comments are engaged
      {
-      if(!ExtDialog.Create(0,captionString,0,210,0,670,200))
+      if(!ExtDialog.Create(0,captionString,0,210,0,(int)(670*screenScaleFactor),(int)(200*screenScaleFactor)))
          return(INIT_FAILED);
      }
    else
      {
-      if(!ExtDialog.Create(0,captionString,0,0,15,460,215))
+      if(!ExtDialog.Create(0,captionString,0,0,15,(int)(460*screenScaleFactor),(int)(200*screenScaleFactor)))
          return(INIT_FAILED);
      }
 
@@ -4415,7 +4414,7 @@ void OnTick()
 //|                                                                  |
 //+------------------------------------------------------------------+
    ObjectSetString(0,ExtDialog.Name()+"MarginAvailableDisplLbl",OBJPROP_TEXT,DoubleToString(AccountFreeMargin,2));
-   ObjectSetString(0,ExtDialog.Name()+"SpreadLbl",OBJPROP_TEXT,"Spread: "+spreadStr);
+   ObjectSetString(0,ExtDialog.Name()+"SpreadLbl",OBJPROP_TEXT,"S: "+spreadStr);
    ObjectSetString(0,ExtDialog.Name()+"TimeTillCandleCloseLbl",OBJPROP_TEXT,timeTillCloseStr);
    ObjectSetString(0,ExtDialog.Name()+"ProfitLbl",OBJPROP_TEXT,profitStr);
 //+------------------------------------------------------------------+
