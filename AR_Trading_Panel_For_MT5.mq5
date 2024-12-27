@@ -1020,7 +1020,7 @@ bool CControlsDialog::CreateProfitLbl(void)
   {
 //--- coordinates
 
-   int x1=INDENT_LEFT+2*BUTTON_WIDTH/3+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+BUTTON_WIDTH/3+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
    int y1=4*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
@@ -2102,6 +2102,7 @@ void CControlsDialog::OnClickClearInputsBtn(void)
    m_SlPipsEdit.Text(slPipsDef);
    m_TpEdit.Text(NULL);
    m_TpPipsEdit.Text(NULL);
+   m_ProfitLbl.Color(clrBlack);
 
    if(!ResetPanel())
       Print(__FUNCTION__," Failed...");
@@ -4312,15 +4313,15 @@ void OnTick()
 
                if(showProfitOnChart)
                  {
-                  ObjectSetString(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_TEXT,posProfitStr);
+                  ObjectSetString(0,"AR_PositionProfitLbl_" + IntegerToString(i),OBJPROP_TEXT,posProfitStr);
                   if(posProfit>0)
-                     ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_COLOR,clrLimeGreen);
+                     ObjectSetInteger(0,"AR_PositionProfitLbl_" + IntegerToString(i),OBJPROP_COLOR,clrLimeGreen);
                   else
                      if(posProfit<0)
-                        ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_COLOR,clrOrangeRed);
+                        ObjectSetInteger(0,"AR_PositionProfitLbl_" + IntegerToString(i),OBJPROP_COLOR,clrOrangeRed);
                      else
                         if(posProfit==0)
-                           ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_COLOR,clrSilver);
+                           ObjectSetInteger(0,"AR_PositionProfitLbl_" + IntegerToString(i),OBJPROP_COLOR,clrSilver);
                  } // showProfitOnChart
               } // PositionGetString(POSITION_SYMBOL) == _Symbol
            } // PositionSelectByTicket(posTicket)
@@ -6073,11 +6074,11 @@ bool CControlsDialog::DrawPositionRectangles()
                if(showProfitOnChart)
                  {
                   updateProfitOnchart = true;
-                  ObjectCreate(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJ_TEXT,0,time1,price1);
-                  ObjectSetString(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_TEXT,posProfit);
-                  ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_COLOR,clrAqua);
-                  ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_SELECTABLE,true);
-                  ObjectSetInteger(0,"AR_PositionProfitLbl" + IntegerToString(i),OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
+                  ObjectCreate(0,"AR_PositionProfitLbl_" + IntegerToString(i),OBJ_TEXT,0,time1,price3);
+                  ObjectSetString(0,"AR_PositionProfitLbl_" + IntegerToString(i),OBJPROP_TEXT,posProfit);
+                  ObjectSetInteger(0,"AR_PositionProfitLbl_" + IntegerToString(i),OBJPROP_COLOR,clrAqua);
+                  ObjectSetInteger(0,"AR_PositionProfitLbl_" + IntegerToString(i),OBJPROP_SELECTABLE,true);
+                  ObjectSetInteger(0,"AR_PositionProfitLbl_" + IntegerToString(i),OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
                  }
 
                if(price2 > 0)
@@ -6118,6 +6119,8 @@ bool CControlsDialog::DrawPositionRectangles()
             if(StringSubstr(Name, 0, 6) == "AR_AP_")
                ObjectDelete(0,Name);
             if(StringSubstr(Name, 0, 10) == "alertClose")
+               ObjectDelete(0,Name);
+            if(StringSubstr(Name, 0, 20) == "AR_PositionProfitLbl")
                ObjectDelete(0,Name);
            }
         }
