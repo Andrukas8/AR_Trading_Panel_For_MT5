@@ -47,7 +47,7 @@ string StrategyStr[9] =
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
-input double screenScaleFactor = 1.5; // Screen Scale Factor (use 1.2 - 1.5 for Small Screen)
+input double screenScaleFactor = 1.5; // Screen Scale (1.2-1.5 Small Screens; 0.8-1.0 Big Screens)
 input group "------------- POSITIONS MANAGEMENT SETTINGS -------------"
 input int TslOffsetPoints = 0; // TSL BUFFER POINTS FOR MA/TKS/KJS
 input ENUM_TIMEFRAMES TimeFrame = 2; // EA TIMEFRAME
@@ -57,7 +57,6 @@ input bool autoBreakEven = false; // AUTO BREAKEVEN
 input double breakevenRatio = 1; //  _____ BE RATIO
 input bool alertBreakEven = false; // _____ ALERT ON BE
 input bool showEAComment = false; // SHOW EA COMMENT
-input bool debuggingComments = false; // SHOW DEBUGGING COMMENTS
 input bool showProfitOnChart = false; // SHOW POSITION PROFIT ON CHART
 input bool useSymmetricalPositionFilter = false; // DO NOT SHOW SIGNALS FOR SYMMETRICAL PAIRS
 input bool useOpenPositionFilter = false; // DO NOT SHOW SIGNALS FOR INSTRUMENTS WITH OPEN POSITIONS
@@ -311,30 +310,23 @@ string StrSellSignal_4;
 
 string captionString = "AR TPanel ";
 
-
-
 //+------------------------------------------------------------------+
 //| defines                                                          |
 //+------------------------------------------------------------------+
 //--- indents and gaps
-#define INDENT_LEFT                         ((int)(5*screenScaleFactor))      // indent from left (with allowance for border width) // old value 11
+#define INDENT_LEFT                         ((int)(5*screenScaleFactor))      // indent from left (with allowance for border width)
 #define INDENT_TOP                          ((int)(5*screenScaleFactor))      // indent from top (with allowance for border width)
 #define INDENT_RIGHT                        ((int)(5*screenScaleFactor))      // indent from right (with allowance for border width)
 #define INDENT_BOTTOM                       ((int)(5*screenScaleFactor))      // indent from bottom (with allowance for border width)
-#define CONTROLS_GAP_X                      ((int)(5*screenScaleFactor))       // gap by X coordinate // 3
-#define CONTROLS_GAP_Y                      ((int)(5*screenScaleFactor))       // gap by Y coordinate // 3
+#define CONTROLS_GAP_X                      ((int)(5*screenScaleFactor))       // gap by X coordinate
+#define CONTROLS_GAP_Y                      ((int)(5*screenScaleFactor))       // gap by Y coordinate
 //--- for buttons
 #define BUTTON_WIDTH                        ((int)(105*screenScaleFactor))     // size by X coordinate
-#define BUTTON_HEIGHT                       ((int)(25*screenScaleFactor))      // size by Y coordinate //20
+#define BUTTON_HEIGHT                       ((int)(25*screenScaleFactor))      // size by Y coordinate
 //--- for the indication area
-#define EDIT_HEIGHT                         ((int)(25*screenScaleFactor))      // size by Y coordinate // 20
+#define EDIT_HEIGHT                         ((int)(25*screenScaleFactor))      // size by Y coordinate
 #define EDIT_WIDTH                          ((int)(60*screenScaleFactor))      // size by X coordinate
 #define EDIT_WIDTH_SMALL                    ((int)(40*screenScaleFactor))      // size by X coordinate
-//--- for group controls
-//#define GROUP_WIDTH                         ((int)(150*screenScaleFactor))     // size by X coordinate
-//#define LIST_HEIGHT                         ((int)(180*screenScaleFactor))     // size by Y coordinate
-//#define RADIO_HEIGHT                        ((int)(56*screenScaleFactor))      // size by Y coordinate
-//#define CHECK_HEIGHT                        ((int)(93*screenScaleFactor))      // size by Y coordinate
 
 //+------------------------------------------------------------------+
 //| Class CControlsDialog                                            |
@@ -3059,12 +3051,12 @@ int OnInit()
 
    if(showEAComment) // here if is used to move the panel to the right in case if the comments are engaged
      {
-      if(!ExtDialog.Create(0,captionString,0,210,0,(int)(670*screenScaleFactor),(int)(200*screenScaleFactor)))
+      if(!ExtDialog.Create(0,captionString,0,210,0,(int)(680*screenScaleFactor),(int)(200*screenScaleFactor)))
          return(INIT_FAILED);
      }
    else
      {
-      if(!ExtDialog.Create(0,captionString,0,0,15,(int)(460*screenScaleFactor),(int)(200*screenScaleFactor)))
+      if(!ExtDialog.Create(0,captionString,0,0,15,(int)(460*screenScaleFactor),(int)(220*screenScaleFactor)))
          return(INIT_FAILED);
      }
 
@@ -3235,33 +3227,7 @@ void OnTick()
   {
 
    textComment = "";
-   debugComment = "";
 
-
-// sand box
-   if(debuggingComments)
-     {
-      //fractalsTrendFilterBull();
-      //fractalsTrendFilterBear();
-      //StochasticOscillatorFilterBull();
-      //StochasticOscillatorFilterBear();
-      //RSI_MA_FilterBull();
-      //RSI_MA_FilterBear();
-      //MA_FilterBull();
-      //MA_FilterBear();
-      //AO_FilterBull();
-      //AO_FilterBear();
-      //AC_FilterBull();
-      //AC_FilterBear();
-      //Alligator_FilterBull();
-      //Alligator_FilterBear();
-      //Ichimoku_FilterBull();
-      //Ichimoku_FilterBear();
-     }
-
-
-
-// end of sand box
 
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -3278,7 +3244,7 @@ void OnTick()
       if(accountBallance > 0)
          percentAtRisk = NormalizeDouble(TotalRiskVolume / accountBallance * 100,2);
 
-      captionString += "AR TPanel | " + _Symbol + " | TF " + IntegerToString(TimeFrame) + " | Total VaR: " + accountCurrency + " " + DoubleToString(TotalRiskVolume,2) + " | " + DoubleToString(percentAtRisk,2) + " % | " + IntegerToString(VaRfilterGo(maxVARFiltervalue));
+      captionString += "AR TPanel | " + _Symbol + " | TF " + IntegerToString(TimeFrame) + " | VaR: " + accountCurrency + " " + DoubleToString(TotalRiskVolume,2) + " | " + DoubleToString(percentAtRisk,2) + " % | " + IntegerToString(VaRfilterGo(maxVARFiltervalue));
       ObjectSetString(0,ExtDialog.Name()+"Caption",OBJPROP_TEXT,captionString);
       captionString = "";
 
@@ -3912,25 +3878,6 @@ void OnTick()
                   KJSSAFilterUp = true;
                   KJSSAFilterDn = true;
                  }
-
-            if(debuggingComments)
-              {
-               debugComment += "======== DEBUGGING KJSSAFilter ===============\n";
-               debugComment += "|=> KJSSAFilterRange = " + IntegerToString(KJSSAFilterRange) + " \n";
-               debugComment += "|=> KJSSAFilter SWITCH = " + IntegerToString(KJSSAFilter) + " \n";
-               debugComment += "|=> KJSSAFilterUp = " + IntegerToString(KJSSAFilterUp) + " \n";
-               debugComment += "|=> KJSSAFilterDn = " + IntegerToString(KJSSAFilterDn) + " \n";
-               debugComment += "|=> CURRENT  KijunsenArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(KijunsenArr[KJSSAFilterRange],_Digits) + " \n";
-               debugComment += "|=> PREVIOUS KijunsenArr[ 0 ] = " + DoubleToString(KijunsenArr[0],_Digits) + " \n";
-               debugComment += "|=> CURRENT  ShiftedSenkouspanAArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange],_Digits) + " \n";
-               debugComment += "|=> CURRENT  ShiftedSenkouspanBArr[ " + IntegerToString(KJSSAFilterRange) + " ] = " + DoubleToString(ShiftedSenkouspanBArr[KJSSAFilterRange],_Digits) + " \n";
-               debugComment += "|=> PREVIOUS ShiftedSenkouspanAArr[ 0 ] = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + " \n";
-               debugComment += "|=> PREVIOUS ShiftedSenkouspanBArr[ 0 ] = " + DoubleToString(ShiftedSenkouspanBArr[0],_Digits) + " \n";
-               debugComment += "|=> CURRENT Kumo Delta = " + DoubleToString(ShiftedSenkouspanAArr[KJSSAFilterRange] - ShiftedSenkouspanBArr[KJSSAFilterRange],_Digits) + " \n";
-               debugComment += "|=> PREVIOUS Kumo Delta = " + DoubleToString(ShiftedSenkouspanAArr[0] - ShiftedSenkouspanBArr[0],_Digits) + " \n";
-               debugComment += "|=> KumoIsWider = " + IntegerToString(KumoIsWider) + "\n";
-              }
-
 
             if(timeStamp != time)
               {
@@ -5152,11 +5099,6 @@ void OnTick()
 //+------------------------------------------------------------------+
    if(showEAComment)
      {
-      if(debuggingComments)
-        {
-         textComment += debugComment;
-         debugComment="";
-        }
       Comment(textComment);
       textComment="";
      }
@@ -6479,14 +6421,6 @@ bool StochasticOscillatorFilterBull()
       if(soMainSignalDiff > soFilterStrength)
          stochasticOscillatorFilterBull = true;
 
-      if(debuggingComments)
-        {
-         debugComment += "======== DEBUGGING stochasticOscillatorFilterBear ===\n";
-         debugComment += "|=> main_buffer[1] = " + DoubleToString(main_buffer[1],_Digits) + " signal_buffer[1] = " + DoubleToString(signal_buffer[1],_Digits) + " \n";
-         debugComment += "|=> soMainSignalDiff = " + DoubleToString(soMainSignalDiff,_Digits) + " \n";
-         debugComment += "|=> main_buffer[1] = " + IntegerToString(stochasticOscillatorFilterBull) + " \n";
-        }
-
      }
    else
       if(!soFilter)
@@ -6528,14 +6462,6 @@ bool StochasticOscillatorFilterBear()
       if(soMainSignalDiff > soFilterStrength)
          stochasticOscillatorFilterBear = true;
 
-      if(debuggingComments)
-        {
-         debugComment += "======== DEBUGGING stochasticOscillatorFilterBear ===\n";
-         debugComment += "|=> main_buffer[1] = " + DoubleToString(main_buffer[1],_Digits) + " signal_buffer[1] = " + DoubleToString(signal_buffer[1],_Digits) + " \n";
-         debugComment += "|=> soMainSignalDiff = " + DoubleToString(soMainSignalDiff,_Digits) + " \n";
-         debugComment += "|=> main_buffer[1] = " + IntegerToString(stochasticOscillatorFilterBear) + " \n";
-        }
-
      }
    else
       if(!soFilter)
@@ -6571,13 +6497,6 @@ bool RSI_MA_FilterBull()
 
       if(RSI_buffer[1] > RSI_buffer[0] && RSI_buffer[1] > RSI_MA_buffer[1])
          RSI_MA_BULL = true;
-
-      if(debuggingComments)
-        {
-         debugComment += "======== DEBUGGING RSI_MA_FilterBull ===\n";
-         debugComment += "|=> RSI_buffer[1] = " + DoubleToString(RSI_buffer[1],2) + " RSI_MA_buffer[1] = " + DoubleToString(RSI_MA_buffer[1],2) + " \n";
-         debugComment += "|=> RSI_MA_BULL = " + IntegerToString(RSI_MA_BULL) + " \n";
-        }
 
      }
    else
@@ -6617,13 +6536,6 @@ bool RSI_MA_FilterBear()
       if(RSI_buffer[1] < RSI_buffer[0] && RSI_buffer[1] < RSI_MA_buffer[1])
          RSI_MA_BEAR = true;
 
-      if(debuggingComments)
-        {
-         debugComment += "======== DEBUGGING RSI_MA_FilterBull ===\n";
-         debugComment += "|=> RSI_buffer[1] = " + DoubleToString(RSI_buffer[1],2) + " RSI_MA_buffer[1] = " + DoubleToString(RSI_MA_buffer[1],2) + " \n";
-         debugComment += "|=> RSI_MA_BEAR = " + IntegerToString(RSI_MA_BEAR) + " \n";
-        }
-
      }
 
    else
@@ -6658,14 +6570,6 @@ bool MA_FilterBull()
       if(LastClosePrice > MA_buffer[1])
          MA_BULL = true;
 
-      if(debuggingComments)
-        {
-         debugComment += "======== DEBUGGING MA Filter General BULL ===\n";
-         debugComment += "|=> MA for LastClosePrice = " + DoubleToString(MA_buffer[1],_Digits) + " \n";
-         debugComment += "|=> LastClosePrice = " + DoubleToString(LastClosePrice,_Digits) + " \n";
-         debugComment += "|=> MA_BULL = " + IntegerToString(MA_BULL) + " \n";
-        }
-
      }
    else
       if(!useMAFilter)
@@ -6698,14 +6602,6 @@ bool MA_FilterBear()
 
       if(LastClosePrice < MA_buffer[1])
          MA_BEAR = true;
-
-      if(debuggingComments)
-        {
-         debugComment += "======== DEBUGGING MA Filter General BEAR ===\n";
-         debugComment += "|=> MA for LastClosePrice = " + DoubleToString(MA_buffer[1],_Digits) + " \n";
-         debugComment += "|=> LastClosePrice = " + DoubleToString(LastClosePrice,_Digits) + " \n";
-         debugComment += "|=> MA_BEAR = " + IntegerToString(MA_BEAR) + " \n";
-        }
 
      }
    else
@@ -6834,14 +6730,6 @@ bool AO_FilterBull()
       if(AO_buffer[0] > AO_buffer[1])
          AO_BULL = true;
 
-      if(debuggingComments)
-        {
-         debugComment += "======== DEBUGGING AO Filter General BULL ===\n";
-         debugComment += "|=> AO_buffer[0] = " + DoubleToString(AO_buffer[0],_Digits) + " \n";
-         debugComment += "|=> AO_buffer[1] = " + DoubleToString(AO_buffer[1],_Digits) + " \n";
-         debugComment += "|=> AO_BULL = " + IntegerToString(AO_BULL) + " \n";
-        }
-
      }
    else
       if(!useAOFilter)
@@ -6875,14 +6763,6 @@ bool AO_FilterBear()
 
       if(AO_buffer[0] < AO_buffer[1])
          AO_BEAR = true;
-
-      if(debuggingComments)
-        {
-         debugComment += "======== DEBUGGING AO Filter General BULL ===\n";
-         debugComment += "|=> AO_buffer[0] = " + DoubleToString(AO_buffer[0],_Digits) + " \n";
-         debugComment += "|=> AO_buffer[1] = " + DoubleToString(AO_buffer[1],_Digits) + " \n";
-         debugComment += "|=> AO_BEAR = " + IntegerToString(AO_BEAR) + " \n";
-        }
 
      }
    else
@@ -6920,14 +6800,6 @@ bool AC_FilterBull()
       if(AC_buffer[0] > AC_buffer[1])
          AC_BULL = true;
 
-      if(debuggingComments)
-        {
-         debugComment += "======== DEBUGGING AC Filter General BULL ===\n";
-         debugComment += "|=> AC_buffer[0] = " + DoubleToString(AC_buffer[0],_Digits) + " \n";
-         debugComment += "|=> AC_buffer[1] = " + DoubleToString(AC_buffer[1],_Digits) + " \n";
-         debugComment += "|=> AC_BULL = " + IntegerToString(AC_BULL) + " \n";
-        }
-
      }
    else
       if(!useACFilter)
@@ -6961,14 +6833,6 @@ bool AC_FilterBear()
 
       if(AC_buffer[0] < AC_buffer[1])
          AC_BEAR = true;
-
-      if(debuggingComments)
-        {
-         debugComment += "======== DEBUGGING AC Filter General BULL ===\n";
-         debugComment += "|=> AC_buffer[1] = " + DoubleToString(AC_buffer[1],_Digits) + " \n";
-         debugComment += "|=> AC_buffer[0] = " + DoubleToString(AC_buffer[0],_Digits) + " \n";
-         debugComment += "|=> AC_BEAR = " + IntegerToString(AC_BEAR) + " \n";
-        }
 
      }
    else
@@ -7026,15 +6890,6 @@ bool Alligator_FilterBull()
         {
          Alligator_BULL = true;
 
-        }
-
-      if(debuggingComments)
-        {
-         debugComment += "======== DEBUGGING Alligator Filter BULL ===\n";
-         debugComment += "|=> alligatorLipsEndArr[0] = " + DoubleToString(alligatorLipsEndArr[0],_Digits) + " \n";
-         debugComment += "|=> alligatorTeethEndArr[0] = " + DoubleToString(alligatorTeethEndArr[0],_Digits) + " \n";
-         debugComment += "|=> alligatorJawEndArr[0] = " + DoubleToString(alligatorJawEndArr[0],_Digits) + " \n";
-         debugComment += "|=> Alligator_BULL = " + IntegerToString(Alligator_BULL) + " \n";
         }
 
      }
@@ -7096,15 +6951,6 @@ bool Alligator_FilterBear()
         {
          Alligator_BEAR = true;
 
-        }
-
-      if(debuggingComments)
-        {
-         debugComment += "======== DEBUGGING Alligator Filter BEAR ===\n";
-         debugComment += "|=> alligatorLipsEndArr[0] = " + DoubleToString(alligatorLipsEndArr[0],_Digits) + " \n";
-         debugComment += "|=> alligatorTeethEndArr[0] = " + DoubleToString(alligatorTeethEndArr[0],_Digits) + " \n";
-         debugComment += "|=> alligatorJawEndArr[0] = " + DoubleToString(alligatorJawEndArr[0],_Digits) + " \n";
-         debugComment += "|=> Alligator_BEAR = " + IntegerToString(Alligator_BEAR) + " \n";
         }
 
      }
@@ -7250,24 +7096,6 @@ bool Ichimoku_FilterBull()
         }
 
 
-
-      if(debuggingComments)
-        {
-         debugComment += "======== DEBUGGING Ichimoku Filter BULL ===\n";
-         debugComment += "|=> ClosePrice_1 = " + DoubleToString(ClosePrice_1,_Digits) + " \n";
-         debugComment += "|=> SenkouspanAArr[0] = " + DoubleToString(SenkouspanAArr[0],_Digits) + " \n";
-         debugComment += "|=> SenkouspanBArr[0] = " + DoubleToString(SenkouspanBArr[0],_Digits) + " \n";
-         debugComment += "|=> TenkansenArr[0] = " + DoubleToString(TenkansenArr[0],_Digits) + " \n";
-         debugComment += "|=> KijunsenArr[0] = " + DoubleToString(KijunsenArr[0],_Digits) + " \n";
-         debugComment += "|=> ShiftedSenkouspanAArr[0] = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + " \n";
-         debugComment += "|=> ShiftedSenkouspanBArr[0] = " + DoubleToString(ShiftedSenkouspanBArr[0],_Digits) + " \n";
-         debugComment += "|=> ChikouspanArr[0] = " + DoubleToString(ChikouspanArr[0],_Digits) + " \n";
-         debugComment += "|=> Bar26High = " + DoubleToString(Bar26High,_Digits) + " \n";
-         debugComment += "|=> Ichimoku_BULL = " + IntegerToString(Ichimoku_BULL) + " \n";
-        }
-
-
-
      }
    else
       if(!useIchimokuFilter)
@@ -7329,23 +7157,6 @@ bool Ichimoku_FilterBear()
         {
          Ichimoku_BEAR = true;
         }
-
-
-      if(debuggingComments)
-        {
-         debugComment += "======== DEBUGGING Ichimoku Filter BEAR ===\n";
-         debugComment += "|=> ClosePrice_1 = " + DoubleToString(ClosePrice_1,_Digits) + " \n";
-         debugComment += "|=> SenkouspanAArr[0] = " + DoubleToString(SenkouspanAArr[0],_Digits) + " \n";
-         debugComment += "|=> SenkouspanBArr[0] = " + DoubleToString(SenkouspanBArr[0],_Digits) + " \n";
-         debugComment += "|=> TenkansenArr[0] = " + DoubleToString(TenkansenArr[0],_Digits) + " \n";
-         debugComment += "|=> KijunsenArr[0] = " + DoubleToString(KijunsenArr[0],_Digits) + " \n";
-         debugComment += "|=> ShiftedSenkouspanAArr[0] = " + DoubleToString(ShiftedSenkouspanAArr[0],_Digits) + " \n";
-         debugComment += "|=> ShiftedSenkouspanBArr[0] = " + DoubleToString(ShiftedSenkouspanBArr[0],_Digits) + " \n";
-         debugComment += "|=> ChikouspanArr[0] = " + DoubleToString(ChikouspanArr[0],_Digits) + " \n";
-         debugComment += "|=> Bar26High = " + DoubleToString(Bar26High,_Digits) + " \n";
-         debugComment += "|=> Ichimoku_BEAR = " + IntegerToString(Ichimoku_BEAR) + " \n";
-        }
-
 
      }
    else
