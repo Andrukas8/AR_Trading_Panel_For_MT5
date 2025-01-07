@@ -1020,7 +1020,7 @@ bool CControlsDialog::CreateProfitLbl(void)
   {
 //--- coordinates
 
-   int x1=INDENT_LEFT+BUTTON_WIDTH/3+2*(BUTTON_WIDTH+CONTROLS_GAP_X);
+   int x1=INDENT_LEFT+BUTTON_WIDTH/3+2*(BUTTON_WIDTH+CONTROLS_GAP_X)+4*CONTROLS_GAP_X;
    int y1=4*EDIT_HEIGHT+2*CONTROLS_GAP_Y;
    int x2=x1+BUTTON_WIDTH;
    int y2=y1+BUTTON_HEIGHT;
@@ -3226,6 +3226,7 @@ void OnChartEvent(const int id,         // event ID
 //+------------------------------------------------------------------+
 void OnTick()
   {
+//Print(NormalizeDouble(iVolume(_Symbol,TimeFrame,0),_Digits)," ",NormalizeDouble(iClose(_Symbol,TimeFrame,0),_Digits));
 
    textComment = "";
 
